@@ -1,0 +1,21 @@
+@media (min-width: 768px) {
+  .hmd100 {
+    height: 100% !important;
+  }
+}
+
+.roomsShell {
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.roomsPage {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.panelColumn {
+  min-height: 0;
+  overflow: hidden;
+}

@@ -1,0 +1,61 @@
+"use client";
+import { useEffect, useState, type ReactNode } from "react";
+
+import { AuthContext, type User } from "./AuthContext";
+import { logOutUser, getCurrentUser, logInUser } from "../../api/auth";
+import { logInForm } from "@/types/auth";
+
+type Props = {
+  children: ReactNode;
+  initialUser: User | null;
+};
+
+export const AuthProvider = ({ children, initialUser }: Props) => {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [loading, setLoading] = useState(!initialUser);
+
+  const fetchMe = async () => {
+    getCurrentUser()
+      .then((user) => {
+        console.log("provider chay", user);
+        setUser(user);
+      })
+      .catch(() => {
+        setUser(null);
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    fetchMe();
+  }, []);
+
+  const login = async (userData: logInForm) => {
+    await logInUser(userData);
+  };
+  const logout = async () => {
+    try {
+      await logOutUser();
+      setUser(null);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        logout,
+        setUser,
+        login,
+        fetchMe,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};

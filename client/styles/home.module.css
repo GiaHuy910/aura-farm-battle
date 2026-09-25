@@ -1,0 +1,77 @@
+.playBtn {
+  background-color: #b60c31;
+  color: white;
+  padding: 12px 40px;
+  font-size: 1.5rem;
+  font-weight: bold;
+  border: none;
+  border-radius: 8px;
+  max-width: 300px;
+
+  transition:
+    transform 0.2s ease-in-out,
+    background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+.playBtn:hover {
+  background-color: #fff;
+  color: #000;
+  transform: scale(1.1);
+}
+
+.btnFill {
+  position: relative;
+  padding: 12px 24px;
+  font-size: 16px;
+  font-weight: bold;
+  color: black;
+  border: 2px solid #f0f0f0;
+  background: linear-gradient(to right, rgb(0, 46, 137) 50%, #f0f0f0 50%);
+  background-size: 200% 100%;
+  background-position: right bottom;
+  transition:
+    background-position 0.4s ease,
+    color 0.4s ease;
+  cursor: pointer;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.btnFill:hover {
+  background-position: left bottom;
+  color: white;
+}
+
+.optionBtn {
+  background-color: #f0f0f0;
+  cursor: pointer;
+  color: black;
+  font-size: 1rem;
+  border: solid 2px gray;
+  max-width: 350px;
+  max-height: 50px;
+
+  transition:
+    transform 0.2s ease-in-out,
+    background-color 0.2s ease-in-out,
+    box-shadow 0.2s ease-in-out;
+}
+.optionBtn:hover {
+  background-color: blue;
+  color: white;
+  transform: scale(1.1);
+}
+
+.logoWrapper {
+  --logo-scale: scale(0.85);
+  --logo-translate: translateY(-50px);
+  --logo-margin: -30px;
+}
+
+@media (min-width: 768px) {
+  .logoWrapper {
+    --logo-scale: scale(0.5);
+    --logo-translate: translateY(-100px);
+    --logo-margin: -100px;
+  }
+}
