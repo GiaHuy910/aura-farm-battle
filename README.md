@@ -26,6 +26,7 @@
 - [Table of contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Quick Start](#quick-start)
+- [Tech Stacks](#tech-stacks)
 - [Contribution](#contribution)
   - [Cach khoi tao project](#cach-khoi-tao-project)
   - [Rules](#rules)
@@ -49,6 +50,15 @@
 - In the server directory : `cabal build`
 - Run the server : `cabal run`
   Backend end will be hosting locally on port `3001` by default
+
+## Tech Stacks
+
+| Category | Technology                                         |
+| -------- | -------------------------------------------------- |
+| Frontend | Next.js, React, TypeScript, Bootstrap              |
+| Backend  | Cabal, Haskell, Servant, Warp                      |
+| Database | MongoDB                                            |
+| Others   | RESTful API, MVC model, Client-Server architecture |
 
 ## Contribution
 
