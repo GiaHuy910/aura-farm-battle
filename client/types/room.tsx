@@ -1,5 +1,6 @@
 export type createRoomForm = {
-  roomName: string;
+  room_name: string;
   password: string;
-  isPrivate: boolean;
+  owner_id: string;
+  is_private: boolean;
 };
