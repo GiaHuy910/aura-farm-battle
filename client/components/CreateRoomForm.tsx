@@ -60,9 +60,17 @@ export default function CreateRoomForm({ onSuccess }: Props) {
     });
     if (!roomNameError && !passwordError) {
       try {
-        const createRoomSend = fields;
-        const response = await createRoom(createRoomSend);
-        onSuccess();
+        if (user) {
+          const owner_id = user.user_id;
+          const createRoomSend = {
+            room_name: fields.roomName,
+            owner_id,
+            password: fields.password,
+            is_private: fields.isPrivate,
+          };
+          const response = await createRoom(createRoomSend);
+          onSuccess();
+        }
       } catch (error) {
         console.error("Error Fetching rooms:", error);
       }
