@@ -85,7 +85,7 @@ parseSessionId cookieHeader =
 
 
 
-registerHandler :: RegisterRequest -> Handler AuthResponse
+registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 registerHandler req = do
   -- Đổi username thành regUsername, password thành regPassword, và XÓA CHỮ 'pack $'
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
