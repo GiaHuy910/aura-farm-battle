@@ -13,7 +13,7 @@ type RoomRouter =
 
   :<|> "room" :> "create"
            :> ReqBody '[JSON] CreateRoomRequest
-           :> Post '[JSON] RoomResponse
+           :> Post '[JSON] CreateRoomResponse
 
   :<|> "room"
            :> Capture "roomName" String

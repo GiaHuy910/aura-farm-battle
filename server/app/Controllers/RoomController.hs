@@ -33,8 +33,32 @@ instance FromJSON CreateRoomRequest where
           _                   -> field
     }
 
+data RoomDetail = RoomDetail
+  { resRoomID   :: Text
+  , resRoomName  :: Text
+  , resIsPrivate :: Bool
+  } deriving (Show, Generic)
+
+instance ToJSON RoomDetail   where
+  toJSON = genericToJSON $ defaultOptions
+    { fieldLabelModifier = \field ->
+        case field of
+          "resRoomID"   -> "room_id"
+          "resRoomName" -> "room_name"
+          "resIsPrivate" -> "is_private"
+          _                   -> field
+    }
+
+data CreateRoomResponse = CreateRoomResponse
+  { status :: Text
+  , room   :: RoomDetail
+  } deriving (Show, Generic)
+
+instance ToJSON CreateRoomResponse
+
 data RoomResponse = RoomResponse
-  { roomNameResponse  :: Text
+  { roomIDResponse   :: Text
+  , roomNameResponse  :: Text
   , occupancyResponse :: Int
   , isPrivateResponse :: Bool
   } deriving (Show, Generic)
@@ -43,13 +67,12 @@ instance ToJSON RoomResponse where
   toJSON = genericToJSON $ defaultOptions
     { fieldLabelModifier = \field ->
         case field of
-          "roomNameResponse"  -> "room_name"
-          "occupancyResponse" -> "occupancy"
-          "isPrivateResponse" -> "is_private"
-          _                   -> field
-    }
-
-
+          "roomIDResponse"   -> "room_id"
+          "roomNameResponse" -> "room_name"
+          "occupancyResponse"-> "occupancy"
+          "isPrivateResponse"-> "is_private"
+          _                  -> field
+     }
 
 getRoomsHandler :: Handler [RoomResponse]
 getRoomsHandler = do
@@ -79,13 +102,16 @@ createRoomHandler req = do
           , occupancy = 1
           , is_private = isPrivateRequest req
           }
-  liftIO (createRoom newRoom)
-  return $
-    RoomResponse
-      { roomNameResponse  = room_name newRoom
-      , occupancyResponse = occupancy newRoom
-      , isPrivateResponse = is_private newRoom
-      }
+  createdRoom <- liftIO (createRoom newRoom)
+  let rDetail = RoomDetail
+        { resRoomID = room_id createdRoom
+        , resRoomName = room_name createdRoom
+        , resIsPrivate = is_private createdRoom
+        }
+  return $ CreateRoomResponse
+    { status = "success"
+    , room = rDetail
+    }
 
 deleteRoomHandler :: String -> String -> Handler NoContent
 deleteRoomHandler roomNameValue ownerIDValue = do

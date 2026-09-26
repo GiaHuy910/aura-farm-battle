@@ -91,7 +91,10 @@ registerHandler req = do
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
   
   case result of
-    Success -> return $ AuthResponse "success" "Đăng ký thành công!"
+    Success -> do
+       sID <- liftIO $ createSession (regUsername req)
+       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
+       return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
     UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
 loginHandler :: LoginRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)

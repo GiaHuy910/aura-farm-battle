@@ -66,7 +66,7 @@ roomToDoc r =
   ]
 
 -- 1. Hàm tạo phòng mới
-createRoom :: Room -> IO ()
+createRoom :: Room -> IO Room
 createRoom newRoom = runDB $ do
     uuid <- liftIO nextRandom
     let validUsers = take 2 (user_ids newRoom)
@@ -74,6 +74,7 @@ createRoom newRoom = runDB $ do
     let valiatedRoom = newRoom { room_id = pack (toString uuid), occupancy = realOccupancy }
     insert_ "room" (roomToDoc valiatedRoom)
     -- insert_ (có dấu gạch dưới) dùng khi ta không cần lấy lại ID do MongoDB tự sinh ra.
+    return valiatedRoom
 
 -- 5. Hàm xóa phòng khi chủ phòng rời đi
 -- Tham số: Tên phòng -> ID người vừa rời (phải là Owner thì mới xóa được)
