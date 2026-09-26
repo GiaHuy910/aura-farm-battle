@@ -37,12 +37,19 @@ createSession uName = do
     return sID
 
 -- Tìm username từ session_id
+-- Tìm user_id từ session_id
 getUserBySession :: Text -> IO (Maybe Text)
 getUserBySession sID = runDB $ do
-    maybeDoc <- findOne (select ["session_id" =: sID] "sessions")
-    case maybeDoc of
+    maybeSessionDoc <- findOne (select ["session_id" =: sID] "sessions")
+    case maybeSessionDoc of
         Nothing  -> return Nothing
-        Just doc -> return (Just $ fromMaybe "" (doc !? "username"))
+        Just sDoc -> do
+            let uname = fromMaybe "" (sDoc !? "username")
+            -- Quét tiếp bảng user để lấy id
+            maybeUserDoc <- findOne (select ["username" =: uname] "user")
+            case maybeUserDoc of
+                Nothing   -> return Nothing
+                Just uDoc -> return (Just $ fromMaybe "" (uDoc !? "user_id"))
 
 -- Xóa session khi logout
 deleteSession :: Text -> IO ()

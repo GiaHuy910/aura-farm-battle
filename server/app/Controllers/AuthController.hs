@@ -12,7 +12,7 @@ import GHC.Generics
 import Servant
 
 --Dùng file nào thì bỏ comment
-import Game_database.User (registerUser, loginUser, RegisterStatus(..), LoginStatus(..), getUser, User(..))
+import Game_database.User (registerUser, loginUser, RegisterStatus(..), LoginStatus(..), getUserById, User(..))
 --import Game_database.Usercopy (registerUser, loginUser, RegisterStatus(..), LoginStatus(..), getUser, User(..) )
 import Game_database.Session (createSession, getUserBySession, deleteSession)
 
@@ -127,28 +127,22 @@ logoutHandler mCookieHeader = do
       return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
 
 --Cua auth/me
+-- Handler của auth/me
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = do
     case cookieHeader of
-        Nothing ->
-            throwError err401
+        Nothing -> throwError err401
         Just cookie ->
             case parseSessionId cookie of
-                Nothing ->
-                    throwError err401
+                Nothing -> throwError err401
                 Just sessionId -> do
-                    maybeUsername <- liftIO $ getUserBySession sessionId
-                    case maybeUsername of
-                        Nothing ->
-                            throwError err401
-                        Just username -> do
-                            maybeUser <- liftIO $ getUser username
+                    -- mUserId bây giờ chứa user_id thay vì username
+                    mUserId <- liftIO $ getUserBySession sessionId
+                    case mUserId of
+                        Nothing -> throwError err401
+                        Just uid -> do
+                            -- Đổi từ getUser sang getUserById
+                            maybeUser <- liftIO $ getUserById uid
                             case maybeUser of
-                                Nothing ->
-                                    throwError err404
-                                Just u ->
-                                    return (MeResponse
-                                        (AuthResponse
-                                            "success"
-                                            "Xác thực thành công!")
-                                        u)
+                                Nothing -> throwError err404
+                                Just u -> return (MeResponse (AuthResponse "success" "Xác thực thành công!") u)
