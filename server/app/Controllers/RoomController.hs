@@ -11,15 +11,13 @@ import Data.Text (Text, pack, unpack)
 import qualified Data.Text as T
 import GHC.Generics
 import Servant
--- Import từ các module Database của bạn
+
 import Game_database.Rooms (Room(..), getRooms, createRoom, deleteRoom)
 import Game_database.Session (getUserBySession)
 
--- Room Requests/Responses
 data CreateRoomRequest = CreateRoomRequest
   { roomNameRequest  :: Text
   , passwordRequest  :: Text
-  -- ĐÃ XÓA ownerIDRequest TẠI ĐÂY
   , isPrivateRequest :: Bool
   } deriving (Show, Generic)
 
@@ -82,41 +80,36 @@ getRoomsHandler = do
 roomToResponse :: Room -> RoomResponse
 roomToResponse room =
   RoomResponse
-    { roomNameResponse = room_name room
+    { roomIDResponse = room_id room
+    , roomNameResponse = room_name room
     , occupancyResponse = occupancy room
     , isPrivateResponse = is_private room
     }
 
 createRoomHandler :: Maybe String -> CreateRoomRequest -> Handler CreateRoomResponse
 createRoomHandler mCookieHeader req = do
-  -- Bước 1: Parse Header Cookie để lấy session_id
   case mCookieHeader >>= parseSessionId of
     Nothing -> throwError err401 { errBody = "Vui lòng đăng nhập để tạo phòng!" }
     Just sID -> do
-      
-      -- Bước 2: Dùng session_id gọi DB lấy user_id (như đã cập nhật ở task trước)
       mUserId <- liftIO $ getUserBySession sID
       case mUserId of
         Nothing -> throwError err401 { errBody = "Phiên đăng nhập không hợp lệ hoặc đã hết hạn!" }
         Just uid -> do
-          
-          -- Bước 3: Dùng uid (user_id) làm owner_id để tạo phòng
           let newRoom =
                 Room
                   { room_id       = "" 
                   , room_name     = roomNameRequest req
                   , room_password = passwordRequest req
-                  , owner_id      = uid              -- Lấy từ DB
-                  , user_ids      = [uid]            -- Lấy từ DB
+                  , owner_id      = uid
+                  , user_ids      = [uid]
                   , occupancy     = 1
                   , is_private    = isPrivateRequest req
                   }
           
           createdRoom <- liftIO (createRoom newRoom)
           
-          -- Bước 4: Trả về kết quả
           let rDetail = RoomDetail
-                { resRoomId    = room_id createdRoom
+                { resRoomID    = room_id createdRoom
                 , resRoomName  = room_name createdRoom
                 , resIsPrivate = is_private createdRoom
                 }
@@ -125,16 +118,6 @@ createRoomHandler mCookieHeader req = do
                 { status = "success"
                 , room   = rDetail
                 }
-  createdRoom <- liftIO (createRoom newRoom)
-  let rDetail = RoomDetail
-        { resRoomID = room_id createdRoom
-        , resRoomName = room_name createdRoom
-        , resIsPrivate = is_private createdRoom
-        }
-  return $ CreateRoomResponse
-    { status = "success"
-    , room = rDetail
-    }
 
 deleteRoomHandler :: String -> String -> Handler NoContent
 deleteRoomHandler roomNameValue ownerIDValue = do

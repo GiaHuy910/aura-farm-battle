@@ -1,5 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+
 module Game_database.Session where
 
 import Database.MongoDB
@@ -9,9 +10,10 @@ import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
 
+-- Đã đổi username thành user_id
 data Session = Session
   { session_id :: Text
-  , username   :: Text
+  , user_id    :: Text 
   } deriving (Show)
 
 runDB :: Action IO a -> IO a
@@ -24,32 +26,25 @@ runDB action = do
 sessionToDoc :: Session -> Document
 sessionToDoc s =
   [ "session_id" =: session_id (s :: Session)
-  , "username"   =: username (s :: Session)
+  , "user_id"    =: user_id (s :: Session)
   ]
 
--- Tạo session từ username truyền vào
+-- Tạo session dựa trên user_id thay vì username
 createSession :: Text -> IO Text
-createSession uName = do
+createSession uId = do
     uuid <- liftIO nextRandom
     let sID = pack (toString uuid)
-    let newSession = Session { session_id = sID, username = uName }
+    let newSession = Session { session_id = sID, user_id = uId }
     runDB $ insert_ "sessions" (sessionToDoc newSession)
     return sID
 
--- Tìm username từ session_id
--- Tìm user_id từ session_id
+-- Chỉ cần query 1 lần là lấy được user_id, không cần quét bảng user nữa
 getUserBySession :: Text -> IO (Maybe Text)
 getUserBySession sID = runDB $ do
     maybeSessionDoc <- findOne (select ["session_id" =: sID] "sessions")
     case maybeSessionDoc of
-        Nothing  -> return Nothing
-        Just sDoc -> do
-            let uname = fromMaybe "" (sDoc !? "username")
-            -- Quét tiếp bảng user để lấy id
-            maybeUserDoc <- findOne (select ["username" =: uname] "user")
-            case maybeUserDoc of
-                Nothing   -> return Nothing
-                Just uDoc -> return (Just $ fromMaybe "" (uDoc !? "user_id"))
+        Nothing   -> return Nothing
+        Just sDoc -> return (Just $ fromMaybe "" (sDoc !? "user_id"))
 
 -- Xóa session khi logout
 deleteSession :: Text -> IO ()

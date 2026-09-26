@@ -11,15 +11,9 @@ import qualified Data.Text as T
 import GHC.Generics
 import Servant
 
---Dùng file nào thì bỏ comment
-import Game_database.User (registerUser, loginUser, RegisterStatus(..), LoginStatus(..), getUserById, User(..))
---import Game_database.Usercopy (registerUser, loginUser, RegisterStatus(..), LoginStatus(..), getUser, User(..) )
+import Game_database.User (registerUser, verifyUserLogin, RegisterStatus(..), LoginStatus(..), getUserById, User(..))
 import Game_database.Session (createSession, getUserBySession, deleteSession)
 
--- Auth Requests/Responses
--- ==========================================
--- DỮ LIỆU ĐĂNG KÝ
--- ==========================================
 data RegisterRequest = RegisterRequest
   { regUsername :: Text 
   , regPassword :: Text
@@ -34,9 +28,6 @@ instance FromJSON RegisterRequest where
           _             -> field
     }
 
--- ==========================================
--- DỮ LIỆU ĐĂNG NHẬP
--- ==========================================
 data LoginRequest = LoginRequest
   { loginUsername :: Text
   , loginPassword :: Text
@@ -51,10 +42,10 @@ instance FromJSON LoginRequest where
           _               -> field
     }
 
-
 data AuthResponse = AuthResponse
-  { status  :: String
-  , message :: String
+  { status     :: String
+  , session_id :: String
+  , user_id    :: String
   } deriving (Show, Generic)
 
 instance ToJSON AuthResponse
@@ -66,11 +57,6 @@ data MeResponse = MeResponse
 
 instance ToJSON MeResponse
 
--- ==========================================
--- 3. HÀM PHỤ TRỢ (HELPER)
--- ==========================================
-
--- Hàm bóc tách session_id từ chuỗi Cookie nhận được từ trình duyệt
 parseSessionId :: String -> Maybe Text
 parseSessionId cookieHeader =
   let pairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
@@ -83,51 +69,44 @@ parseSessionId cookieHeader =
                       "" -> []
                       s' -> let (w, s'') = break p s' in w : wordsWhen p s'
 
-
-
 registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 registerHandler req = do
-  -- Đổi username thành regUsername, password thành regPassword, và XÓA CHỮ 'pack $'
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
   
   case result of
-    Success -> do
-       sID <- liftIO $ createSession (regUsername req)
+    -- Nhận user_id từ database sau khi đăng ký thành công
+    Success uid -> do
+       sID <- liftIO $ createSession uid
        let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
-       return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
+       return $ addHeader cookieValue (AuthResponse "success" (unpack sID) (unpack uid))
     UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
 loginHandler :: LoginRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 loginHandler req = do
-  loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
-  case loginStatus of
-    LoginSuccess -> do  -- BỎ CHỮ 'uid' Ở ĐÂY ĐI
-      -- Truyền trực tiếp loginUsername vào hàm createSession
-      sID <- liftIO $ createSession (loginUsername req)
+  -- Sử dụng verifyUserLogin để lấy thẳng user_id
+  maybeUserId <- liftIO $ verifyUserLogin (loginUsername req) (loginPassword req)
+  
+  case maybeUserId of
+    Just uid -> do
+      sID <- liftIO $ createSession uid
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
-      return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
+      return $ addHeader cookieValue (AuthResponse "success" (unpack sID) (unpack uid))
       
-    LoginFailed -> 
+    Nothing -> 
       throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
 
--- HANDLER ĐĂNG XUẤT (XÓA COOKIE)
 logoutHandler :: Maybe String -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 logoutHandler mCookieHeader = do
   case mCookieHeader >>= parseSessionId of
     Just sID -> do
-      -- 1. Xóa session trong DB
       liftIO $ deleteSession sID
-      
-      -- 2. Set Max-Age=0 để trình duyệt xóa Cookie này
       let expiredCookie = "session_id=; Path=/; HttpOnly; Max-Age=0"
-      return $ addHeader expiredCookie (AuthResponse "success" "Đăng xuất thành công!")
+      return $ addHeader expiredCookie (AuthResponse "success" "" "")
       
     Nothing -> do
       let expiredCookie = "session_id=; Path=/; HttpOnly; Max-Age=0"
-      return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
+      return $ addHeader expiredCookie (AuthResponse "success" "" "")
 
---Cua auth/me
--- Handler của auth/me
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = do
     case cookieHeader of
@@ -136,13 +115,11 @@ meHandler cookieHeader = do
             case parseSessionId cookie of
                 Nothing -> throwError err401
                 Just sessionId -> do
-                    -- mUserId bây giờ chứa user_id thay vì username
                     mUserId <- liftIO $ getUserBySession sessionId
                     case mUserId of
                         Nothing -> throwError err401
                         Just uid -> do
-                            -- Đổi từ getUser sang getUserById
                             maybeUser <- liftIO $ getUserById uid
                             case maybeUser of
                                 Nothing -> throwError err404
-                                Just u -> return (MeResponse (AuthResponse "success" "Xác thực thành công!") u)
+                                Just u -> return (MeResponse (AuthResponse "success" (unpack sessionId) (unpack uid)) u)

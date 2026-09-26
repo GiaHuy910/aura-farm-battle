@@ -30,16 +30,23 @@ runDB action = do
     close pipe
     return result
 
-getUsers :: IO [User] --Whole ass list of users in user_db
+getUsers :: IO [User] 
 getUsers = runDB $ do
     docs <- find (select [] "user") >>= rest
     return (map docToUser docs)
 
-getUser:: Text -> IO (Maybe User) --One specific user by username
+getUser:: Text -> IO (Maybe User) 
 getUser uname = runDB $ do 
     let query = (select ["username" =: uname] "user") { project = ["user_id" =: True, "username" =: True] }
     user <- findOne query
     return (fmap docToUser user)
+
+-- Bổ sung hàm getUserById để dùng trong AuthController /auth/me
+getUserById :: Text -> IO (Maybe User) 
+getUserById uid = runDB $ do 
+    let query = (select ["user_id" =: uid] "user") { project = ["user_id" =: True, "username" =: True] }
+    userDoc <- findOne query
+    return (fmap docToUser userDoc)
 
 docToUser :: Document -> User
 docToUser doc = User
@@ -58,14 +65,11 @@ userToDoc u =
 createUser:: User -> IO()
 createUser newUser = runDB $ do
     insert_ "user" (userToDoc newUser)
--- deleteUser :: Text -> IO ()
--- deleteUser userId = runDB $ do
---     deleteOne (select ["user_id" =: userId] "user")  
 
-data RegisterStatus = Success | UserAlreadyExists deriving (Show, Eq)
+-- Cập nhật RegisterStatus để mang theo user_id khi thành công
+data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
 data LoginStatus = LoginSuccess | LoginFailed deriving (Show, Eq)
 
---Hàm đăng ký: kiểm tra có trùng user trong user_db ko, có thì trả về UserAlreadyExists, ko thì tạo user mới và trả về Success
 registerUser :: Text -> Text -> IO RegisterStatus
 registerUser uname pass = do 
     existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest
@@ -77,8 +81,9 @@ registerUser uname pass = do
             let generatedUserID = pack (toString userID)    
             let newUser = User {user_id = generatedUserID, username = uname,password = unPasswordHash hashedPass}
             createUser newUser
-            return Success
---Hàm đăng nhập: kiểm tra có trùng user và pass trong user_db ko, ko thì trả về LoginFailed, có thì trả về LoginSuccess
+            -- Trả về user_id vừa tạo
+            return (Success generatedUserID)
+
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
     existingDocs <- runDB $ find (select ["username" =: uname] "user" ) >>= rest
@@ -93,4 +98,9 @@ loginUser uname pass = do
                 PasswordCheckSuccess -> return LoginSuccess 
                 _ -> return LoginFailed
 
-
+verifyUserLogin :: Text -> Text -> IO (Maybe Text)
+verifyUserLogin uname pwd = runDB $ do
+    maybeUser <- findOne (select ["username" =: uname, "password" =: pwd] "user")
+    case maybeUser of
+        Nothing -> return Nothing
+        Just uDoc -> return (Just $ fromMaybe "" (uDoc !? "user_id"))
