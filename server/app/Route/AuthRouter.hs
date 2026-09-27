@@ -10,7 +10,7 @@ import Servant
 type AuthRouter =
        "auth" :> "register"
            :> ReqBody '[JSON] RegisterRequest
-           :> Post '[JSON] AuthResponse
+           :> Post '[JSON] (Headers '[Header "Set-Cookie" String] AuthResponse)
 
   :<|> "auth" :> "login"
            :> ReqBody '[JSON] LoginRequest
