@@ -22,6 +22,9 @@ export default function RoomsPage() {
       setRightView("detail");
     }
   };
+  const handleCreateRoomSuccess = () => {
+    router.push("/rooms");
+  };
   return (
     <div
       className={`${styles.roomsPage} mx-3 mb-3`}
@@ -75,7 +78,7 @@ export default function RoomsPage() {
               {rightView === "detail" ? (
                 <RoomDetail />
               ) : (
-                <CreateRoomForm onSuccess={() => setRightView("detail")} />
+                <CreateRoomForm onSuccess={handleCreateRoomSuccess} />
               )}
             </div>
           </div>
