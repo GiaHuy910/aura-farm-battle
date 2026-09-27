@@ -68,21 +68,25 @@ createUser newUser = runDB $ do
 
 -- Cập nhật RegisterStatus để mang theo user_id khi thành công
 data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
-data LoginStatus = LoginSuccess | LoginFailed deriving (Show, Eq)
+-- Cập nhật LoginStatus có kèm Text
+data LoginStatus = LoginSuccess Text | LoginFailed deriving (Show, Eq)
 
-registerUser :: Text -> Text -> IO RegisterStatus
-registerUser uname pass = do 
-    existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest
-    if not (null existingDocs)
-        then return UserAlreadyExists
+loginUser :: Text -> Text -> IO LoginStatus
+loginUser uname pass = do
+    existingDocs <- runDB $ find (select ["username" =: uname] "user" ) >>= rest
+    if null existingDocs
+        then return LoginFailed
         else do
-            hashedPass <- hashPassword (mkPassword pass)
-            userID <- liftIO nextRandom
-            let generatedUserID = pack (toString userID)    
-            let newUser = User {user_id = generatedUserID, username = uname,password = unPasswordHash hashedPass}
-            createUser newUser
-            -- Trả về user_id vừa tạo
-            return (Success generatedUserID)
+            let userDoc = head existingDocs
+            let storedHashedPass = fromMaybe "" (userDoc !? "password")
+            let storedPasswordHash = PasswordHash storedHashedPass
+            let checkresult = checkPassword (mkPassword pass) storedPasswordHash
+            case checkresult of
+                PasswordCheckSuccess -> do
+                    -- Lấy user_id từ database ra và gắn vào LoginSuccess
+                    let uid = fromMaybe "" (userDoc !? "user_id")
+                    return (LoginSuccess uid)
+                _ -> return LoginFailed
 
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do

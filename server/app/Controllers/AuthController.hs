@@ -73,11 +73,12 @@ registerHandler req = do
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
   
   case result of
-    -- 1. Hứng trực tiếp biến Text đi kèm với Success
+    
     Success newUserID -> do
-      sID <- liftIO $ createSession (regUsername req)
+      -- Đã sửa: Truyền newUserID vào thay vì username
+      sID <- liftIO $ createSession newUserID
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
-      
+
       -- 2. Dùng luôn newUserID, XÓA HOÀN TOÀN cục code gọi hàm getUser đi!
       return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
       
@@ -88,16 +89,12 @@ loginHandler req = do
   loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
   
   case loginStatus of
-    LoginSuccess -> do
-      sID <- liftIO $ createSession (loginUsername req)
+    -- Hứng uID được trả về từ LoginSuccess
+    LoginSuccess uID -> do
+      -- Đã sửa: Truyền uID vào thay vì username
+      sID <- liftIO $ createSession uID
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
       
-      -- Tìm user để lấy user_id trả về
-      maybeUser <- liftIO $ getUser (loginUsername req)
-      let uID = case maybeUser of
-            Just u -> user_id u
-            Nothing -> ""
-                  
       return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
       
     LoginFailed -> 
