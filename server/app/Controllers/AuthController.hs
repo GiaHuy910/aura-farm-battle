@@ -43,8 +43,8 @@ instance FromJSON LoginRequest where
     }
 
 data AuthResponse = AuthResponse
-  { status  :: Text
-  , userID :: Text
+  { status  :: String
+  , message :: String
   } deriving (Show, Generic)
 
 instance ToJSON AuthResponse
@@ -79,7 +79,7 @@ registerHandler req = do
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
       
       -- 2. Dùng luôn newUserID, XÓA HOÀN TOÀN cục code gọi hàm getUser đi!
-      return $ addHeader cookieValue (AuthResponse "success" newUserID)
+      return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
       
     UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
@@ -98,7 +98,7 @@ loginHandler req = do
             Just u -> user_id u
             Nothing -> ""
                   
-      return $ addHeader cookieValue (AuthResponse "success" uID)
+      return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
       
     LoginFailed -> 
       throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
@@ -110,9 +110,9 @@ logoutHandler mCookieHeader = do
   case mCookieHeader >>= parseSessionId of
     Just sID -> do
       liftIO $ deleteSession sID
-      return $ addHeader expiredCookie (AuthResponse "success" "")
+      return $ addHeader expiredCookie (AuthResponse "success" "Đăng xuất thành công!")
     Nothing -> do
-      return $ addHeader expiredCookie (AuthResponse "success" "")
+      return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
 
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = do
@@ -131,4 +131,4 @@ meHandler cookieHeader = do
                             case maybeUser of
                                 Nothing -> throwError err404
                                 Just u -> 
-                                    return (MeResponse (AuthResponse "success" uid) u)
+                                    return (MeResponse (AuthResponse "success" "Xác thực thành công!") u)
