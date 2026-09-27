@@ -1,35 +1,28 @@
-# Chi tiết thay đổi Backend & Database (Auth & Room)
+# Cập nhật API Backend (Auth & Room)
 
-Tài liệu này tổng hợp các thay đổi thực tế trong logic xử lý và cấu trúc dữ liệu để team Router và Frontend nắm thông tin.
+## 1. API: `POST /auth/register`
+*   **Đầu vào:** Nhận `username` và `password` từ Body[cite: 8].
+*   **Đầu ra:** Trả về `AuthResponse` kèm theo Header `Set-Cookie`[cite: 8].
+*   **Hàm xử lý:** Hàm `registerUser` giờ sẽ trả về trực tiếp `user_id` mới tạo[cite: 4, 8]. Controller lấy ID đó truyền thẳng vào `createSession`[cite: 8].
 
-## 1. Database (`Game_database`)
-**File `User.hs`:**
-*   **Hàm mới:** Thêm `getUserById :: Text -> IO (Maybe User)` để truy vấn thông tin người dùng trực tiếp bằng ID. Thêm `verifyUserLogin`.
-*   **Tối ưu Output:** 
-    *   Cập nhật `RegisterStatus` thành `Success Text | UserAlreadyExists` để trả về ngay `user_id` khi tạo tài khoản thành công.
-    *   Cập nhật `LoginStatus` thành `LoginSuccess Text | LoginFailed` để gom luôn `user_id` trả về khi kiểm tra mật khẩu hợp lệ.
+## 2. API: `POST /auth/login`
+*   **Đầu vào:** Nhận `username` và `password` từ Body[cite: 8].
+*   **Đầu ra:** Trả về `AuthResponse` kèm theo Header `Set-Cookie`[cite: 8].
+*   **Hàm xử lý:** Hàm `loginUser` được cập nhật để trả về luôn `user_id` nếu mật khẩu đúng[cite: 4, 8]. Truyền thẳng ID đó vào `createSession` (đã xóa code query thừa)[cite: 8].
 
-**File `Session.hs`:**
-*   **Cấu trúc dữ liệu:** Thay đổi model `Session` để lưu trường `user_id` thay vì `username`.
-*   **Hàm xử lý:**
-    *   Cập nhật `createSession` để nhận đầu vào là `uId` (kiểu `Text`).
-    *   Tối ưu `getUserBySession` để đọc thẳng `user_id` từ bảng `sessions` (không cần quét lại bảng `user` như trước).
+## 3. API: `POST /auth/logout`
+*   **Đầu vào:** Yêu cầu thêm Header `Cookie`[cite: 2, 8].
+*   **Đầu ra:** Trả về `AuthResponse` kèm Header `Set-Cookie` rỗng (Max-Age=0) để xoá ở client[cite: 8].
+*   **Hàm xử lý:** Phân tích `session_id` từ Cookie và gọi `deleteSession`[cite: 8].
 
-## 2. Controllers
-**File `RoomController.hs`:**
-*   **Input Body:** Gỡ bỏ hoàn toàn việc nhận `owner_id` từ Request Body của client trong cấu trúc `CreateRoomRequest`.
-*   **Logic Tạo Phòng:** Nâng cấp `createRoomHandler` để nhận Header Cookie, giải mã lấy `session_id`, truy vấn DB lấy `user_id` và tự động gán giá trị đó vào `owner_id` cũng như `user_ids` của phòng mới.
-*   **Helper:** Thêm hàm phụ trợ `parseSessionId` để tự cắt chuỗi Cookie.
+## 4. API: `GET /auth/me`
+*   **Đầu vào:** Yêu cầu thêm Header `Cookie`[cite: 2, 8].
+*   **Đầu ra:** Trả về `MeResponse` (thông báo + thông tin user)[cite: 8].
+*   **Hàm xử lý:** Lấy `user_id` từ session đang đăng nhập, sau đó gọi hàm mới `getUserById` để lấy toàn bộ thông tin tài khoản[cite: 4, 8].
 
-**File `AuthController.hs`:**
-*   **Output:** Giữ nguyên cấu trúc `AuthResponse` gồm `status :: String` và `message :: String` (trả về câu thông báo tiếng Việt).
-*   **Logic Đăng Ký & Đăng Nhập (Quan trọng):** 
-    *   Sửa lỗi truyền nhầm tham số: `createSession` hiện tại đã nhận chính xác biến `user_id` (được hứng từ `Success newUserID` và `LoginSuccess uID`) thay vì `username`.
-    *   Tối ưu hiệu suất: Xóa bỏ hoàn toàn các đoạn code gọi hàm `getUser` thừa thãi.
-*   **Logic Xác Thực (`/auth/me`):** Trích xuất `user_id` từ session rồi dùng hàm mới `getUserById` để lấy và trả về toàn bộ thông tin người dùng.
-*   **Helper:** Tích hợp hàm `parseSessionId`.
-
-## 3. Yêu cầu cập nhật dành cho team Router
-Để code biên dịch thành công, hai file Router cần được cập nhật khớp với Controller:
-*   **`RoomRouter.hs`:** API `create` cần bổ sung `Header "Cookie" String` và đổi kiểu Output sang `CreateRoomResponse`.
-*   **`AuthRouter.hs`:** Các API cần bổ sung `Header "Cookie" String` cho đầu vào (với `me`, `logout`) và `Headers '[Header "Set-Cookie" String]` cho đầu ra (với `register`, `login`, `logout`).
+## 5. API: `POST /room/create`
+*   **Đầu vào:** 
+    *   Bắt buộc gửi kèm Header `Cookie`[cite: 7].
+    *   Body rút gọn: Xóa trường `owner_id` (client không cần gửi nữa)[cite: 7].
+*   **Đầu ra:** Cấu trúc đổi sang `CreateRoomResponse`[cite: 1, 7].
+*   **Hàm xử lý:** Tự động cắt `Cookie` lấy `session_id`, truy xuất DB lấy `user_id` hiện tại và tự động gán nó làm `owner_id` cho phòng mới[cite: 7].
