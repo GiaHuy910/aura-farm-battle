@@ -50,9 +50,16 @@ data AuthResponse = AuthResponse
 
 instance ToJSON AuthResponse
 
+data PublicUser = PublicUser
+  { user_id :: Text
+  , username :: Text
+  } deriving (Show, Generic)
+
+instance ToJSON PublicUser
+
 data MeResponse = MeResponse
     { auth    :: AuthResponse
-    , me      :: User
+    , me      :: PublicUser
     , profile :: Maybe PlayerProfile -- Thêm field này
     } deriving (Show, Generic)
 
@@ -132,4 +139,5 @@ meHandler cookieHeader = do
                                 Just u -> do
                                     -- Lấy thêm thông tin túi đồ/profile
                                     pProfile <- liftIO $ getProfileByUserId uid
-                                    return (MeResponse (AuthResponse "success" (unpack sessionId)) u pProfile)
+                                    let safeUser = PublicUser (user_id u) (username u)
+                                    return (MeResponse (AuthResponse "success" (unpack sessionId)) safeUser pProfile)
