@@ -14,6 +14,7 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Password.Bcrypt (PasswordHash(..),PasswordCheck(..),hashPassword, mkPassword, unPasswordHash,checkPassword)
 import Data.Text (Text, pack)
 import Data.Text.Internal.StrictBuilder (toText)
+import Game_database.PlayerProfile (createDefaultProfile)
 
 data User = User
   { user_id   :: Text
@@ -71,6 +72,25 @@ data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
 -- Cập nhật LoginStatus có kèm Text
 data LoginStatus = LoginSuccess Text | LoginFailed deriving (Show, Eq)
 
+registerUser :: Text -> Text -> IO RegisterStatus
+registerUser uname pass = do 
+    existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest
+    if not (null existingDocs)
+        then return UserAlreadyExists
+        else do
+            hashedPass <- hashPassword (mkPassword pass)
+            userID <- liftIO nextRandom
+            let generatedUserID = pack (toString userID)    
+            let newUser = User {user_id = generatedUserID, username = uname,password = unPasswordHash hashedPass}
+            
+            -- Tạo user
+            createUser newUser
+            
+            -- TẠO LUÔN PROFILE MẶC ĐỊNH CHO USER NÀY
+            createDefaultProfile generatedUserID
+            
+            return (Success generatedUserID)
+
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
     existingDocs <- runDB $ find (select ["username" =: uname] "user" ) >>= rest
@@ -88,23 +108,11 @@ loginUser uname pass = do
                     return (LoginSuccess uid)
                 _ -> return LoginFailed
 
-loginUser :: Text -> Text -> IO LoginStatus
-loginUser uname pass = do
-    existingDocs <- runDB $ find (select ["username" =: uname] "user" ) >>= rest
-    if null existingDocs
-        then return LoginFailed
-        else do
-            let userDoc = head existingDocs
-            let storedHashedPass = fromMaybe "" (userDoc !? "password")
-            let storedPasswordHash = PasswordHash storedHashedPass
-            let checkresult = checkPassword (mkPassword pass) storedPasswordHash
-            case checkresult of
-                PasswordCheckSuccess -> return LoginSuccess 
-                _ -> return LoginFailed
-
 verifyUserLogin :: Text -> Text -> IO (Maybe Text)
 verifyUserLogin uname pwd = runDB $ do
     maybeUser <- findOne (select ["username" =: uname, "password" =: pwd] "user")
     case maybeUser of
         Nothing -> return Nothing
         Just uDoc -> return (Just $ fromMaybe "" (uDoc !? "user_id"))
+
+        

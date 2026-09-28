@@ -50,16 +50,27 @@ extra-doc-files:    CHANGELOG.md
 common warnings
     ghc-options: -Wall
 
-executable server
+executable test-server
     -- Import common warning flags.
     import:           warnings
 
     -- .hs or .lhs file containing the Main module.
-    main-is:          Server.hs
+    main-is:          TestServer.hs
 
     -- Modules included in this executable, other than Main.
     -- other-modules:
-    other-modules:    Game_database.Rooms, Game_database.User, Game_database.Session
+    other-modules:    
+      Game_database.Rooms
+      Game_database.User
+      Game_database.Session
+      Game_database.PlayerProfile
+      Game_database.GameItem
+      Controllers.AuthController
+      Controllers.RoomController
+      Controllers.ProfileController
+      Route.AuthRouter
+      Route.Index
+      Route.RoomRouter
     -- LANGUAGE extensions used by modules in this package.
     -- other-extensions:
 
@@ -76,6 +87,7 @@ executable server
         password,
         text,
         bson,
+        random,
         wai-cors
 
     -- Directories containing source files.

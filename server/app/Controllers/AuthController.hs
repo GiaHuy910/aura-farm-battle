@@ -13,6 +13,7 @@ import Servant
 
 import Game_database.User (registerUser, verifyUserLogin, RegisterStatus(..), LoginStatus(..), getUserById, User(..),getUser,loginUser)
 import Game_database.Session (createSession, getUserBySession, deleteSession)
+import Game_database.PlayerProfile (PlayerProfile(..), getProfileByUserId)
 
 data RegisterRequest = RegisterRequest
   { regUsername :: Text 
@@ -50,8 +51,9 @@ data AuthResponse = AuthResponse
 instance ToJSON AuthResponse
 
 data MeResponse = MeResponse
-    { auth :: AuthResponse
-    , me   :: User
+    { auth    :: AuthResponse
+    , me      :: User
+    , profile :: Maybe PlayerProfile -- Thêm field này
     } deriving (Show, Generic)
 
 instance ToJSON MeResponse
@@ -127,5 +129,7 @@ meHandler cookieHeader = do
                             maybeUser <- liftIO $ getUserById uid
                             case maybeUser of
                                 Nothing -> throwError err404
-                                Just u -> 
-                                    return (MeResponse (AuthResponse "success" "Xác thực thành công!") u)
+                                Just u -> do
+                                    -- Lấy thêm thông tin túi đồ/profile
+                                    pProfile <- liftIO $ getProfileByUserId uid
+                                    return (MeResponse (AuthResponse "success" (unpack sessionId)) u pProfile)
