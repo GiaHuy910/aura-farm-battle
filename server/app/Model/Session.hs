@@ -1,7 +1,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Game_database.Session where
+module Model.Session where
 
 import Database.MongoDB
 import Data.Maybe (fromMaybe)

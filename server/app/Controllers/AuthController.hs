@@ -2,21 +2,28 @@
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{- HLINT ignore "Use newtype instead of data" -}
+
 module Controllers.AuthController where
 
+import Control.Monad (replicateM)
 import Control.Monad.IO.Class
 import Data.Aeson hiding (Result(..))
 import Data.Text (Text, pack, unpack)
-import qualified Data.Text as T
 import GHC.Generics
 import Servant
+import System.Random (randomRIO)
 
-import Game_database.User (registerUser, verifyUserLogin, RegisterStatus(..), LoginStatus(..), getUserById, User(..),getUser,loginUser)
-import Game_database.Session (createSession, getUserBySession, deleteSession)
-import Game_database.PlayerProfile (PlayerProfile(..), getProfileByUserId)
+import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), ItemType(..), deductTickets, addGachaItems )
+import Model.Clothe (Clothe(..), getClothesPool)
+import Model.Skill (Skill(..), getSkillsPool)
+import Model.Session (createSession, getUserBySession, deleteSession)
+import qualified Model.Clothe as Clothe
+import qualified Model.Skill as Skill
 
 data RegisterRequest = RegisterRequest
-  { regUsername :: Text 
+  { regUsername :: Text
   , regPassword :: Text
   } deriving (Show, Generic)
 
@@ -58,12 +65,37 @@ data PublicUser = PublicUser
 instance ToJSON PublicUser
 
 data MeResponse = MeResponse
-    { auth    :: AuthResponse
-    , me      :: PublicUser
-    , profile :: Maybe PlayerProfile -- Thêm field này
+    { auth :: AuthResponse
+    , me   :: PublicUser 
     } deriving (Show, Generic)
 
 instance ToJSON MeResponse
+
+data TicketsResponse = TicketsResponse { tickets :: Int } deriving (Show, Generic)
+instance ToJSON TicketsResponse
+
+data AvatarResponse = AvatarResponse { avatar :: Text } deriving (Show, Generic)
+instance ToJSON AvatarResponse
+
+data CurrentSkillsResponse = CurrentSkillsResponse
+  { na :: Skill, s1 :: Skill, s2 :: Skill, ult :: Skill } deriving (Show, Generic)
+instance ToJSON CurrentSkillsResponse
+
+data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Skill] } deriving (Show, Generic)
+instance ToJSON OwnedSkillsResponse
+
+data CurrentClothesResponse = CurrentClothesResponse
+  { accessory :: Clothe, shirt :: Clothe, shoes :: Clothe } deriving (Show, Generic)
+instance ToJSON CurrentClothesResponse
+
+data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Clothe] } deriving (Show, Generic)
+instance ToJSON OwnedClothesResponse
+
+data GachaResponse = GachaResponse
+  { status :: String
+  , items  :: [Text]
+  } deriving (Show, Generic)
+instance ToJSON GachaResponse
 
 parseSessionId :: String -> Maybe Text
 parseSessionId cookieHeader =
@@ -80,64 +112,110 @@ parseSessionId cookieHeader =
 registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 registerHandler req = do
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
-  
   case result of
-    
     Success newUserID -> do
-      -- Đã sửa: Truyền newUserID vào thay vì username
       sID <- liftIO $ createSession newUserID
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
-
-      -- 2. Dùng luôn newUserID, XÓA HOÀN TOÀN cục code gọi hàm getUser đi!
       return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
-      
     UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
 loginHandler :: LoginRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 loginHandler req = do
   loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
-  
   case loginStatus of
-    -- Hứng uID được trả về từ LoginSuccess
     LoginSuccess uID -> do
-      -- Đã sửa: Truyền uID vào thay vì username
       sID <- liftIO $ createSession uID
       let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
-      
       return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
-      
-    LoginFailed -> 
-      throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
+    LoginFailed -> throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
 
 logoutHandler :: Maybe String -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 logoutHandler mCookieHeader = do
   let expiredCookie = "session_id=; Path=/; HttpOnly; Max-Age=0"
-  
   case mCookieHeader >>= parseSessionId of
     Just sID -> do
       liftIO $ deleteSession sID
       return $ addHeader expiredCookie (AuthResponse "success" "Đăng xuất thành công!")
-    Nothing -> do
-      return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
+    Nothing -> return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
 
 meHandler :: Maybe String -> Handler MeResponse
-meHandler cookieHeader = do
-    case cookieHeader of
-        Nothing -> throwError err401
-        Just cookie ->
-            case parseSessionId cookie of
-                Nothing -> throwError err401
-                Just sessionId -> do
-                    -- mUserId bây giờ là user_id (kiểu Text)
-                    mUserId <- liftIO $ getUserBySession sessionId
-                    case mUserId of
-                        Nothing -> throwError err401
-                        Just uid -> do
-                            maybeUser <- liftIO $ getUserById uid
-                            case maybeUser of
-                                Nothing -> throwError err404
-                                Just u -> do
-                                    -- Lấy thêm thông tin túi đồ/profile
-                                    pProfile <- liftIO $ getProfileByUserId uid
-                                    let safeUser = PublicUser (user_id u) (username u)
-                                    return (MeResponse (AuthResponse "success" (unpack sessionId)) safeUser pProfile)
+meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u ->
+    return $ MeResponse (AuthResponse "success" "OK") (PublicUser u.user_id u.username)
+
+withAuthenticatedUser :: Maybe String -> (User -> Handler a) -> Handler a
+withAuthenticatedUser cookieHeader action = do
+    case cookieHeader >>= parseSessionId of
+        Nothing -> throwError err401 { errBody = "Chưa đăng nhập!" }
+        Just sid -> do
+            mUid <- liftIO $ getUserBySession sid
+            case mUid of
+                Nothing -> throwError err401 { errBody = "Session không hợp lệ!" }
+                Just uid -> do
+                    mUser <- liftIO $ getUserById uid
+                    case mUser of
+                        Nothing -> throwError err404 { errBody = "Không tìm thấy người dùng!" }
+                        Just u  -> action u
+
+getTicketsHandler :: Maybe String -> Handler TicketsResponse
+getTicketsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ TicketsResponse u.tickets
+
+getAvatarHandler :: Maybe String -> Handler AvatarResponse
+getAvatarHandler cookie = withAuthenticatedUser cookie $ \u -> return $ AvatarResponse u.avatar
+
+getCurrentSkillsHandler :: Maybe String -> Handler CurrentSkillsResponse
+getCurrentSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ CurrentSkillsResponse u.na u.s1 u.s2 u.ult
+
+getOwnedSkillsHandler :: Maybe String -> Handler OwnedSkillsResponse
+getOwnedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedSkillsResponse u.owned_skills
+
+getCurrentClothesHandler :: Maybe String -> Handler CurrentClothesResponse
+getCurrentClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ CurrentClothesResponse u.accessory u.shirt u.shoes
+
+getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
+getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
+
+-- HỆ THỐNG GACHA
+getWeight :: Text -> Int
+getWeight "Mythical"  = 1
+getWeight "Legendary" = 3
+getWeight "Epic"      = 10
+getWeight "Rare"      = 17
+getWeight "Uncommon"  = 20
+getWeight _           = 50
+
+pickItem :: Int -> [a] -> (a -> Text) -> (a -> Text) -> [Int] -> Text
+pickItem _ [item] getId _ _ = getId item
+pickItem randVal (item:items) getId getRarity (w:ws)
+    | randVal <= w = getId item
+    | otherwise    = pickItem (randVal - w) items getId getRarity ws
+pickItem _ [] _ _ _ = ""
+
+getRandomItemWithRate :: [a] -> (a -> Text) -> (a -> Text) -> IO Text
+getRandomItemWithRate pool getId getRarity = do
+    let weights = map (getWeight . getRarity) pool
+    let totalWeight = sum weights
+    randVal <- randomRIO (1, totalWeight)
+    return $ pickItem randVal pool getId getRarity weights
+
+runGachaCore :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> Maybe String -> Handler GachaResponse
+runGachaCore count category getPool getId getRarity cookie = withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id
+    success <- liftIO $ deductTickets uid count
+    if not success
+        then throwError err400 { errBody = "Không đủ vé để quay!" }
+        else do
+            pool <- liftIO getPool
+            if null pool
+                then throwError err500 { errBody = "Pool rỗng!" }
+                else do
+                    rolledIDs <- liftIO $ replicateM count (getRandomItemWithRate pool getId getRarity)
+                    liftIO $ addGachaItems uid category rolledIDs
+                    return $ GachaResponse "success" rolledIDs
+
+gachaX1Handler, gachaX10Handler :: Maybe String -> Handler GachaResponse
+gachaX1Handler = runGachaCore 1  ClotheType getClothesPool clothe_id Clothe.rarity
+gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rarity
+
+gachaSkillX1Handler, gachaSkillX10Handler :: Maybe String -> Handler GachaResponse
+gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity
+gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity

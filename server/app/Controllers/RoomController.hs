@@ -12,8 +12,8 @@ import qualified Data.Text as T
 import GHC.Generics
 import Servant
 
-import Game_database.Rooms (Room(..), getRooms, createRoom, deleteRoom)
-import Game_database.Session (getUserBySession)
+import Model.Rooms (Room(..), getRooms, createRoom, deleteRoom)
+import Model.Session (getUserBySession)
 
 data CreateRoomRequest = CreateRoomRequest
   { roomNameRequest  :: Text

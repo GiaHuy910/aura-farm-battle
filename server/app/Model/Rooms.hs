@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-module Game_database.Rooms where
+module Model.Rooms where
 
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
@@ -44,7 +44,7 @@ docToRoom doc = Room
   , room_name  = fromMaybe ""    (doc !? "room_name")
   , room_password  = fromMaybe ""    (doc !? "room_password")
   , owner_id   = fromMaybe ""    (doc !? "owner_id")
-  , user_ids   = fromMaybe []    (doc !? "user_id")
+  , user_ids   = fromMaybe []    (doc !? "user_ids")
   , occupancy = fromMaybe 0     (doc !? "occupancy")
   , is_private = fromMaybe False (doc !? "is_private")
   }
@@ -55,7 +55,7 @@ docToRoom doc = Room
 
 -- Hàm phụ trợ: Chuyển cấu trúc Room trong Haskell thành Document để lưu vào MongoDB
 roomToDoc :: Room -> Document
-roomToDoc r = 
+roomToDoc r =
   [ "room_id" =: room_id r
   , "room_name" =: room_name r
   , "room_password"  =: room_password r
@@ -81,28 +81,29 @@ createRoom newRoom = runDB $ do
 deleteRoom :: Text -> Text -> IO ()
 deleteRoom rName reqOwnerID = runDB $ do
     deleteOne (select ["room_name" =: rName, "owner_id" =: reqOwnerID] "room")
-    
+
 -- Hàm cho phép người chơi tham gia phòng (Trả về True nếu thành công, False nếu thất bại)
-joinRoom :: Text -> Text -> IO Bool
-joinRoom rName newUserID = runDB $ do
-    -- 1. Tìm phòng trong Database dựa theo tên phòng
+joinRoom :: Text -> Text -> Text -> IO Bool
+joinRoom rName rPass newUserID = runDB $ do
     maybeDoc <- findOne (select ["room_name" =: rName] "room")
-    
     case maybeDoc of
-        Nothing -> return False -- Thất bại: Không tìm thấy phòng này
+        Nothing -> return False --K tìm thấy phòng
         Just doc -> do
             let room = docToRoom doc
-            
-            -- 2. KIỂM TRA ĐIỀU KIỆN: Tối đa 2 người
-            if occupancy room >= 2
-                then return False -- Thất bại: Phòng đã đầy (đạt mức 2 người)
-                else do
-                    -- 3. Nếu chưa đầy, tiến hành thêm ID người mới vào mảng
-                    let updatedUsers = user_ids room ++ [newUserID]
-                        newOccupancy = length updatedUsers
-                    
-                    -- 4. Cập nhật lại mảng userID và số occupancy mới vào Database
-                    modify (select ["room_name" =: rName] "room") 
-                           ["$set" =: ["user_ids" =: updatedUsers, "occupancy" =: newOccupancy]]
-                    
-                    return True -- Thành công: Đã cho người chơi vào phòng
+            if occupancy room >= 2 --Check số ng trong phòng
+                then return False
+                else if is_private room  --Check private
+                    then if rPass == room_password room
+                        then do
+                            let updatedUsers = user_ids room ++ [newUserID]
+                                newOccupancy = length updatedUsers
+                            modify (select ["room_name" =: rName] "room") --Chỉnh sửa lại data của room
+                                ["$set" =: ["user_ids" =: updatedUsers, "occupancy" =: newOccupancy]]
+                            return True
+                        else return False
+                    else do
+                        let updatedUsers = user_ids room ++ [newUserID]
+                            newOccupancy = length updatedUsers
+                        modify (select ["room_name" =: rName] "room")
+                            ["$set" =: ["user_ids" =: updatedUsers, "occupancy" =: newOccupancy]]
+                        return True

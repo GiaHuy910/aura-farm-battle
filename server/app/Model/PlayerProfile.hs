@@ -2,7 +2,7 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Game_database.PlayerProfile where
+module Model.PlayerProfile where
 
 import GHC.Generics (Generic)
 import Data.Aeson (ToJSON)
@@ -95,24 +95,3 @@ getProfileByUserId uid = runDB $ do
     maybeDoc <- findOne (select ["user_id" =: uid] "player_profile")
     return (fmap docToProfile maybeDoc)
 
--- Hàm kiểm tra và trừ vé
-deductTickets :: Text -> Int -> IO Bool
-deductTickets uid amount = runDB $ do
-    maybeDoc <- findOne (select ["user_id" =: uid] "player_profile")
-    case maybeDoc of
-        Nothing -> return False
-        Just doc -> do
-            let currentTickets = fromMaybe 0 (doc !? "tickets")
-            if currentTickets >= amount
-                then do
-                    modify (select ["user_id" =: uid] "player_profile")
-                           ["$inc" =: ["tickets" =: (-amount)]]
-                    return True
-                else return False
-
--- Hàm nhét đồ (áo/quần/kỹ năng) vào kho đồ sau khi quay gacha
-addGachaItems :: Text -> Text -> [Text] -> IO ()
-addGachaItems uid itemCategory newItems = runDB $ do
-    let targetArray = if itemCategory == "clothes" then "owned_clothes" else "owned_skills"
-    modify (select ["user_id" =: uid] "player_profile")
-           ["$addToSet" =: [targetArray =: ["$each" =: newItems]]]
