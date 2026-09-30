@@ -1,4 +1,3 @@
-import { logInForm } from "@/types/auth";
 const baseApi = `http://localhost:3001/auth`;
 
 interface UserInfo {
@@ -10,8 +9,9 @@ interface AuthMeResponse {
     message: string;
     status: string;
   };
-  me: UserInfo;
+  me: User;
 }
+
 export const getCurrentUser = async () => {
   const response = await fetch(`${baseApi}/me`, {
     credentials: "include",
