@@ -1,24 +1,49 @@
-Api : auth/register
-input : RegisterRequest
-output: header AuthResponse
-handler : registerHandler
-
-Api : auth/login
-input : LoginRequest
-output: header AuthResponse
-handler : loginHandler
-
-Api : auth/logout
+Api : user/getTickets
 input : header Cookie
-output: header AuthResponse
-handler : logoutHandler
+output: TicketsResponse
+handler : getTicketsHandler
 
-Api : auth/me
+Api : user/getAvatar
 input : header Cookie
-output: MeResponse
-handler : meHandler
+output: AvatarResponse
+handler : getAvatarHandler
 
-Api : room/create
-input : header Cookie, CreateRoomRequest
-output: CreateRoomResponse
-handler : createRoomHandler
+Api : user/getCurrentSkills
+input : header Cookie
+output: CurrentSkillsResponse
+handler : getCurrentSkillsHandler
+
+Api : user/getOwnedSkills
+input : header Cookie
+output: OwnedSkillsResponse
+handler : getOwnedSkillsHandler
+
+Api : user/getCurrentClothes
+input : header Cookie
+output: CurrentClothesResponse
+handler : getCurrentClothesHandler
+
+Api : user/getOwnedClothes
+input : header Cookie
+output: OwnedClothesResponse
+handler : getOwnedClothesHandler
+
+Api : gacha/x1
+input : header Cookie
+output: GachaResponse
+handler : gachaX1Handler
+
+Api : gacha/x10
+input : header Cookie
+output: GachaResponse
+handler : gachaX10Handler
+
+Api : gacha/skills/x1
+input : header Cookie
+output: GachaResponse
+handler : gachaSkillX1Handler
+
+Api : gacha/skills/x10
+input : header Cookie
+output: GachaResponse
+handler : gachaSkillX10Handler

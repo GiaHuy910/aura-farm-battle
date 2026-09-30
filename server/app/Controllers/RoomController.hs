@@ -1,137 +1,124 @@
-{-# LANGUAGE DataKinds     #-}
-{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{- HLINT ignore "Use newtype instead of data" -}
+
 module Controllers.RoomController where
 
-import Control.Monad.IO.Class
-import Data.Aeson hiding (Success)
-import Data.Text (Text, pack, unpack)
-import qualified Data.Text as T
-import GHC.Generics
+import Control.Monad.IO.Class (liftIO)
+import Data.Aeson (FromJSON, ToJSON)
+import Data.Text (Text, pack)
+import GHC.Generics (Generic)
 import Servant
 
-import Game_database.Rooms (Room(..), getRooms, createRoom, deleteRoom)
-import Game_database.Session (getUserBySession)
+import Model.Rooms (Room(..), getRooms, createRoom, deleteRoom, joinRoom)
 
+-- ============================================================================
+-- 1. REQUEST & RESPONSE MODELS (Khớp chính xác 100% với Spec JSON)
+-- ============================================================================
+
+-- POST /room/create
 data CreateRoomRequest = CreateRoomRequest
-  { roomNameRequest  :: Text
-  , passwordRequest  :: Text
-  , isPrivateRequest :: Bool
+  { user_id    :: Text
+  , room_name  :: Text
+  , password   :: Text
+  , is_private :: Bool
   } deriving (Show, Generic)
+instance FromJSON CreateRoomRequest
 
-instance FromJSON CreateRoomRequest where
-  parseJSON = genericParseJSON $ defaultOptions
-    { fieldLabelModifier = \field ->
-        case field of
-        "roomNameRequest"   -> "room_name"
-        "passwordRequest"   -> "room_password"
-        "isPrivateRequest"  -> "is_private"
-        _                   -> field
-    }
-
-data RoomDetail = RoomDetail
-  { resRoomID   :: Text
-  , resRoomName  :: Text
-  , resIsPrivate :: Bool
+data CreatedRoomDetail = CreatedRoomDetail
+  { room_id   :: Text
+  , room_name :: Text
+  , owner_id  :: Text
   } deriving (Show, Generic)
-
-instance ToJSON RoomDetail   where
-  toJSON = genericToJSON $ defaultOptions
-    { fieldLabelModifier = \field ->
-        case field of
-          "resRoomID"   -> "room_id"
-          "resRoomName" -> "room_name"
-          "resIsPrivate" -> "is_private"
-          _                   -> field
-    }
+instance ToJSON CreatedRoomDetail
 
 data CreateRoomResponse = CreateRoomResponse
   { status :: Text
-  , room   :: RoomDetail
+  , room   :: CreatedRoomDetail
   } deriving (Show, Generic)
-
 instance ToJSON CreateRoomResponse
 
-data RoomResponse = RoomResponse
-  { roomIDResponse   :: Text
-  , roomNameResponse  :: Text
-  , occupancyResponse :: Int
-  , isPrivateResponse :: Bool
+-- GET /room/getRooms
+data RoomSummary = RoomSummary
+  { room_name  :: Text
+  , room_id    :: Text
+  , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
   } deriving (Show, Generic)
+instance ToJSON RoomSummary
 
-instance ToJSON RoomResponse where
-  toJSON = genericToJSON $ defaultOptions
-    { fieldLabelModifier = \field ->
-        case field of
-          "roomIDResponse"   -> "room_id"
-          "roomNameResponse" -> "room_name"
-          "occupancyResponse"-> "occupancy"
-          "isPrivateResponse"-> "is_private"
-          _                  -> field
-     }
+-- POST /room/joinRoom
+data JoinRoomRequest = JoinRoomRequest
+  { user_id  :: Text
+  , room_id  :: Text
+  , password :: Text
+  } deriving (Show, Generic)
+instance FromJSON JoinRoomRequest
 
-getRoomsHandler :: Handler [RoomResponse]
+-- DELETE /room/leave
+data LeaveRoomRequest = LeaveRoomRequest
+  { userId  :: Text  -- Đúng tên key camelCase "userId" trong spec
+  , room_id :: Text
+  } deriving (Show, Generic)
+instance FromJSON LeaveRoomRequest
+
+-- Common Status Response {"status": "success" | "failure"}
+data StatusResponse = StatusResponse
+  { status :: Text
+  } deriving (Show, Generic)
+instance ToJSON StatusResponse
+
+
+-- ============================================================================
+-- 2. HANDLERS (Xử lý các endpoint phòng)
+-- ============================================================================
+
+-- POST /room/create
+createRoomHandler :: CreateRoomRequest -> Handler CreateRoomResponse
+createRoomHandler req = do
+  let newRoom = Room
+        { room_id       = "" 
+        , room_name     = req.room_name
+        , room_password = req.password
+        , owner_id      = req.user_id
+        , user_ids      = [req.user_id]
+        , occupancy     = 1
+        , is_private    = req.is_private
+        }
+  created <- liftIO $ createRoom newRoom
+  let rDetail = CreatedRoomDetail
+        { room_id   = created.room_id
+        , room_name = created.room_name
+        , owner_id  = created.owner_id
+        }
+  return $ CreateRoomResponse "success" rDetail
+
+-- GET /room/getRooms
+getRoomsHandler :: Handler [RoomSummary]
 getRoomsHandler = do
   rooms <- liftIO getRooms
-  return (map roomToResponse rooms)
-  
-roomToResponse :: Room -> RoomResponse
-roomToResponse room =
-  RoomResponse
-    { roomIDResponse = room_id room
-    , roomNameResponse = room_name room
-    , occupancyResponse = occupancy room
-    , isPrivateResponse = is_private room
-    }
-
-createRoomHandler :: Maybe String -> CreateRoomRequest -> Handler CreateRoomResponse
-createRoomHandler mCookieHeader req = do
-  case mCookieHeader >>= parseSessionId of
-    Nothing -> throwError err401 { errBody = "Vui lòng đăng nhập để tạo phòng!" }
-    Just sID -> do
-      mUserId <- liftIO $ getUserBySession sID
-      case mUserId of
-        Nothing -> throwError err401 { errBody = "Phiên đăng nhập không hợp lệ hoặc đã hết hạn!" }
-        Just uid -> do
-          let newRoom =
-                Room
-                  { room_id       = "" 
-                  , room_name     = roomNameRequest req
-                  , room_password = passwordRequest req
-                  , owner_id      = uid
-                  , user_ids      = [uid]
-                  , occupancy     = 1
-                  , is_private    = isPrivateRequest req
-                  }
-          
-          createdRoom <- liftIO (createRoom newRoom)
-          
-          let rDetail = RoomDetail
-                { resRoomID    = room_id createdRoom
-                , resRoomName  = room_name createdRoom
-                , resIsPrivate = is_private createdRoom
-                }
-                
-          return $ CreateRoomResponse
-                { status = "success"
-                , room   = rDetail
-                }
-
-deleteRoomHandler :: String -> String -> Handler NoContent
-deleteRoomHandler roomNameValue ownerIDValue = do
-  liftIO (deleteRoom (pack roomNameValue) (pack ownerIDValue))
-  return NoContent
-
-parseSessionId :: String -> Maybe Text
-parseSessionId cookieHeader =
-  let pairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
-      trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
-  in case lookup "session_id" [(trim k, drop 1 (trim v)) | (k, v) <- pairs] of
-       Just val -> Just (pack val)
-       Nothing  -> Nothing
+  return $ map toSummary rooms
   where
-    wordsWhen p s = case dropWhile p s of
-                      "" -> []
-                      s' -> let (w, s'') = break p s' in w : wordsWhen p s'
+    toSummary r = RoomSummary
+      { room_name  = r.room_name
+      , room_id    = r.room_id
+      , occupation = pack (show r.occupancy ++ "/2") -- Chuyển occupancy Int -> "1/2"
+      }
+
+-- POST /room/joinRoom
+joinRoomHandler :: JoinRoomRequest -> Handler StatusResponse
+joinRoomHandler req = do
+  -- Gọi hàm joinRoom từ Model.Rooms
+  success <- liftIO $ joinRoom req.room_id req.password req.user_id
+  if success
+    then return $ StatusResponse "success"
+    else return $ StatusResponse "failure"
+
+-- DELETE /room/leave
+leaveRoomHandler :: LeaveRoomRequest -> Handler StatusResponse
+leaveRoomHandler req = do
+  -- Thực hiện xóa/rời phòng theo room_id và userId
+  liftIO $ deleteRoom req.room_id req.userId
+  return $ StatusResponse "success"
