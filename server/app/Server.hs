@@ -11,8 +11,10 @@ import Servant
 
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
 import Controllers.RoomController( getRoomsHandler, createRoomHandler, deleteRoomHandler )
+import Controllers.UserController( getEquippedSkillsHandler, getOwnedSkillsHandler, getEquippedClothesHandler, getOwnedClothesHandler, getTicketsHandler, getAvatarHandler)
 import Route.AuthRouter( AuthRouter)
 import Route.RoomRouter( RoomRouter)
+import Route.UserRouter( UserRouter)
 import Route.Index
 
 authServer :: Server AuthRouter
@@ -28,10 +30,20 @@ roomServer =
   :<|> createRoomHandler
   :<|> deleteRoomHandler
 
+userServer :: Server UserController
+userServer =
+       getEquippedSkillsHandler
+  :<|> getOwnedSkillsHandler
+  :<|> getEquippedClothesHandler
+  :<|> getOwnedClothesHandler
+  :<|> getTicketsHandler
+  :<|> getAvatarHandler
+
 server :: Server Router
 server =
        authServer
   :<|> roomServer
+  :<|> userServer
 
 api :: Proxy Router
 api = Proxy
