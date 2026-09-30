@@ -4,12 +4,12 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Route.RoomRouter where 
 
-import Controllers.RoomController( RoomResponse, CreateRoomRequest)
+import Controllers.RoomController( RoomSummary, CreateRoomRequest)
 import Servant
 
 type RoomRouter =
        "room" :> "getRooms"
-           :> Get '[JSON] [RoomResponse]
+           :> Get '[JSON] [RoomSummary]
 
   :<|> "room" :> "create"
            :> Header "Cookie" String
