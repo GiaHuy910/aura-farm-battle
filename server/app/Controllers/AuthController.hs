@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {- HLINT ignore "Use newtype instead of data" -}
 
-module Controllers.AuthController (withAuthenticatedUser) where
+module Controllers.AuthController (withAuthenticatedUser,parseSessionId) where
 
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
