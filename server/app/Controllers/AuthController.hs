@@ -78,17 +78,17 @@ data AvatarResponse = AvatarResponse { avatar :: Text } deriving (Show, Generic)
 instance ToJSON AvatarResponse
 
 data CurrentSkillsResponse = CurrentSkillsResponse
-  { na :: Skill, s1 :: Skill, s2 :: Skill, ult :: Skill } deriving (Show, Generic)
+  { na :: Text, s1 :: Text, s2 :: Text, ult :: Text } deriving (Show, Generic)
 instance ToJSON CurrentSkillsResponse
 
-data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Skill] } deriving (Show, Generic)
+data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedSkillsResponse
 
 data CurrentClothesResponse = CurrentClothesResponse
-  { accessory :: Clothe, shirt :: Clothe, shoes :: Clothe } deriving (Show, Generic)
+  { accessory :: Text, shirt :: Text, shoes :: Text } deriving (Show, Generic)
 instance ToJSON CurrentClothesResponse
 
-data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Clothe] } deriving (Show, Generic)
+data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedClothesResponse
 
 data GachaResponse = GachaResponse

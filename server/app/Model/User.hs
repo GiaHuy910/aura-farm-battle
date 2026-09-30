@@ -13,9 +13,7 @@ import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Password.Bcrypt (PasswordHash(..), PasswordCheck(..), hashPassword, mkPassword, unPasswordHash, checkPassword)
 import Data.Text (Text, pack)
-
-import Model.Clothe (Clothe(..), docToClothe, clotheToDoc, getClothesByIds)
-import Model.Skill (Skill(..), docToSkill, skillToDoc, getSkillsByIds)
+--Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
   { user_id       :: Text
@@ -23,15 +21,15 @@ data User = User
   , password      :: Text
   , tickets       :: Int
   , avatar        :: Text
-  , na            :: Skill
-  , s1            :: Skill
-  , s2            :: Skill
-  , ult           :: Skill
-  , accessory     :: Clothe
-  , shirt         :: Clothe
-  , shoes         :: Clothe
-  , owned_clothes :: [Clothe]
-  , owned_skills  :: [Skill]
+  , na            :: Text
+  , s1            :: Text
+  , s2            :: Text
+  , ult           :: Text
+  , accessory     :: Text
+  , shirt         :: Text
+  , shoes         :: Text
+  , owned_clothes :: [Text]
+  , owned_skills  :: [Text]
   } deriving (Show, Generic)
 
 instance ToJSON User
@@ -43,18 +41,18 @@ runDB action = do
     close pipe
     return result
 
-getUsers :: IO [User] 
+getUsers :: IO [User]
 getUsers = runDB $ do
     docs <- find (select [] "user") >>= rest
     return (map docToUser docs)
 
-getUser :: Text -> IO (Maybe User) 
-getUser uname = runDB $ do 
+getUser :: Text -> IO (Maybe User)
+getUser uname = runDB $ do
     user <- findOne (select ["username" =: uname] "user")
     return (fmap docToUser user)
 
-getUserById :: Text -> IO (Maybe User) 
-getUserById uid = runDB $ do 
+getUserById :: Text -> IO (Maybe User)
+getUserById uid = runDB $ do
     userDoc <- findOne (select ["user_id" =: uid] "user")
     return (fmap docToUser userDoc)
 
@@ -65,15 +63,15 @@ docToUser doc = User
   , password      = fromMaybe "" (doc !? "password")
   , tickets       = fromMaybe 0  (doc !? "tickets")
   , avatar        = fromMaybe "" (doc !? "avatar")
-  , na            = docToSkill  (fromMaybe [] (doc !? "na"))
-  , s1            = docToSkill  (fromMaybe [] (doc !? "s1"))
-  , s2            = docToSkill  (fromMaybe [] (doc !? "s2"))
-  , ult           = docToSkill  (fromMaybe [] (doc !? "ult"))
-  , accessory     = docToClothe (fromMaybe [] (doc !? "accessory"))
-  , shirt         = docToClothe (fromMaybe [] (doc !? "shirt"))
-  , shoes         = docToClothe (fromMaybe [] (doc !? "shoes"))
-  , owned_clothes = map docToClothe (fromMaybe [] (doc !? "owned_clothes"))
-  , owned_skills  = map docToSkill  (fromMaybe [] (doc !? "owned_skills"))
+  , na            = fromMaybe "" (doc !? "na")
+  , s1            = fromMaybe "" (doc !? "s1")
+  , s2            = fromMaybe "" (doc !? "s2")
+  , ult           = fromMaybe "" (doc !? "ult")
+  , accessory     = fromMaybe "" (doc !? "accessory")
+  , shirt         = fromMaybe "" (doc !? "shirt")
+  , shoes         = fromMaybe "" (doc !? "shoes")
+  , owned_clothes = fromMaybe [] (doc !? "owned_clothes")
+  , owned_skills  = fromMaybe [] (doc !? "owned_skills")
   }
 
 userToDoc :: User -> Document
@@ -83,37 +81,42 @@ userToDoc u =
   , "password"      =: password u
   , "tickets"       =: tickets u
   , "avatar"        =: avatar u
-  , "na"            =: skillToDoc (na u)
-  , "s1"            =: skillToDoc (s1 u)
-  , "s2"            =: skillToDoc (s2 u)
-  , "ult"           =: skillToDoc (ult u)
-  , "accessory"     =: clotheToDoc (accessory u)
-  , "shirt"         =: clotheToDoc (shirt u)
-  , "shoes"         =: clotheToDoc (shoes u)
-  , "owned_clothes" =: map clotheToDoc (owned_clothes u)
-  , "owned_skills"  =: map skillToDoc (owned_skills u)
+  , "na"            =: na u
+  , "s1"            =: s1 u
+  , "s2"            =: s2 u
+  , "ult"           =: ult u
+  , "accessory"     =: accessory u
+  , "shirt"         =: shirt u
+  , "shoes"         =: shoes u
+  , "owned_clothes" =: owned_clothes u
+  , "owned_skills"  =: owned_skills u
   ]
 
 data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
 data LoginStatus = LoginSuccess Text | LoginFailed deriving (Show, Eq)
 
 registerUser :: Text -> Text -> IO RegisterStatus
-registerUser uname pass = do 
+registerUser uname pass = do
     existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest
     if not (null existingDocs)
         then return UserAlreadyExists
         else do
             hashedPass <- hashPassword (mkPassword pass)
             userID <- liftIO nextRandom
-            let generatedUserID = pack (toString userID)    
-            let newUser = User 
+            let generatedUserID = pack (toString userID)
+            let newUser = User
                   { user_id = generatedUserID
                   , username = uname
                   , password = unPasswordHash hashedPass
                   , tickets = 100
                   , avatar = ""
-                  , na = docToSkill [], s1 = docToSkill [], s2 = docToSkill [], ult = docToSkill []
-                  , accessory = docToClothe [], shirt = docToClothe [], shoes = docToClothe []
+                  , na = ""
+                  ,s1 = ""
+                  ,s2 = ""
+                  ,ult = ""
+                  ,accessory = ""
+                  ,shirt = ""
+                  ,shoes = ""
                   , owned_clothes = [], owned_skills = []
                   }
             runDB $ insert_ "user" (userToDoc newUser)
@@ -121,7 +124,7 @@ registerUser uname pass = do
 
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
-    existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest
+    existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest   --Làm biến giải thích quá, nếu bạn có trình bạn sẽ tự hiểu ha
     if null existingDocs
         then return LoginFailed
         else do
@@ -136,11 +139,11 @@ loginUser uname pass = do
 
 deductTickets :: Text -> Int -> IO Bool
 deductTickets uid amount = runDB $ do
-    mDoc <- findOne (select ["user_id" =: uid] "user")
+    mDoc <- findOne (select ["user_id" =: uid] "user") --Tìm user qua user_id
     case mDoc of
-        Nothing -> return False
+        Nothing -> return False   --Nếu k có user nào
         Just doc -> do
-            let currentTickets = fromMaybe 0 (doc !? "tickets")
+            let currentTickets = fromMaybe 0 (doc !? "tickets")  --Lấy tickets và tính
             if currentTickets >= amount
                 then do
                     modify (select ["user_id" =: uid] "user")
@@ -150,17 +153,13 @@ deductTickets uid amount = runDB $ do
 
 data ItemType = ClotheType | SkillType deriving (Show, Eq)
 
--- Đã sửa: Chuyển đổi item IDs thành BSON Document hoàn chỉnh trước khi lưu vào MongoDB
+--Tối ưu hàm cho nó ngắn vầy chạy cho lẹ
 addGachaItems :: Text -> ItemType -> [Text] -> IO ()
 addGachaItems uid itemType newIDs = do
     case itemType of
       ClotheType -> do
-        clothes <- getClothesByIds newIDs
-        let docs = map clotheToDoc clothes
         runDB $ modify (select ["user_id" =: uid] "user")
-                       ["$addToSet" =: ["owned_clothes" =: ["$each" =: docs]]]
+                        ["$addToSet" =: ["owned_clothes" =: ["$each" =: newIDs]]]
       SkillType -> do
-        skills <- getSkillsByIds newIDs
-        let docs = map skillToDoc skills
         runDB $ modify (select ["user_id" =: uid] "user")
-                       ["$addToSet" =: ["owned_skills" =: ["$each" =: docs]]]
+                        ["$addToSet" =: ["owned_skills" =: ["$each" =: newIDs]]]
