@@ -5,7 +5,7 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {- HLINT ignore "Use newtype instead of data" -}
 
-module Controllers.AuthController where
+module Controllers.AuthController (withAuthenticatedUser) where
 
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
@@ -16,11 +16,7 @@ import Servant
 import System.Random (randomRIO)
 
 import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), ItemType(..), deductTickets, addGachaItems )
-import Model.Clothe (Clothe(..), getClothesPool)
-import Model.Skill (Skill(..), getSkillsPool)
 import Model.Session (createSession, getUserBySession, deleteSession)
-import qualified Model.Clothe as Clothe
-import qualified Model.Skill as Skill
 
 data RegisterRequest = RegisterRequest
   { regUsername :: Text
@@ -70,32 +66,6 @@ data MeResponse = MeResponse
     } deriving (Show, Generic)
 
 instance ToJSON MeResponse
-
-data TicketsResponse = TicketsResponse { tickets :: Int } deriving (Show, Generic)
-instance ToJSON TicketsResponse
-
-data AvatarResponse = AvatarResponse { avatar :: Text } deriving (Show, Generic)
-instance ToJSON AvatarResponse
-
-data CurrentSkillsResponse = CurrentSkillsResponse
-  { na :: Text, s1 :: Text, s2 :: Text, ult :: Text } deriving (Show, Generic)
-instance ToJSON CurrentSkillsResponse
-
-data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
-instance ToJSON OwnedSkillsResponse
-
-data CurrentClothesResponse = CurrentClothesResponse
-  { accessory :: Text, shirt :: Text, shoes :: Text } deriving (Show, Generic)
-instance ToJSON CurrentClothesResponse
-
-data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
-instance ToJSON OwnedClothesResponse
-
-data GachaResponse = GachaResponse
-  { status :: String
-  , items  :: [Text]
-  } deriving (Show, Generic)
-instance ToJSON GachaResponse
 
 parseSessionId :: String -> Maybe Text
 parseSessionId cookieHeader =
@@ -155,67 +125,3 @@ withAuthenticatedUser cookieHeader action = do
                     case mUser of
                         Nothing -> throwError err404 { errBody = "Không tìm thấy người dùng!" }
                         Just u  -> action u
-
-getTicketsHandler :: Maybe String -> Handler TicketsResponse
-getTicketsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ TicketsResponse u.tickets
-
-getAvatarHandler :: Maybe String -> Handler AvatarResponse
-getAvatarHandler cookie = withAuthenticatedUser cookie $ \u -> return $ AvatarResponse u.avatar
-
-getCurrentSkillsHandler :: Maybe String -> Handler CurrentSkillsResponse
-getCurrentSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ CurrentSkillsResponse u.na u.s1 u.s2 u.ult
-
-getOwnedSkillsHandler :: Maybe String -> Handler OwnedSkillsResponse
-getOwnedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedSkillsResponse u.owned_skills
-
-getCurrentClothesHandler :: Maybe String -> Handler CurrentClothesResponse
-getCurrentClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ CurrentClothesResponse u.accessory u.shirt u.shoes
-
-getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
-getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
-
--- HỆ THỐNG GACHA
-getWeight :: Text -> Int
-getWeight "Mythical"  = 1
-getWeight "Legendary" = 3
-getWeight "Epic"      = 10
-getWeight "Rare"      = 17
-getWeight "Uncommon"  = 20
-getWeight _           = 50
-
-pickItem :: Int -> [a] -> (a -> Text) -> (a -> Text) -> [Int] -> Text
-pickItem _ [item] getId _ _ = getId item
-pickItem randVal (item:items) getId getRarity (w:ws)
-    | randVal <= w = getId item
-    | otherwise    = pickItem (randVal - w) items getId getRarity ws
-pickItem _ [] _ _ _ = ""
-
-getRandomItemWithRate :: [a] -> (a -> Text) -> (a -> Text) -> IO Text
-getRandomItemWithRate pool getId getRarity = do
-    let weights = map (getWeight . getRarity) pool
-    let totalWeight = sum weights
-    randVal <- randomRIO (1, totalWeight)
-    return $ pickItem randVal pool getId getRarity weights
-
-runGachaCore :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> Maybe String -> Handler GachaResponse
-runGachaCore count category getPool getId getRarity cookie = withAuthenticatedUser cookie $ \u -> do
-    let uid = u.user_id
-    success <- liftIO $ deductTickets uid count
-    if not success
-        then throwError err400 { errBody = "Không đủ vé để quay!" }
-        else do
-            pool <- liftIO getPool
-            if null pool
-                then throwError err500 { errBody = "Pool rỗng!" }
-                else do
-                    rolledIDs <- liftIO $ replicateM count (getRandomItemWithRate pool getId getRarity)
-                    liftIO $ addGachaItems uid category rolledIDs
-                    return $ GachaResponse "success" rolledIDs
-
-gachaX1Handler, gachaX10Handler :: Maybe String -> Handler GachaResponse
-gachaX1Handler = runGachaCore 1  ClotheType getClothesPool clothe_id Clothe.rarity
-gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rarity
-
-gachaSkillX1Handler, gachaSkillX10Handler :: Maybe String -> Handler GachaResponse
-gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity
-gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity

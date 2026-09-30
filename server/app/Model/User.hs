@@ -21,13 +21,13 @@ data User = User
   , password      :: Text
   , tickets       :: Int
   , avatar        :: Text
-  , na            :: Text
-  , s1            :: Text
-  , s2            :: Text
-  , ult           :: Text
-  , accessory     :: Text
-  , shirt         :: Text
-  , shoes         :: Text
+  , equipped_na            :: Text
+  , equipped_s1            :: Text
+  , equipped_s2            :: Text
+  , equipped_ult           :: Text
+  , equipped_accessory     :: Text
+  , equipped_shirt         :: Text
+  , equipped_shoes         :: Text
   , owned_clothes :: [Text]
   , owned_skills  :: [Text]
   } deriving (Show, Generic)
@@ -63,13 +63,13 @@ docToUser doc = User
   , password      = fromMaybe "" (doc !? "password")
   , tickets       = fromMaybe 0  (doc !? "tickets")
   , avatar        = fromMaybe "" (doc !? "avatar")
-  , na            = fromMaybe "" (doc !? "na")
-  , s1            = fromMaybe "" (doc !? "s1")
-  , s2            = fromMaybe "" (doc !? "s2")
-  , ult           = fromMaybe "" (doc !? "ult")
-  , accessory     = fromMaybe "" (doc !? "accessory")
-  , shirt         = fromMaybe "" (doc !? "shirt")
-  , shoes         = fromMaybe "" (doc !? "shoes")
+  , equipped_na            = fromMaybe "" (doc !? "equipped_na")
+  , equipped_s1            = fromMaybe "" (doc !? "equipped_s1")
+  , equipped_s2            = fromMaybe "" (doc !? "equipped_s2")
+  , equipped_ult           = fromMaybe "" (doc !? "equipped_ult")
+  , equipped_accessory     = fromMaybe "" (doc !? "equipped_accessory")
+  , equipped_shirt         = fromMaybe "" (doc !? "equipped_shirt")
+  , equipped_shoes         = fromMaybe "" (doc !? "equipped_shoes")
   , owned_clothes = fromMaybe [] (doc !? "owned_clothes")
   , owned_skills  = fromMaybe [] (doc !? "owned_skills")
   }
@@ -81,13 +81,13 @@ userToDoc u =
   , "password"      =: password u
   , "tickets"       =: tickets u
   , "avatar"        =: avatar u
-  , "na"            =: na u
-  , "s1"            =: s1 u
-  , "s2"            =: s2 u
-  , "ult"           =: ult u
-  , "accessory"     =: accessory u
-  , "shirt"         =: shirt u
-  , "shoes"         =: shoes u
+  , "equipped_na"            =: equipped_na u
+  , "equipped_s1"            =: equipped_s1 u
+  , "equipped_s2"            =: equipped_s2 u
+  , "equipped_ult"           =: equipped_ult u
+  , "equipped_accessory"     =: equipped_accessory u
+  , "equipped_shirt"         =: equipped_shirt u
+  , "equipped_shoes"         =: equipped_shoes u
   , "owned_clothes" =: owned_clothes u
   , "owned_skills"  =: owned_skills u
   ]
@@ -110,13 +110,13 @@ registerUser uname pass = do
                   , password = unPasswordHash hashedPass
                   , tickets = 0
                   , avatar = ""
-                  , na = "na_1"
-                  , s1 = "s1_1"
-                  , s2 = "s2_1"
-                  , ult = "ult_1"
-                  , accessory = "accessory_1"
-                  , shirt = "shirt_1"
-                  , shoes = "shoes_1"
+                  , equipped_na = "na_1"
+                  , equipped_s1 = "s1_1"
+                  , equipped_s2 = "s2_1"
+                  , equipped_ult = "ult_1"
+                  , equipped_accessory = "accessory_1"
+                  , equipped_shirt = "shirt_1"
+                  , equipped_shoes = "shoes_1"
                   , owned_clothes = ["shoes_1","shirt_1","accessory_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
                   }
             runDB $ insert_ "user" (userToDoc newUser)
