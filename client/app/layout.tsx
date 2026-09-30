@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
 import { cookies } from "next/headers";
 
 import "bootstrap/dist/css/bootstrap.min.css";
@@ -9,16 +8,6 @@ import "./global.css";
 import LogOutManager from "@/components/LogOutManager";
 import { getCurrentUser } from "@/api/auth";
 import { AuthProvider } from "@/contexts/auth/AuthProvider";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -30,7 +19,7 @@ const getMe = async () => {
   const sessionId = cookieStore.get("session_id")?.value;
   if (!sessionId) return null;
   try {
-    const data = await getCurrentUser();
+    const { data } = await getCurrentUser();
     return data;
   } catch {
     return null;
@@ -41,7 +30,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
   const user = await getMe();
   console.log("layout chay", user);
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable}`}>
+    <html lang="en">
       <head>
         <style>
           @import

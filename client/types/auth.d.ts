@@ -1,4 +1,4 @@
-export type logInForm = {
+type logInForm = {
   username: string;
   password: string;
 };
