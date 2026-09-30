@@ -5,8 +5,8 @@ import { fetcher } from "./customFetcher";
 
 const baseApi = `http://localhost:3001/room`;
 
-export const useRooms = async () => {
-  return useSWR<Room[]>(`${baseApi}/getRooms`, fetcher, {
+export const useRooms = () => {
+  return useSWR<Room[] | [] | undefined>(`${baseApi}/getRooms`, fetcher, {
     revalidateIfStale: false,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,

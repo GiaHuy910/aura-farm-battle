@@ -45,6 +45,7 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
           <LogOutManager />
           <BackgroundMusic />
           <BootstrapClient />
+          <ToastContainer />
         </AuthProvider>
       </body>
     </html>

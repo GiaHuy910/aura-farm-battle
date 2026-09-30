@@ -16,7 +16,6 @@ export const AuthProvider = ({ children, initialUser }: Props) => {
   const fetchMe = async () => {
     getCurrentUser()
       .then((user) => {
-        console.log("provider chay", user);
         setUser(user);
       })
       .catch(() => {
