@@ -1,30 +1,20 @@
-import { useEffect, useState, Suspense } from "react";
+import { useState, Suspense } from "react";
 
 import { getRooms } from "@/api/rooms";
-
-type Room = {
-  room_name: string;
-  occupancy: number;
-  is_private: Boolean;
-};
 
 export default function RoomDetail() {
   const [rooms, setRooms] = useState<Room[]>([]);
 
   const fetchRooms = async () => {
-    try {
-      const response = await getRooms();
-      setRooms(response || []);
-    } catch (error) {
-      console.error("Error Fetching rooms:", error);
+    const { data, error, isLoading } = await getRooms();
+    if (error) {
+      return <div>Error :{error}</div>;
     }
+    if (isLoading) {
+      return <div>Loadingg.........</div>;
+    }
+    setRooms(data || []);
   };
-  const handleRefresh = () => {
-    fetchRooms();
-  };
-  useEffect(() => {
-    fetchRooms();
-  }, []);
   return (
     <div className="w-100 h-100 d-flex flex-column justify-content-start overflow-auto">
       {rooms.length > 0 ? (
@@ -54,7 +44,7 @@ export default function RoomDetail() {
       ) : (
         <div className="h5 h-100 d-flex flex-column align-items-center justify-content-center">
           No room exists
-          <button onClick={handleRefresh}>Refresh?</button>
+          <button onClick={fetchRooms}>Refresh?</button>
         </div>
       )}
     </div>

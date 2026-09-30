@@ -1,27 +1,38 @@
-import { logInForm } from "@/types/auth";
+import useSWR from "swr";
+
+import { fetcher } from "./customFetcher";
+
 const baseApi = `http://localhost:3001/auth`;
 
-interface UserInfo {
-  user_id: string;
-  username: string;
-}
-interface AuthMeResponse {
-  auth: {
-    message: string;
-    status: string;
-  };
-  me: UserInfo;
-}
+// interface UserInfo {
+//   user_id: string;
+//   username: string;
+// }
+// interface AuthMeResponse {
+//   auth: {
+//     message: string;
+//     status: string;
+//   };
+//   me: User;
+// }
 export const getCurrentUser = async () => {
-  const response = await fetch(`${baseApi}/me`, {
-    credentials: "include",
-  });
-  const data: AuthMeResponse = await response.json();
-  if (!response.ok) {
-    throw new Error(data.auth.message || "Unauthorized");
-  }
-  return data.me;
+  const { data, error, isLoading } = useSWR<User | null>(
+    `${baseApi}/me`,
+    fetcher,
+  );
+  return { data, error, isLoading };
 };
+
+// export const getCurrentUser = async () => {
+//   const response = await fetch(`${baseApi}/me`, {
+//     credentials: "include",
+//   });
+//   const data: AuthMeResponse = await response.json();
+//   if (!response.ok) {
+//     throw new Error(data.auth.message || "Unauthorized");
+//   }
+//   return data.me;
+// };
 export const logOutUser = async () => {
   const response = await fetch(`${baseApi}/logout`, {
     method: "POST",

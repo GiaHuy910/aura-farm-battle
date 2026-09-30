@@ -1,36 +1,47 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
 
-import { AuthContext, type User } from "./AuthContext";
+import { AuthContext } from "./AuthContext";
 import { logOutUser, getCurrentUser, logInUser } from "../../api/auth";
-import { logInForm } from "@/types/auth";
 
 type Props = {
   children: ReactNode;
-  initialUser: User | null;
+  initialUser: User | null | undefined;
 };
 
 export const AuthProvider = ({ children, initialUser }: Props) => {
-  const [user, setUser] = useState<User | null>(initialUser);
+  const [user, setUser] = useState<User | null | undefined>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
 
   const fetchMe = async () => {
-    getCurrentUser()
-      .then((user) => {
-        console.log("provider chay", user);
-        setUser(user);
-      })
-      .catch(() => {
-        setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
+    const { data, error, isLoading } = await getCurrentUser();
+    if (error) {
+      return <div>Error :{error}</div>;
+    }
+    if (isLoading) {
+      setLoading(true);
+      return <div>Loadingg.........</div>;
+    }
+    setUser(data);
   };
 
-  useEffect(() => {
-    fetchMe();
-  }, []);
+  // const fetchMe = async () => {
+  //   getCurrentUser()
+  //     .then((user) => {
+  //       console.log("provider chay", user.data);
+  //       setUser(user.data);
+  //     })
+  //     .catch(() => {
+  //       setUser(null);
+  //     })
+  //     .finally(() => {
+  //       setLoading(false);
+  //     });
+  // };
+
+  // useEffect(() => {
+  //   fetchMe();
+  // }, []);
 
   const login = async (userData: logInForm) => {
     await logInUser(userData);
