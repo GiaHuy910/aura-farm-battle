@@ -108,16 +108,16 @@ registerUser uname pass = do
                   { user_id = generatedUserID
                   , username = uname
                   , password = unPasswordHash hashedPass
-                  , tickets = 100
+                  , tickets = 0
                   , avatar = ""
-                  , na = ""
-                  ,s1 = ""
-                  ,s2 = ""
-                  ,ult = ""
-                  ,accessory = ""
-                  ,shirt = ""
-                  ,shoes = ""
-                  , owned_clothes = [], owned_skills = []
+                  , na = "na_1"
+                  , s1 = "s1_1"
+                  , s2 = "s2_1"
+                  , ult = "ult_1"
+                  , accessory = "accessory_1"
+                  , shirt = "shirt_1"
+                  , shoes = "shoes_1"
+                  , owned_clothes = ["shoes_1","shirt_1","accessory_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
                   }
             runDB $ insert_ "user" (userToDoc newUser)
             return (Success generatedUserID)
