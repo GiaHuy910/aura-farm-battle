@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 
+import { ToastContainer } from "react-toastify";
+
 import "bootstrap/dist/css/bootstrap.min.css";
 import BootstrapClient from "@/components/BootstrapClient";
 import BackgroundMusic from "@/components/BackgroundMusic";
@@ -19,7 +21,7 @@ const getMe = async () => {
   const sessionId = cookieStore.get("session_id")?.value;
   if (!sessionId) return null;
   try {
-    const { data } = await getCurrentUser();
+    const data = await getCurrentUser();
     return data;
   } catch {
     return null;

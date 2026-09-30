@@ -1,12 +1,12 @@
 import { useState, Suspense } from "react";
 
-import { getRooms } from "@/api/rooms";
+import { useRooms } from "@/api/rooms";
 
 export default function RoomDetail() {
   const [rooms, setRooms] = useState<Room[]>([]);
 
   const fetchRooms = async () => {
-    const { data, error, isLoading } = await getRooms();
+    const { data, error, isLoading } = await useRooms();
     if (error) {
       return <div>Error :{error}</div>;
     }

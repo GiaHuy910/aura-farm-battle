@@ -1,15 +1,16 @@
+"use client";
 import useSWR from "swr";
 
 import { fetcher } from "./customFetcher";
 
 const baseApi = `http://localhost:3001/room`;
 
-export const getRooms = async () => {
-  const { data, error, isLoading } = useSWR<Room[]>(
-    `${baseApi}/getRooms`,
-    fetcher,
-  );
-  return { data, error, isLoading };
+export const useRooms = async () => {
+  return useSWR<Room[]>(`${baseApi}/getRooms`, fetcher, {
+    revalidateIfStale: false,
+    revalidateOnFocus: false,
+    revalidateOnReconnect: false,
+  });
 };
 
 export const createRoom = async (body: createRoomForm) => {
