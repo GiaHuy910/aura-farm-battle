@@ -1,19 +1,19 @@
-Api : user/equipped_skills
+Api : user/equipped-skills
 input : header Cookie
 output: EquippedSkillsResponse
 handler : getEquippedSkillsHandler
 
-Api : user/owned_skills
+Api : user/owned-skills
 input : header Cookie
 output: OwnedSkillsResponse
 handler : getOwnedSkillsHandler
 
-Api : user/equipped_clothes
+Api : user/equipped-clothes
 input : header Cookie
 output: EquippedClothesResponse
 handler : getEquippedClothesHandler
 
-Api : user/owned_clothes
+Api : user/owned-clothes
 input : header Cookie
 output: OwnedClothesResponse
 handler : getOwnedClothesHandler
