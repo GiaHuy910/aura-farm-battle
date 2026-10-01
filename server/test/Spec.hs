@@ -99,9 +99,9 @@ main = do
           let sLen = length u3.owned_skills
           if cLen > 0 && sLen > 0
             then do
-              putStrLn "   ✅ PASS: Đọc/ghi BSON Document kho đồ thành công!"
-              putStrLn $ "      - Áo vừa nhận: " ++ show (head u3.owned_clothes).clothe_name
-              putStrLn $ "      - Skill vừa nhận: " ++ show (head u3.owned_skills).skill_name
+                putStrLn "   ✅ PASS: Đọc/ghi BSON Document kho đồ thành công!"
+                putStrLn $ "      - Áo vừa nhận: " ++ show (head u3.owned_clothes)
+                putStrLn $ "      - Skill vừa nhận: " ++ show (head u3.owned_skills)
             else putStrLn "   ❌ FAIL: Kho đồ bị rỗng sau khi add!"
 
       -- Bước 7: Session

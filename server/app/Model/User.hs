@@ -53,8 +53,11 @@ getUser uname = runDB $ do
 
 getUserById :: Text -> IO (Maybe User)
 getUserById uid = runDB $ do
-    userDoc <- findOne (select ["user_id" =: uid] "user")
-    return (fmap docToUser userDoc)
+    -- Sử dụng record update { project = ... }
+    maybeDoc <- findOne ((select ["user_id" =: uid] "user") { project = ["password" =: (0 :: Int)] })
+    case maybeDoc of
+        Nothing -> return Nothing
+        Just doc -> return $ Just (docToUser doc)
 
 docToUser :: Document -> User
 docToUser doc = User
@@ -125,10 +128,9 @@ registerUser uname pass = do
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
     existingDocs <- runDB $ find (select ["username" =: uname] "user") >>= rest   --Làm biến giải thích quá, nếu bạn có trình bạn sẽ tự hiểu ha
-    if null existingDocs
-        then return LoginFailed
-        else do
-            let userDoc = head existingDocs
+    case existingDocs of
+        [] -> return LoginFailed -- Nếu danh sách rỗng (không tìm thấy)
+        (userDoc:_) -> do        -- Lấy an toàn phần tử đầu tiên bằng Pattern Matching
             let storedHashedPass = fromMaybe "" (userDoc !? "password")
             let checkresult = checkPassword (mkPassword pass) (PasswordHash storedHashedPass)
             case checkresult of
