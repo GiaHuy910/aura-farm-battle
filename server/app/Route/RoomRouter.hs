@@ -14,7 +14,7 @@ type RoomRouter =
        "room" :> "getRooms"
            :> Get '[JSON] [RoomSummary]
 
-  :<|> "room" :> "create"
+  :<|> "room" :> "createRoom"
            :> Header "Cookie" String
            :> ReqBody '[JSON] CreateRoomRequest
            :> Post '[JSON] CreateRoomResponse
