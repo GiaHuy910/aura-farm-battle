@@ -2,9 +2,9 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Route.AuthRouter where 
+module Route.AuthRouter(AuthRouter) where 
 
-import Controllers.AuthController(RegisterRequest, LoginRequest, AuthResponse, MeResponse)
+import Controllers.AuthController(RegisterRequest(..), LoginRequest(..), AuthResponse(..), MeResponse(..))
 import Servant
 
 type AuthRouter =

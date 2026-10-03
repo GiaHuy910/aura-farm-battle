@@ -12,7 +12,6 @@ module Controllers.UserController
   , getOwnedSkillsHandler
   , getEquippedClothesHandler
   , getOwnedClothesHandler
-  , getGachaHandler
   , gachaX1Handler
   , gachaX10Handler
   , gachaSkillX1Handler

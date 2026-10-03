@@ -16,16 +16,18 @@ module Controllers.RoomController
     RoomSummary(..),
     JoinRoomRequest(..),
     LeaveRoomRequest(..),
-    StatusResponse(..)
+    StatusResponse(..),
   ) where
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text, pack)
 import GHC.Generics (Generic)
+import Model.User (User(..))
 import Servant
 
 import Model.Rooms (Room(..), getRooms, createRoom, deleteRoom, joinRoom)
+import Controllers.AuthController (withAuthenticatedUser)
 
 -- ============================================================================
 -- 1. REQUEST & RESPONSE MODELS (Khớp chính xác 100% với Spec JSON)
@@ -88,24 +90,32 @@ instance ToJSON StatusResponse
 -- ============================================================================
 
 -- POST /room/create
-createRoomHandler :: CreateRoomRequest -> Handler CreateRoomResponse
-createRoomHandler req = do
-  let newRoom = Room
-        { room_id       = "" 
-        , room_name     = req.room_name
-        , room_password = req.password
-        , owner_id      = req.user_id
-        , user_ids      = [req.user_id]
-        , occupancy     = 1
-        , is_private    = req.is_private
-        }
-  created <- liftIO $ createRoom newRoom
-  let rDetail = CreatedRoomDetail
-        { room_id   = created.room_id
-        , room_name = created.room_name
-        , owner_id  = created.owner_id
-        }
-  return $ CreateRoomResponse "success" rDetail
+createRoomHandler :: Maybe String -> CreateRoomRequest -> Handler CreateRoomResponse
+createRoomHandler cookie req = do
+  -- Gọi withAuthenticatedUser và đẩy toàn bộ logic xuống dưới
+  withAuthenticatedUser cookie $ \u -> do
+    
+    let uid = u.user_id -- Lấy trực tiếp user_id từ object u
+    
+    let newRoom = Room
+          { room_id       = "" 
+          , room_name     = req.room_name
+          , room_password = req.password
+          , owner_id      = uid    -- Gán uid lấy từ cookie
+          , user_ids      = [uid]  -- Gán uid lấy từ cookie
+          , occupancy     = 1
+          , is_private    = req.is_private
+          }
+          
+    created <- liftIO $ createRoom newRoom
+    
+    let rDetail = CreatedRoomDetail
+          { room_id   = created.room_id
+          , room_name = created.room_name
+          , owner_id  = created.owner_id
+          }
+          
+    return $ CreateRoomResponse "success" rDetail
 
 -- GET /room/getRooms
 getRoomsHandler :: Handler [RoomSummary]
