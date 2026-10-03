@@ -5,17 +5,26 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {- HLINT ignore "Use newtype instead of data" -}
 
-module Controllers.AuthController (withAuthenticatedUser,parseSessionId) where
+module Controllers.AuthController 
+  ( withAuthenticatedUser
+  , parseSessionId
+  , registerHandler
+  , loginHandler
+  , logoutHandler
+  , meHandler
+  , RegisterRequest(..)
+  , LoginRequest(..)
+  , AuthResponse(..)
+  , MeResponse(..)
+  ) where
 
-import Control.Monad (replicateM)
 import Control.Monad.IO.Class
 import Data.Aeson hiding (Result(..))
 import Data.Text (Text, pack, unpack)
 import GHC.Generics
 import Servant
-import System.Random (randomRIO)
 
-import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), ItemType(..), deductTickets, addGachaItems )
+import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..) )
 import Model.Session (createSession, getUserBySession, deleteSession)
 
 data RegisterRequest = RegisterRequest
@@ -54,8 +63,12 @@ data AuthResponse = AuthResponse
 instance ToJSON AuthResponse
 
 data PublicUser = PublicUser
-  { user_id :: Text
-  , username :: Text
+  { user_id       :: Text
+  , username      :: Text
+  , avatar        :: Text
+  , tickets       :: Int
+  , owned_skills  :: [Text]
+  , owned_clothes :: [Text]
   } deriving (Show, Generic)
 
 instance ToJSON PublicUser
@@ -69,15 +82,15 @@ instance ToJSON MeResponse
 
 parseSessionId :: String -> Maybe Text
 parseSessionId cookieHeader =
-  let pairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
+  let cpairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
       trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
-  in case lookup "session_id" [(trim k, drop 1 (trim v)) | (k, v) <- pairs] of
+  in case lookup "session_id" [(trim k, drop 1 (trim v)) | (k, v) <- cpairs] of
        Just val -> Just (pack val)
        Nothing  -> Nothing
   where
     wordsWhen p s = case dropWhile p s of
                       "" -> []
-                      s' -> let (w, s'') = break p s' in w : wordsWhen p s'
+                      s' -> let (w, s'') = break p s' in w : wordsWhen p s''
 
 registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
 registerHandler req = do
@@ -110,7 +123,16 @@ logoutHandler mCookieHeader = do
 
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u ->
-    return $ MeResponse (AuthResponse "success" "OK") (PublicUser u.user_id u.username)
+    return $ MeResponse 
+          (AuthResponse "success" "OK") 
+          (PublicUser 
+              u.user_id 
+              u.username 
+              u.avatar 
+              u.tickets 
+              u.owned_skills 
+              u.owned_clothes
+              )
 
 withAuthenticatedUser :: Maybe String -> (User -> Handler a) -> Handler a
 withAuthenticatedUser cookieHeader action = do

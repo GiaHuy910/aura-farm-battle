@@ -5,7 +5,19 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {- HLINT ignore "Use newtype instead of data" -}
 
-module Controllers.RoomController where
+module Controllers.RoomController
+  (
+    createRoomHandler,
+    getRoomsHandler,
+    joinRoomHandler,
+    leaveRoomHandler,
+    CreateRoomRequest(..),
+    CreateRoomResponse(..),
+    RoomSummary(..),
+    JoinRoomRequest(..),
+    LeaveRoomRequest(..),
+    StatusResponse(..)
+  ) where
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
@@ -101,10 +113,10 @@ getRoomsHandler = do
   rooms <- liftIO getRooms
   return $ map toSummary rooms
   where
-    toSummary r = RoomSummary
-      { room_name  = r.room_name
-      , room_id    = r.room_id
-      , occupation = pack (show r.occupancy ++ "/2") -- Chuyển occupancy Int -> "1/2"
+    toSummary (Room rid rname _ _ _ occ _) = RoomSummary
+      { room_name  = rname
+      , room_id    = rid
+      , occupation = pack (show occ ++ "/2") -- Chuyển occupancy Int -> "1/2"
       }
 
 -- POST /room/joinRoom

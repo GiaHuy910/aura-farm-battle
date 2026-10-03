@@ -1,7 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 
-module Model.Session where
+module Model.Session
+    (
+    Session(..)
+    , createSession
+    , getUserBySession
+    , deleteSession
+    ) where
 
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
@@ -41,7 +47,7 @@ createSession uId = do
 -- Chỉ cần query 1 lần là lấy được user_id, không cần quét bảng user nữa
 getUserBySession :: Text -> IO (Maybe Text)
 getUserBySession sID = runDB $ do
-    maybeSessionDoc <- findOne (select ["session_id" =: sID] "sessions")
+    maybeSessionDoc <- findOne ((select ["session_id" =: sID] "sessions") { project = ["user_id" =: (1 :: Int)] })
     case maybeSessionDoc of
         Nothing   -> return Nothing
         Just sDoc -> return (Just $ fromMaybe "" (sDoc !? "user_id"))

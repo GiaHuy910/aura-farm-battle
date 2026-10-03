@@ -2,7 +2,14 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Model.Clothe where
+module Model.Clothe
+    (
+    Clothe(..)
+    , getClothesPool
+    , getClothesByIds
+    , docToClothe
+    , clotheToDoc
+    ) where
 
 import GHC.Generics (Generic)
 import Data.Aeson (ToJSON)

@@ -1,6 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-module Model.Rooms where
+module Model.Rooms
+    (
+    Room(..)
+    , getRooms
+    , createRoom
+    , deleteRoom
+    , joinRoom
+    ) where
 
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
@@ -32,7 +39,8 @@ runDB action = do
 -- 3. Hàm lấy danh sách phòng (Rất ngắn gọn khi dùng runDB)
 getRooms :: IO [Room]
 getRooms = runDB $ do
-    docs <- find (select [] "room") >>= rest
+    -- Sử dụng record update { project = ... }
+    docs <- find ((select [] "room") { project = ["room_password" =: (0 :: Int)] }) >>= rest
     return (map docToRoom docs)
 
 -- 4. Chuyển đổi BSON Document sang Room
@@ -70,11 +78,14 @@ createRoom :: Room -> IO Room
 createRoom newRoom = runDB $ do
     uuid <- liftIO nextRandom
     let validUsers = take 2 (user_ids newRoom)
-    let realOccupancy = length (user_ids newRoom)
-    let valiatedRoom = newRoom { room_id = pack (toString uuid), occupancy = realOccupancy }
-    insert_ "room" (roomToDoc valiatedRoom)
-    -- insert_ (có dấu gạch dưới) dùng khi ta không cần lấy lại ID do MongoDB tự sinh ra.
-    return valiatedRoom
+    if null validUsers
+        then error "Phòng phải có ít nhất 1 người (chủ phòng)"
+    else do
+        let realOccupancy = length (user_ids newRoom)
+        let valiatedRoom = newRoom { room_id = pack (toString uuid), occupancy = realOccupancy }
+        insert_ "room" (roomToDoc valiatedRoom)
+                    -- insert_ (có dấu gạch dưới) dùng khi ta không cần lấy lại ID do MongoDB tự sinh ra.
+        return valiatedRoom
 
 -- 5. Hàm xóa phòng khi chủ phòng rời đi
 -- Tham số: Tên phòng -> ID người vừa rời (phải là Owner thì mới xóa được)
@@ -85,7 +96,7 @@ deleteRoom rName reqOwnerID = runDB $ do
 -- Hàm cho phép người chơi tham gia phòng (Trả về True nếu thành công, False nếu thất bại)
 joinRoom :: Text -> Text -> Text -> IO Bool
 joinRoom rName rPass newUserID = runDB $ do
-    maybeDoc <- findOne (select ["room_name" =: rName] "room")
+    maybeDoc <- findOne ((select ["room_name" =: rName] "room") { project = ["user_ids" =: (1 :: Int), "occupancy" =: (1 :: Int), "is_private" =: (1 :: Int), "room_password" =: (1 :: Int)] })
     case maybeDoc of
         Nothing -> return False --K tìm thấy phòng
         Just doc -> do
