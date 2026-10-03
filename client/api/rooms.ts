@@ -6,7 +6,7 @@ import { fetcher } from "./customFetcher";
 const baseApi = `http://localhost:3001/room`;
 
 export const useRooms = () => {
-  return useSWR<Room[] | [] | undefined>(`${baseApi}/getRooms`, fetcher, {
+  return useSWR<Room[] | [] | undefined>(`${baseApi}`, fetcher, {
     revalidateIfStale: false,
     revalidateOnFocus: false,
     revalidateOnReconnect: false,
@@ -14,7 +14,7 @@ export const useRooms = () => {
 };
 
 export const createRoom = async (body: createRoomForm) => {
-  const response = await fetch(`${baseApi}/createRoom`, {
+  const response = await fetch(`${baseApi}`, {
     method: "POST",
     credentials: "include",
     headers: {
