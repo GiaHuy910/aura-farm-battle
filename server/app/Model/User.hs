@@ -2,7 +2,20 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Model.User where
+module Model.User
+    (
+        User(..),
+        getUsers,
+        getUser,
+        getUserById,
+        registerUser,
+        loginUser,
+        deductTickets,
+        addGachaItems,
+        RegisterStatus(..),
+        LoginStatus(..),
+        ItemType(..)
+    ) where
 
 import GHC.Generics (Generic)
 import Data.Aeson (ToJSON)
@@ -30,6 +43,8 @@ data User = User
   , equipped_shoes         :: Text
   , owned_clothes :: [Text]
   , owned_skills  :: [Text]
+  , pity_skill_leg        :: Int
+  , pity_clothe_leg       :: Int
   } deriving (Show, Generic)
 
 instance ToJSON User
@@ -75,6 +90,8 @@ docToUser doc = User
   , equipped_shoes         = fromMaybe "" (doc !? "equipped_shoes")
   , owned_clothes = fromMaybe [] (doc !? "owned_clothes")
   , owned_skills  = fromMaybe [] (doc !? "owned_skills")
+  , pity_skill_leg        = fromMaybe 0 (doc !? "pity_skill_leg")
+  , pity_clothe_leg       = fromMaybe 0 (doc !? "pity_clothe_leg")
   }
 
 userToDoc :: User -> Document
@@ -93,6 +110,8 @@ userToDoc u =
   , "equipped_shoes"         =: equipped_shoes u
   , "owned_clothes" =: owned_clothes u
   , "owned_skills"  =: owned_skills u
+    , "pity_skill_leg"        =: pity_skill_leg u
+    , "pity_clothe_leg"       =: pity_clothe_leg u
   ]
 
 data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
@@ -121,6 +140,8 @@ registerUser uname pass = do
                   , equipped_shirt = "shirt_1"
                   , equipped_shoes = "shoes_1"
                   , owned_clothes = ["shoes_1","shirt_1","accessory_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
+                  , pity_skill_leg = 0
+                  , pity_clothe_leg = 0
                   }
             runDB $ insert_ "user" (userToDoc newUser)
             return (Success generatedUserID)

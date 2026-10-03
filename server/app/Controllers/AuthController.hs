@@ -69,6 +69,8 @@ data PublicUser = PublicUser
   , tickets       :: Int
   , owned_skills  :: [Text]
   , owned_clothes :: [Text]
+  , pity_skill_leg        :: Int
+  , pity_clothe_leg       :: Int
   } deriving (Show, Generic)
 
 instance ToJSON PublicUser
@@ -132,6 +134,8 @@ meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u ->
               u.tickets 
               u.owned_skills 
               u.owned_clothes
+              u.pity_skill_leg
+              u.pity_clothe_leg
               )
 
 withAuthenticatedUser :: Maybe String -> (User -> Handler a) -> Handler a

@@ -10,7 +10,7 @@ import Network.Wai.Middleware.Cors
 import Servant
 
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
-import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler) 
+import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
 import Controllers.UserController( getEquippedSkillsHandler, getOwnedSkillsHandler, getEquippedClothesHandler, getOwnedClothesHandler, getTicketsHandler, getAvatarHandler)
 import Route.AuthRouter( AuthRouter)
 import Route.RoomRouter( RoomRouter)
@@ -28,6 +28,7 @@ roomServer :: Server RoomRouter
 roomServer =
        getRoomsHandler
   :<|> createRoomHandler
+  :<|> joinRoomHandler
   :<|> leaveRoomHandler
 
 userServer :: Server UserRouter

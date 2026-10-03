@@ -111,11 +111,11 @@ getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ Ow
 -- ============================================================================
 
 getWeight :: Text -> Int
-getWeight "Mythical"  = 1
-getWeight "Legendary" = 3
+getWeight "Mythical"  = 1     --pity 0
+getWeight "Legendary" = 4     --pity 50s
 getWeight "Epic"      = 10
-getWeight "Rare"      = 17
-getWeight "Uncommon"  = 20
+getWeight "Rare"      = 20
+getWeight "Uncommon"  = 30
 getWeight _           = 50
 
 pickItem :: Int -> [a] -> (a -> Text) -> (a -> Text) -> [Int] -> Text
@@ -154,3 +154,4 @@ gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rar
 gachaSkillX1Handler, gachaSkillX10Handler :: Maybe String -> Handler GachaResponse
 gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity
 gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity
+

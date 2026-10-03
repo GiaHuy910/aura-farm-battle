@@ -7,18 +7,24 @@ module Route.RoomRouter
      RoomRouter
     )where 
 
-import Controllers.RoomController( RoomSummary(..), CreateRoomRequest(..), CreateRoomResponse(..), LeaveRoomRequest(..), StatusResponse(..))
+import Controllers.RoomController( RoomSummary(..), CreateRoomRequest(..), CreateRoomResponse(..), LeaveRoomRequest(..), StatusResponse(..), JoinRoomRequest(..))
 import Servant
 
 type RoomRouter =
-       "room" :> "getRooms"
+       "room"
            :> Get '[JSON] [RoomSummary]
 
-  :<|> "room" :> "createRoom"
+    :<|> "room"
            :> Header "Cookie" String
            :> ReqBody '[JSON] CreateRoomRequest
            :> Post '[JSON] CreateRoomResponse
 
-  :<|> "room" :> "leave"
+    :<|> "room" :> "engagement"
+                :> Header "Cookie" String
+                :> ReqBody '[JSON] JoinRoomRequest
+                :> Post '[JSON] StatusResponse
+
+    :<|> "room" :> "leave"
+            :> Header "Cookie" String
             :> ReqBody '[JSON] LeaveRoomRequest
             :> Post '[JSON] StatusResponse
