@@ -17,6 +17,9 @@ export const createRoom = async (body: createRoomForm) => {
   const response = await fetch(`${baseApi}/createRoom`, {
     method: "POST",
     credentials: "include",
+    headers: {
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify(body),
   });
   const data = await response.json();
