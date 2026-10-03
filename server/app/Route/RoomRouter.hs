@@ -2,9 +2,12 @@
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE OverloadedStrings #-}
-module Route.RoomRouter where 
+module Route.RoomRouter
+    (
+     RoomRouter
+    )where 
 
-import Controllers.RoomController( RoomSummary, CreateRoomRequest)
+import Controllers.RoomController( RoomSummary(..), CreateRoomRequest(..), CreateRoomResponse(..), LeaveRoomRequest(..), StatusResponse(..))
 import Servant
 
 type RoomRouter =
@@ -16,7 +19,6 @@ type RoomRouter =
            :> ReqBody '[JSON] CreateRoomRequest
            :> Post '[JSON] CreateRoomResponse
 
-  :<|> "room"
-           :> Capture "roomName" String
-           :> Capture "ownerID" String
-           :> Delete '[JSON] NoContent
+  :<|> "room" :> "leave"
+            :> ReqBody '[JSON] LeaveRoomRequest
+            :> Post '[JSON] StatusResponse
