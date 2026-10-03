@@ -1,5 +1,6 @@
 "use client";
 import { useEffect, useState, type ReactNode } from "react";
+import { useRouter } from "next/navigation";
 
 import { AuthContext } from "./AuthContext";
 import { logOutUser, getCurrentUser, logInUser } from "../../api/auth";
@@ -12,6 +13,7 @@ type Props = {
 export const AuthProvider = ({ children, initialUser }: Props) => {
   const [user, setUser] = useState<User | null | undefined>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
+  const router = useRouter();
 
   const fetchMe = async () => {
     getCurrentUser()
@@ -19,6 +21,8 @@ export const AuthProvider = ({ children, initialUser }: Props) => {
         setUser(user);
       })
       .catch(() => {
+        // remove comment after done
+        // router.push("/");
         setUser(null);
       })
       .finally(() => {

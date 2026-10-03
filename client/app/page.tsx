@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import styles from "../styles/home.module.css";
+import home from "../styles/home.module.css";
 import gameLogo from "../public/game-logo-small.png";
 import LogInPage from "@/components/LogIn";
 import RegisterPage from "@/components/Register";
@@ -50,7 +50,7 @@ export default function Home() {
       className={`d-flex justify-content-center align-items-center vh-100 vw-100 flex-column`}
     >
       <div
-        className={`${styles.logoWrapper}`}
+        className={`${home.logoWrapper}`}
         style={{
           transform: isStart
             ? "var(--logo-scale) var(--logo-translate)"
@@ -78,14 +78,14 @@ export default function Home() {
         >
           {user ? (
             <button
-              className={`${styles.btnFill} w-md-auto`}
+              className={`${home.btnFill} w-md-auto`}
               onClick={handleStart}
             >
               PLAY NOW
             </button>
           ) : (
             <button
-              className={`${styles.playBtn} w-md-auto`}
+              className={`${home.playBtn} w-md-auto`}
               onClick={handleShowLogIn}
             >
               LOG IN
@@ -107,7 +107,7 @@ export default function Home() {
           <div className={`w-100 pb-2`}>
             <Link href="/rooms" style={{ textDecoration: "none" }}>
               <div
-                className={`${styles.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
+                className={`${home.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
               >
                 1 VS 1
               </div>
@@ -116,16 +116,16 @@ export default function Home() {
           <div className={`w-100 pb-2 `}>
             <Link href="/gacha" style={{ textDecoration: "none" }}>
               <div
-                className={`${styles.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
+                className={`${home.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
               >
                 GACHA
               </div>
             </Link>
           </div>
           <div className={`w-100 pb-2`}>
-            <Link href="/custom" style={{ textDecoration: "none" }}>
+            <Link href="/user" style={{ textDecoration: "none" }}>
               <div
-                className={`${styles.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
+                className={`${home.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
               >
                 CUSTOMIZE
               </div>
@@ -134,7 +134,7 @@ export default function Home() {
           <div className={`w-100 pb-2`}>
             <div
               onClick={handleStart}
-              className={`${styles.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
+              className={`${home.optionBtn} py-3 px-4 text-center rounded fw-bold game-option`}
               style={{
                 color: "white",
                 background: "red",

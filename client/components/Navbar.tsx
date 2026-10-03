@@ -8,8 +8,8 @@ const Navbar = () => {
         <Image
           className="img-fluid ps-3"
           src={gameLogoSmallMini}
-          width={700}
-          height={400}
+          width={600}
+          height={350}
           alt="AURA FARMING BATTLE"
           preload={true}
         />
