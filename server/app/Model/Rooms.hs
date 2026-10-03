@@ -1,6 +1,13 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-module Model.Rooms where
+module Model.Rooms
+    (
+    Room(..)
+    , getRooms
+    , createRoom
+    , deleteRoom
+    , joinRoom
+    ) where
 
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
@@ -89,7 +96,7 @@ deleteRoom rName reqOwnerID = runDB $ do
 -- Hàm cho phép người chơi tham gia phòng (Trả về True nếu thành công, False nếu thất bại)
 joinRoom :: Text -> Text -> Text -> IO Bool
 joinRoom rName rPass newUserID = runDB $ do
-    maybeDoc <- findOne (select ["room_name" =: rName] "room")
+    maybeDoc <- findOne ((select ["room_name" =: rName] "room") { project = ["user_ids" =: (1 :: Int), "occupancy" =: (1 :: Int), "is_private" =: (1 :: Int), "room_password" =: (1 :: Int)] })
     case maybeDoc of
         Nothing -> return False --K tìm thấy phòng
         Just doc -> do

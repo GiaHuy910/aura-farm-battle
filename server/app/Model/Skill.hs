@@ -2,7 +2,14 @@
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE DeriveGeneric #-}
 
-module Model.Skill where
+module Model.Skill
+    (
+    Skill(..)
+    , getSkillsPool
+    , getSkillsByIds
+    , docToSkill
+    , skillToDoc
+    ) where
 
 import GHC.Generics (Generic)
 import Data.Aeson (ToJSON)

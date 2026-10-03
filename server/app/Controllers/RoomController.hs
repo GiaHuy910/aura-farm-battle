@@ -5,7 +5,19 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 {- HLINT ignore "Use newtype instead of data" -}
 
-module Controllers.RoomController where
+module Controllers.RoomController
+  (
+    createRoomHandler,
+    getRoomsHandler,
+    joinRoomHandler,
+    leaveRoomHandler,
+    CreateRoomRequest(..),
+    CreateRoomResponse(..),
+    RoomSummary(..),
+    JoinRoomRequest(..),
+    LeaveRoomRequest(..),
+    StatusResponse(..)
+  ) where
 
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
