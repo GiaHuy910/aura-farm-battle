@@ -35,8 +35,7 @@ import Controllers.AuthController (withAuthenticatedUser)
 
 -- POST /room/create
 data CreateRoomRequest = CreateRoomRequest
-  { user_id    :: Text
-  , room_name  :: Text
+  { room_name  :: Text
   , password   :: Text
   , is_private :: Bool
   } deriving (Show, Generic)
