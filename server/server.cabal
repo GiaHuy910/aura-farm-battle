@@ -20,7 +20,7 @@ library
                     , Route.RoomRouter
                     , Route.UserRouter
     build-depends:
-        base ^>=4.19.1.0,
+        base ^>=4.19.1.0 && <4.21,
         aeson,
         servant-server,
         warp,
