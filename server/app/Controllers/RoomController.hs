@@ -64,16 +64,14 @@ instance ToJSON RoomSummary
 
 -- POST /room/joinRoom
 data JoinRoomRequest = JoinRoomRequest
-  { user_id  :: Text
-  , room_id  :: Text
+  { room_id  :: Text
   , password :: Text
   } deriving (Show, Generic)
 instance FromJSON JoinRoomRequest
 
 -- DELETE /room/leave
 data LeaveRoomRequest = LeaveRoomRequest
-  { userId  :: Text  -- Đúng tên key camelCase "userId" trong spec
-  , room_id :: Text
+  { room_id :: Text
   } deriving (Show, Generic)
 instance FromJSON LeaveRoomRequest
 
@@ -129,17 +127,21 @@ getRoomsHandler = do
       }
 
 -- POST /room/joinRoom
-joinRoomHandler :: JoinRoomRequest -> Handler StatusResponse
-joinRoomHandler req = do
-  -- Gọi hàm joinRoom từ Model.Rooms
-  success <- liftIO $ joinRoom req.room_id req.password req.user_id
-  if success
-    then return $ StatusResponse "success"
-    else return $ StatusResponse "failure"
+joinRoomHandler :: Maybe String -> JoinRoomRequest -> Handler StatusResponse
+joinRoomHandler cookie req = do
+  withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id -- Lấy trực tiếp user_id từ object u
+    -- Gọi hàm joinRoom từ Model.Rooms
+    success <- liftIO $ joinRoom req.room_id req.password uid
+    if success
+      then return $ StatusResponse "success"
+      else return $ StatusResponse "failure"
 
 -- DELETE /room/leave
-leaveRoomHandler :: LeaveRoomRequest -> Handler StatusResponse
-leaveRoomHandler req = do
+leaveRoomHandler :: Maybe String -> LeaveRoomRequest -> Handler StatusResponse
+leaveRoomHandler cookie req = do
   -- Thực hiện xóa/rời phòng theo room_id và userId
-  liftIO $ deleteRoom req.room_id req.userId
-  return $ StatusResponse "success"
+  withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id
+    success <- liftIO $ deleteRoom req.room_id uid
+    return $ StatusResponse "success" 

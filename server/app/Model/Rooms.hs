@@ -88,10 +88,10 @@ createRoom newRoom = runDB $ do
         return valiatedRoom
 
 -- 5. Hàm xóa phòng khi chủ phòng rời đi
--- Tham số: Tên phòng -> ID người vừa rời (phải là Owner thì mới xóa được)
+-- Tham số: ID phòng -> ID người vừa rời (phải là Owner thì mới xóa được)
 deleteRoom :: Text -> Text -> IO ()
-deleteRoom rName reqOwnerID = runDB $ do
-    deleteOne (select ["room_name" =: rName, "owner_id" =: reqOwnerID] "room")
+deleteRoom rId reqOwnerID = runDB $ do
+    deleteOne (select ["room_id" =: rId, "owner_id" =: reqOwnerID] "room")
 
 -- Hàm cho phép người chơi tham gia phòng (Trả về True nếu thành công, False nếu thất bại)
 joinRoom :: Text -> Text -> Text -> IO Bool
