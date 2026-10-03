@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-import styles from "../../styles/page.module.css";
+import page from "../../styles/page.module.css";
 import home from "../../styles/home.module.css";
 import RoomDetail from "@/components/RoomDetail";
 import CreateRoomForm from "@/components/CreateRoomForm";
@@ -27,12 +27,12 @@ export default function RoomsPage() {
   };
   return (
     <div
-      className={`${styles.roomsPage} mx-3 mb-3`}
+      className={`${page.roomsPage} mx-3 mb-3`}
       style={{ border: "5px solid brown", background: "#f7dacefa" }}
     >
       <div className="row h-100 m-0">
         <div
-          className={`col-12 col-md-2 h-25 ${styles.hmd100} ${styles.panelColumn} text-white`}
+          className={`col-12 col-md-2 h-25 ${page.hmd100} ${page.panelColumn} text-white`}
           style={{ border: "5px solid brown" }}
         >
           <div className="d-flex flex-column justify-content-end h-100">
@@ -70,7 +70,7 @@ export default function RoomsPage() {
           </div>
         </div>
         <div
-          className={`col-12 col-md-10 h-75 ${styles.hmd100} ${styles.panelColumn} text-black`}
+          className={`col-12 col-md-10 h-75 ${page.hmd100} ${page.panelColumn} text-black`}
           style={{ border: "5px solid brown" }}
         >
           <div className="h-100 d-flex justify-content-center">

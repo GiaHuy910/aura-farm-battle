@@ -37,7 +37,7 @@
 
 ## Requirements
 
-- Make sure you installed [nodejs](https://nodejs.org/en) for npm
+- Make sure you installed [Nodejs](https://nodejs.org/en) for npm
 - Make sure you installed [GHCup](https://haskell.org) for compiling haskell
 - Make sure you installed [MongoDB](https://www.mongodb.com/try/download/community) either MongoDBcompass or Mongosh
 
@@ -62,7 +62,7 @@
 
 ## Contribution
 
-Thank you to all the people who already contributed to aura-farm-battle!
+Thank you to all the people in the team who already contributed to aura-farm-battle!
 
 <p align="center">
 <a href="https://github.com/H-Hisoka"><img src="https://github.com/H-Hisoka.png" width="80px;" style="border-radius: 50%;" alt=""/></a>
@@ -71,6 +71,14 @@ Thank you to all the people who already contributed to aura-farm-battle!
 <a href="https://github.com/GiaHuy910"><img src="https://github.com/GiaHuy910.png" width="80px;" style="border-radius: 50%;" alt=""/></a>
 <a href="https://github.com/tukhidonglai"><img src="https://github.com/tukhidonglai.png" width="80px;" style="border-radius: 50%;" alt=""/></a>
 </p>
+
+And thank you to the people whom assets was borrowed from is credited here (but not have asked so shushhhh):
+
+- First 30s of "F4M] Your Yandere Bully Forces You Into Her Dorm Room || ASMR Roleplay" on [Youtube](https://www.youtube.com/watch?v=lCIyrje1Nb0).
+- The thumbnail of "The Rise of Mommy ASMR: Comfort in a Click ft. ‪@EinAudios‬" on [Youtube](https://www.youtube.com/watch?v=uVUgbiABZ_8)
+- "Yuta Okkotsu - Jujutsu Kaisen.
+  En mode Asian Squat" Art of [animathish](https://www.instagram.com/p/DXqsFLRiJN_/) on Instagram.
+- "Rankbreaker" Item from [AOV-ArenaOfValor](https://www.arenaofvalor.com/)
 
 ### Cach khoi tao project
 

@@ -9,7 +9,7 @@ interface AuthMeResponse {
     message: string;
     status: string;
   };
-  me: User;
+  me: UserInfo;
 }
 
 export const getCurrentUser = async () => {
