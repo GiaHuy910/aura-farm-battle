@@ -30,3 +30,10 @@
 - chua khai bao module cho tui model
 -
 - ong da projectile cac query nma con thieu 1 so, tui vi du 1 cai nha,line 103 user model, muc dich cua viec di vao db lay ra la chi de check xem no co ton tai hay khong, vi the ong co the chi can lay ra moi id cua no thoi thay vi toan bo field
+
+### task 5 6 qua roi
+
+### task 7
+
+- chay cabal build ong se thay warning, sua cac warning do di
+- warning dong thu 42 o session.hs hinh nhu la do ten bien trung voi ten field, chac la ong lam ten bien khac lai xem no van hoat dong bth khong nha
