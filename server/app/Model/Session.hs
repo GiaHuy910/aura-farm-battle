@@ -16,7 +16,6 @@ import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
 import Data.Time.Clock ( UTCTime, getCurrentTime, addUTCTime)
-import Data.Int (Int)
 import Config.Database (runDB)
 
 -- Đã đổi username thành user_id
@@ -39,9 +38,9 @@ createSession uId age = do
     uuid <- liftIO nextRandom
     now <- liftIO getCurrentTime
     let duration = fromIntegral age
-        expiresAt = addUTCTime duration now
+        expires_at = addUTCTime duration now
     let sID = pack (toString uuid)
-    let newSession = Session { session_id = sID, user_id = uId, expiresAt = expiresAt }
+    let newSession = Session { session_id = sID, user_id = uId, expiresAt = expires_at }
     runDB $ insert_ "sessions" (sessionToDoc newSession)
     return sID
 
