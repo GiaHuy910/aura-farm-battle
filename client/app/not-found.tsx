@@ -16,13 +16,13 @@ const NotFound = () => {
             className="w-100 h-auto"
             src={chatBobble}
             alt="404 NOT FOUND"
-            preload
+            priority
           />
           <Image
             className="w-100 h-auto"
             src={mommyImage}
             alt="mommy"
-            preload
+            priority
           />
           <div
             style={{ top: "85%" }}

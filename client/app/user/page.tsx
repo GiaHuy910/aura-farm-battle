@@ -7,34 +7,55 @@ import BackgroundButton from "@/components/BackgroundButton";
 import { useAuth } from "@/contexts/auth/useAuth";
 import page from "../../styles/page.module.css";
 
-const skill_na = "/skills/na/na_2.png";
-const skill_na_name = "NA";
-const skill_s1 = "/skills/s1/s1_2.png";
-const skill_s1_name = "S1";
-const skill_s2 = "/skills/s2/s2_4.png";
-const skill_s2_name = "S2";
-const skill_ult = "/skills/ult/ult_4.png";
-const skill_ult_name = "ULT";
+const skill_1 = "/skills/na/na_1.png";
+const skill_1_name = "NA" as const;
+const skill_2 = "/skills/s1/s1_1.png";
+const skill_2_name = "S1" as const;
+const skill_3 = "/skills/s2/s2_1.png";
+const skill_3_name = "S2" as const;
+const skill_4 = "/skills/ult/ult_1.png";
+const skill_4_name = "ULT" as const;
 
 const SKILL_IMAGES: Record<string, string> = {
-  na_2: skill_na,
-  s1_2: skill_s1,
-  s2_4: skill_s2,
-  ult_4: skill_ult,
+  na_1: skill_1,
+  s1_1: skill_2,
+  s2_1: skill_3,
+  ult_1: skill_4,
 };
 
-type SkillId = { id: string };
+const clothe_1_name = "ACC" as const;
+const clothe_2_name = "SHIRT" as const;
+const clothe_3_name = "SHOES" as const;
+
+type SkillType =
+  | typeof skill_1_name
+  | typeof skill_2_name
+  | typeof skill_3_name
+  | typeof skill_4_name;
+type ClotheType =
+  | typeof clothe_1_name
+  | typeof clothe_2_name
+  | typeof clothe_3_name;
 
 export default function UserPage() {
   const { user } = useAuth();
 
   const [showSkills, setShowSkills] = useState(false);
   const [ownedSkills, setOwnedSkills] = useState<string[]>([
-    "na_2",
-    "s1_2",
-    "s2_4",
-    "ult_4",
+    "na_1",
+    "s1_1",
+    "s2_1",
+    "ult_1",
   ]);
+  // rememebr to test more ownedskills
+  const [selectedSkillType, setSelectedSkillType] = useState<SkillType>("NA");
+  const handleSetSelectedSkillType = (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    const value = e.currentTarget.value;
+    // reason to force this type cuz typescript would not believe me
+    setSelectedSkillType(value as SkillType);
+  };
   const handleShowSkills = () => {
     setShowSkills((prev) => !prev);
     setShowClothes(false);
@@ -45,10 +66,19 @@ export default function UserPage() {
 
   const [showClothes, setShowClothes] = useState(false);
   const [ownedClothes, setOwnedClothes] = useState<string[]>([
-    "accessory_1",
+    "acc_1",
     "shirt_1",
     "shoes_1",
   ]);
+  const [selectedClotheType, setSelectedClotheType] =
+    useState<ClotheType>("ACC");
+  const handleSetSelectedClotheType = (
+    e: React.MouseEvent<HTMLButtonElement>,
+  ) => {
+    const value = e.currentTarget.value;
+    // reason to force this type cuz typescript would not believe me
+    setSelectedClotheType(value as ClotheType);
+  };
   const handleShowClothes = () => {
     setShowClothes((prev) => !prev);
     setShowSkills(false);
@@ -69,14 +99,26 @@ export default function UserPage() {
           className="header d-flex justify-content-between flex-wrap"
           style={{ border: "3px solid white" }}
         >
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            Acs
+          <button
+            value={clothe_1_name}
+            className={`btn btn-info ${selectedClotheType === clothe_1_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+            onClick={handleSetSelectedClotheType}
+          >
+            {clothe_1_name}
           </button>
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            Shirt
+          <button
+            value={clothe_2_name}
+            className={`btn btn-info ${selectedClotheType === clothe_2_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+            onClick={handleSetSelectedClotheType}
+          >
+            {clothe_2_name}
           </button>
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            Shoes
+          <button
+            value={clothe_3_name}
+            className={`btn btn-info ${selectedClotheType === clothe_3_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+            onClick={handleSetSelectedClotheType}
+          >
+            {clothe_3_name}
           </button>
         </div>
         <div>
@@ -85,16 +127,21 @@ export default function UserPage() {
           </button>
           <div className="d-flex justify-content-start h-100">
             <div className="d-flex flex-column h-100">
-              {ownedClothes?.map((id) => {
-                const currentImage = SKILL_IMAGES[id];
+              {ownedClothes?.map((clothe_name) => {
+                const currentImage = SKILL_IMAGES[clothe_name];
+                const isMatch =
+                  clothe_name.split("_")[0].toUpperCase() ===
+                  selectedClotheType;
                 return (
-                  <div className="dropdown-content" key={id}>
-                    <BackgroundButton
-                      imageUrl={currentImage}
-                      buttonName={id}
-                      onOpen={() => handleSelected(id)}
-                    />
-                  </div>
+                  isMatch && (
+                    <div className="dropdown-content" key={clothe_name}>
+                      <BackgroundButton
+                        imageUrl={currentImage}
+                        buttonName={clothe_name}
+                        onOpen={() => handleSelected(clothe_name)}
+                      />
+                    </div>
+                  )
                 );
               })}
             </div>
@@ -109,29 +156,29 @@ export default function UserPage() {
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_na}
-                buttonName={skill_na_name}
+                imageUrl={skill_1}
+                buttonName={skill_1_name}
                 onOpen={handleShowSkills}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_s1}
-                buttonName={skill_s1_name}
+                imageUrl={skill_2}
+                buttonName={skill_2_name}
                 onOpen={handleShowSkills}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_s2}
-                buttonName={skill_s2_name}
+                imageUrl={skill_3}
+                buttonName={skill_3_name}
                 onOpen={handleShowSkills}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_ult}
-                buttonName={skill_ult_name}
+                imageUrl={skill_4}
+                buttonName={skill_4_name}
                 onOpen={handleShowSkills}
               />
             </div>
@@ -164,17 +211,33 @@ export default function UserPage() {
           className="header d-flex justify-content-between flex-wrap"
           style={{ border: "3px solid light" }}
         >
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            NA
+          <button
+            value={skill_1_name}
+            onClick={handleSetSelectedSkillType}
+            className={`btn btn-info ${selectedSkillType === skill_1_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+          >
+            {skill_1_name}
           </button>
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            S1
+          <button
+            value={skill_2_name}
+            onClick={handleSetSelectedSkillType}
+            className={`btn btn-info ${selectedSkillType === skill_2_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+          >
+            {skill_2_name}
           </button>
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            S2
+          <button
+            value={skill_3_name}
+            onClick={handleSetSelectedSkillType}
+            className={`btn btn-info ${selectedSkillType === skill_3_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+          >
+            {skill_3_name}
           </button>
-          <button className="btn btn-info rounded-0 flex-fill border border-light">
-            ULT
+          <button
+            value={skill_4_name}
+            onClick={handleSetSelectedSkillType}
+            className={`btn btn-info ${selectedSkillType === skill_4_name ? "disabled" : ""} rounded-0 flex-fill border border-light`}
+          >
+            {skill_4_name}
           </button>
         </div>
         <div>
@@ -183,16 +246,20 @@ export default function UserPage() {
           </button>
           <div className="d-flex justify-content-end h-100">
             <div className="d-flex flex-column h-100">
-              {ownedSkills?.map((id) => {
-                const currentImage = SKILL_IMAGES[id];
+              {ownedSkills?.map((skill_name) => {
+                const currentImage = SKILL_IMAGES[skill_name];
+                const isMatch =
+                  skill_name.split("_")[0].toUpperCase() === selectedSkillType;
                 return (
-                  <div className="dropdown-content" key={id}>
-                    <BackgroundButton
-                      imageUrl={currentImage}
-                      buttonName={id}
-                      onOpen={() => handleSelected(id)}
-                    />
-                  </div>
+                  isMatch && (
+                    <div className="dropdown-content" key={skill_name}>
+                      <BackgroundButton
+                        imageUrl={currentImage}
+                        buttonName={skill_name}
+                        onOpen={() => handleSelected(skill_name)}
+                      />
+                    </div>
+                  )
                 );
               })}
             </div>

@@ -11,7 +11,7 @@ const Navbar = () => {
           width={600}
           height={350}
           alt="AURA FARMING BATTLE"
-          preload={true}
+          priority
         />
       </div>
     </nav>
