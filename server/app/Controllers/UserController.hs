@@ -11,6 +11,7 @@ module Controllers.UserController
   , getOwnedSkillsHandler
   , getEquippedClothesHandler
   , getOwnedClothesHandler
+  , getOwnedItemsHandler
   , gachaX1Handler
   , gachaX10Handler
   , gachaSkillX1Handler
@@ -19,6 +20,7 @@ module Controllers.UserController
     , EquippedSkillsResponse(..)
     , OwnedSkillsResponse(..)
     , EquippedClothesResponse(..)
+    , OwnedItemsResponse(..)
     , OwnedClothesResponse(..)
     , GachaResponse(..)
   ) where
@@ -107,7 +109,7 @@ getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ Ow
 
 getOwnedItemsHandler :: Maybe String -> Handler OwnedItemsResponse
 getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
-    return $ OwnedItemsResponse (owned_skills u) (owned_clothes u)
+    return $ OwnedItemsResponse { owned_skills = u.owned_skills, owned_clothes = u.owned_clothes }
 
 
 

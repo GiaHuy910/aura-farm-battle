@@ -7,9 +7,11 @@ build-type:         Simple
 library
     hs-source-dirs:   app
     exposed-modules:  
-                    Controllers.AuthController
+                      Config.Database
+                    , Controllers.AuthController
                     , Controllers.RoomController
                     , Controllers.UserController
+                    , Controllers.PoolController
                     , Model.Clothe
                     , Model.Rooms
                     , Model.Session
@@ -19,6 +21,7 @@ library
                     , Route.Index
                     , Route.RoomRouter
                     , Route.UserRouter
+                    , Route.PoolRouter
     build-depends:
         base ^>=4.19.1.0 && <4.21,
         aeson,
@@ -41,9 +44,11 @@ executable server-app
     main-is:          Server.hs
     hs-source-dirs:   app
     other-modules:  
-        Controllers.AuthController
+        Config.Database
+        , Controllers.AuthController
         , Controllers.RoomController
         , Controllers.UserController
+        , Controllers.PoolController
         , Model.Clothe
         , Model.Rooms
         , Model.Session
@@ -53,6 +58,7 @@ executable server-app
         , Route.Index
         , Route.RoomRouter
         , Route.UserRouter
+        , Route.PoolRouter
     build-depends:
         base ^>=4.19.1.0,
         server,

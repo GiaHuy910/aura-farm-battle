@@ -4,25 +4,19 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Route.UserRouter(UserRouter) where
 
-import Controllers.UserController (EquippedSkillsResponse(..), OwnedSkillsResponse(..), EquippedClothesResponse(..), OwnedClothesResponse(..), TicketsResponse(..))
+import Controllers.UserController (EquippedSkillsResponse(..), OwnedSkillsResponse(..), EquippedClothesResponse(..), OwnedClothesResponse(..), TicketsResponse(..), OwnedItemsResponse(..))
 import Servant
 
 type UserRouter =
     "user" :> "equipped-skills"
            :> Header "Cookie" String
            :> Get '[JSON] EquippedSkillsResponse 
-   :<|> "user" :> "owned-skills"
-           :> Header "Cookie" String
-           :> Get '[JSON] OwnedSkillsResponse 
     :<|>"user" :> "equipped-clothes"
            :> Header "Cookie" String
-           :> Get '[JSON] EquippedClothesResponse 
-    :<|>"user" :> "owned-clothes"
-           :> Header "Cookie" String
-           :> Get '[JSON] OwnedClothesResponse  
+           :> Get '[JSON] EquippedClothesResponse  
     :<|>"user" :> "tickets"
            :> Header "Cookie" String
            :> Get '[JSON] TicketsResponse  
     :<|>"user" :> "owned-items"
-               :> Headr "Cookie" String
+               :> Header "Cookie" String
                :> Get '[JSON] OwnedItemsResponse
