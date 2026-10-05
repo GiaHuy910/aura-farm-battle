@@ -127,10 +127,10 @@ getWeight _           = 50
 
 pickItem :: Int -> [a] -> (a -> Text) -> (a -> Text) -> [Int] -> Text
 pickItem _ [item] getId _ _ = getId item
-pickItem randVal (item:items) getId getRarity (w:ws)
+pickItem randVal (item:restItems) getId getRarity (w:ws)
     | randVal <= w = getId item
-    | otherwise    = pickItem (randVal - w) items getId getRarity ws
-pickItem _ [] _ _ _ = ""
+    | otherwise    = pickItem (randVal - w) restItems getId getRarity ws
+pickItem _ _ _ _ _ = ""
 
 getRandomItemWithRate :: [a] -> (a -> Text) -> (a -> Text) -> IO Text
 getRandomItemWithRate pool getId getRarity = do

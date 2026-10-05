@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Route.UserRouter(UserRouter) where
 
-import Controllers.UserController (EquippedSkillsResponse(..), OwnedSkillsResponse(..), EquippedClothesResponse(..), OwnedClothesResponse(..), TicketsResponse(..), OwnedItemsResponse(..))
+import Controllers.UserController (EquippedSkillsResponse(..), EquippedClothesResponse(..), TicketsResponse(..), OwnedItemsResponse(..))
 import Servant
 
 type UserRouter =
