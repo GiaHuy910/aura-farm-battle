@@ -15,32 +15,33 @@ import Data.UUID.V4 (nextRandom)
 import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
+import Data.Time.Clock ( UTCTime, getCurrentTime, addUTCTime)
+import Data.Int (Int)
+import Config.Database (runDB)
 
 -- Đã đổi username thành user_id
 data Session = Session
   { session_id :: Text
-  , user_id    :: Text 
+  , user_id    :: Text
+  , expiresAt :: UTCTime
   } deriving (Show)
-
-runDB :: Action IO a -> IO a
-runDB action = do
-    pipe <- connect (host "127.0.0.1")
-    result <- access pipe master "aura-farm-battle" action
-    close pipe
-    return result
 
 sessionToDoc :: Session -> Document
 sessionToDoc s =
   [ "session_id" =: session_id (s :: Session)
   , "user_id"    =: user_id (s :: Session)
+  , "expiresAt" =: expiresAt (s :: Session)
   ]
 
 -- Tạo session dựa trên user_id thay vì username
-createSession :: Text -> IO Text
-createSession uId = do
+createSession :: Text -> Int -> IO Text
+createSession uId age = do
     uuid <- liftIO nextRandom
+    now <- liftIO getCurrentTime
+    let duration = fromIntegral age
+        expiresAt = addUTCTime duration now
     let sID = pack (toString uuid)
-    let newSession = Session { session_id = sID, user_id = uId }
+    let newSession = Session { session_id = sID, user_id = uId, expiresAt = expiresAt }
     runDB $ insert_ "sessions" (sessionToDoc newSession)
     return sID
 

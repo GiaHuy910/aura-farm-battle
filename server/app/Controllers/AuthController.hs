@@ -23,6 +23,8 @@ import Data.Aeson hiding (Result(..))
 import Data.Text (Text, pack, unpack)
 import GHC.Generics
 import Servant
+import Data.Time.Clock (getCurrentTime, addUTCTime, UTCTime)
+import Data.Time.Clock.POSIX (posixSecondsToUTCTime)
 
 import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..) )
 import Model.Session (createSession, getUserBySession, deleteSession)
@@ -65,7 +67,6 @@ instance ToJSON AuthResponse
 data PublicUser = PublicUser
   { user_id       :: Text
   , username      :: Text
-  , avatar        :: Text
   , tickets       :: Int
   , owned_skills  :: [Text]
   , owned_clothes :: [Text]
@@ -99,8 +100,9 @@ registerHandler req = do
   result <- liftIO $ registerUser (regUsername req) (regPassword req)
   case result of
     Success newUserID -> do
-      sID <- liftIO $ createSession newUserID
-      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
+      let maxage = 172800
+      sID <- liftIO $ createSession newUserID maxage
+      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage -- 60*60*24*3 = 3 days
       return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
     UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
@@ -109,8 +111,9 @@ loginHandler req = do
   loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
   case loginStatus of
     LoginSuccess uID -> do
-      sID <- liftIO $ createSession uID
-      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax"
+      let maxage = 172800
+      sID <- liftIO $ createSession uID maxage
+      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage-- 60*60*24*3 = 3 days
       return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
     LoginFailed -> throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
 
@@ -130,7 +133,6 @@ meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u ->
           (PublicUser 
               u.user_id 
               u.username 
-              u.avatar 
               u.tickets 
               u.owned_skills 
               u.owned_clothes

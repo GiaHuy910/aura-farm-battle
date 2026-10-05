@@ -45,6 +45,7 @@ server =
        authServer
   :<|> roomServer
   :<|> userServer
+  :<|> getPoolHandler
 
 api :: Proxy Router
 api = Proxy

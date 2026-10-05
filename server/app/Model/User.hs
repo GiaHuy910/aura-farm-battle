@@ -26,6 +26,7 @@ import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Password.Bcrypt (PasswordHash(..), PasswordCheck(..), hashPassword, mkPassword, unPasswordHash, checkPassword)
 import Data.Text (Text, pack)
+import Config.Database (runDB)
 --Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
@@ -33,12 +34,11 @@ data User = User
   , username      :: Text
   , password      :: Text
   , tickets       :: Int
-  , avatar        :: Text
   , equipped_na            :: Text
   , equipped_s1            :: Text
   , equipped_s2            :: Text
   , equipped_ult           :: Text
-  , equipped_accessory     :: Text
+  , equipped_acc     :: Text
   , equipped_shirt         :: Text
   , equipped_shoes         :: Text
   , owned_clothes :: [Text]
@@ -48,13 +48,6 @@ data User = User
   } deriving (Show, Generic)
 
 instance ToJSON User
-
-runDB :: Action IO a -> IO a
-runDB action = do
-    pipe <- connect (host "127.0.0.1")
-    result <- access pipe master "aura-farm-battle" action
-    close pipe
-    return result
 
 getUsers :: IO [User]
 getUsers = runDB $ do
@@ -80,12 +73,11 @@ docToUser doc = User
   , username      = fromMaybe "" (doc !? "username")
   , password      = fromMaybe "" (doc !? "password")
   , tickets       = fromMaybe 0  (doc !? "tickets")
-  , avatar        = fromMaybe "" (doc !? "avatar")
   , equipped_na            = fromMaybe "" (doc !? "equipped_na")
   , equipped_s1            = fromMaybe "" (doc !? "equipped_s1")
   , equipped_s2            = fromMaybe "" (doc !? "equipped_s2")
   , equipped_ult           = fromMaybe "" (doc !? "equipped_ult")
-  , equipped_accessory     = fromMaybe "" (doc !? "equipped_accessory")
+  , equipped_acc     = fromMaybe "" (doc !? "equipped_acc")
   , equipped_shirt         = fromMaybe "" (doc !? "equipped_shirt")
   , equipped_shoes         = fromMaybe "" (doc !? "equipped_shoes")
   , owned_clothes = fromMaybe [] (doc !? "owned_clothes")
@@ -100,12 +92,11 @@ userToDoc u =
   , "username"      =: username u
   , "password"      =: password u
   , "tickets"       =: tickets u
-  , "avatar"        =: avatar u
   , "equipped_na"            =: equipped_na u
   , "equipped_s1"            =: equipped_s1 u
   , "equipped_s2"            =: equipped_s2 u
   , "equipped_ult"           =: equipped_ult u
-  , "equipped_accessory"     =: equipped_accessory u
+  , "equipped_acc"     =: equipped_acc u
   , "equipped_shirt"         =: equipped_shirt u
   , "equipped_shoes"         =: equipped_shoes u
   , "owned_clothes" =: owned_clothes u
@@ -131,15 +122,14 @@ registerUser uname pass = do
                   , username = uname
                   , password = unPasswordHash hashedPass
                   , tickets = 0
-                  , avatar = ""
                   , equipped_na = "na_1"
                   , equipped_s1 = "s1_1"
                   , equipped_s2 = "s2_1"
                   , equipped_ult = "ult_1"
-                  , equipped_accessory = "accessory_1"
+                  , equipped_acc = "acc_1"
                   , equipped_shirt = "shirt_1"
                   , equipped_shoes = "shoes_1"
-                  , owned_clothes = ["shoes_1","shirt_1","accessory_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
+                  , owned_clothes = ["shoes_1","shirt_1","acc_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
                   , pity_skill_leg = 0
                   , pity_clothe_leg = 0
                   }

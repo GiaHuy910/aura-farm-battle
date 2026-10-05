@@ -16,6 +16,7 @@ import Data.Aeson (ToJSON)
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Config.Database (runDB)
 
 data Skill = Skill
   { skill_id   :: Text
@@ -26,13 +27,6 @@ data Skill = Skill
   } deriving (Show, Generic)
 
 instance ToJSON Skill
-
-runDB :: Action IO a -> IO a
-runDB action = do
-    pipe <- connect (host "127.0.0.1")
-    result <- access pipe master "aura-farm-battle" action
-    close pipe
-    return result
 
 docToSkill :: Document -> Skill
 docToSkill doc = Skill
