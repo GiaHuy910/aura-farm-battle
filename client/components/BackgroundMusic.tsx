@@ -46,7 +46,6 @@ export default function BackgroundMusic() {
       <audio ref={audioRef} loop preload="auto">
         <source src={sourceAudio} type="audio/mp4" />
       </audio>
-      {/* {!isPlaying && ( */}
       <button
         onClick={togglePlay}
         style={{
@@ -63,7 +62,6 @@ export default function BackgroundMusic() {
       >
         {isPlaying ? "MUSIC OFF" : "MUSIC ON"}
       </button>
-      {/* )} */}
     </div>
   );
 }

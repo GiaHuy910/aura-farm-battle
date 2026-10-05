@@ -1,11 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
+import home from "@/styles/home.module.css";
+import page from "../../styles/page.module.css";
 import UserCharacter from "@/components/UserCharacter";
 import BackgroundButton from "@/components/BackgroundButton";
 import { useAuth } from "@/contexts/auth/useAuth";
-import page from "../../styles/page.module.css";
+import { getUserOwnedItems } from "@/api/user";
 
 const skill_1 = "/skills/na/na_1.png";
 const skill_1_name = "NA" as const;
@@ -39,6 +42,36 @@ type ClotheType =
 
 export default function UserPage() {
   const { user } = useAuth();
+  const router = useRouter();
+  // const ownedItems = getUserOwnedItems();
+  const ownedItems = {
+    owned_skills: [
+      "na_1",
+      "s1_1",
+      "s2_1",
+      "ult_1",
+      "ult_2",
+      "na_2",
+      "s1_3",
+      "s2_4",
+      "s2_5",
+      "ult_6",
+    ],
+    owned_clothes: [
+      "acc_1",
+      "shirt_1",
+      "shoes_1",
+      "shirt_2",
+      "shirt_3",
+      "shoes_2",
+      "shoes_4",
+      "acc_5",
+    ],
+  };
+  useEffect(() => {
+    setOwnedClothes(ownedItems.owned_clothes);
+    setOwnedSkills(ownedItems.owned_skills);
+  }, []);
 
   const [showSkills, setShowSkills] = useState(false);
   const [ownedSkills, setOwnedSkills] = useState<string[]>([
@@ -86,12 +119,25 @@ export default function UserPage() {
   const handleCloseClothes = () => {
     setShowClothes(false);
   };
+  const handleReturn = () => {
+    router.push("/");
+  };
   const handleSelected = (id: string) => {};
   return (
     <div
       className={`${page.roomsPage} container h-100 position-relative overflow-hidden`}
       style={{ border: "5px solid darkgoldenrod", background: "transparent" }}
     >
+      <button
+        className={`${home.optionBtn} position-absolute mt-3`}
+        style={{
+          color: "white",
+          background: "red",
+        }}
+        onClick={handleReturn}
+      >
+        RETURN
+      </button>
       <div
         className={`position-absolute custom-dropdown-left ${showClothes ? "open" : ""}`}
       >

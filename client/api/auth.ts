@@ -1,17 +1,5 @@
 const baseApi = `http://localhost:3001/auth`;
 
-interface UserInfo {
-  user_id: string;
-  username: string;
-}
-interface AuthMeResponse {
-  auth: {
-    message: string;
-    status: string;
-  };
-  me: UserInfo;
-}
-
 export const getCurrentUser = async () => {
   const response = await fetch(`${baseApi}/me`, {
     credentials: "include",

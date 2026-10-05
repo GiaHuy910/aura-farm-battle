@@ -1,9 +1,9 @@
 import { createContext } from "react";
 
 export type AuthContextType = {
-  user: User | null | undefined;
+  user: UserInfo | null;
   loading: boolean;
-  setUser: React.Dispatch<React.SetStateAction<User | null | undefined>>;
+  setUser: React.Dispatch<React.SetStateAction<UserInfo | null>>;
   logout: () => void;
   login: (data: logInForm) => Promise<void>;
   fetchMe: () => void;

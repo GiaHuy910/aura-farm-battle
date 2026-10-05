@@ -7,11 +7,11 @@ import { logOutUser, getCurrentUser, logInUser } from "../../api/auth";
 
 type Props = {
   children: ReactNode;
-  initialUser: User | null | undefined;
+  initialUser: UserInfo | null;
 };
 
 export const AuthProvider = ({ children, initialUser }: Props) => {
-  const [user, setUser] = useState<User | null | undefined>(initialUser);
+  const [user, setUser] = useState<UserInfo | null>(initialUser);
   const [loading, setLoading] = useState(!initialUser);
   const router = useRouter();
 
