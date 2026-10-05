@@ -3,6 +3,7 @@ module Route.Index(Router) where
 import Route.RoomRouter( RoomRouter)
 import Route.AuthRouter( AuthRouter)
 import Route.UserRouter( UserRouter)
+import Route.PoolRouter( PoolRouter)
 import Servant
 type Router =
          AuthRouter
