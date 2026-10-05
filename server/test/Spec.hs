@@ -6,7 +6,8 @@ module Main where
 import Database.MongoDB
 import Data.Text (Text)
 
-import Model.User    -- Giữ lại runDB từ module này
+import Config.Database (runDB)
+import Model.User    hiding (runDB) -- Giữ lại runDB từ module này
 import Model.Skill   hiding (runDB)
 import Model.Session hiding (runDB)
 import Model.Clothe  hiding (runDB)

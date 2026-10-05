@@ -3,20 +3,10 @@ input : header Cookie
 output: EquippedSkillsResponse
 handler : getEquippedSkillsHandler
 
-Api : user/owned-skills
-input : header Cookie
-output: OwnedSkillsResponse
-handler : getOwnedSkillsHandler
-
 Api : user/equipped-clothes
 input : header Cookie
 output: EquippedClothesResponse
 handler : getEquippedClothesHandler
-
-Api : user/owned-clothes
-input : header Cookie
-output: OwnedClothesResponse
-handler : getOwnedClothesHandler
 
 Api : user/tickets
 input : header Cookie
@@ -67,3 +57,15 @@ Api : room/leave
 input : LeaveRoomRequest
 output: StatusResponse
 handler : leaveRoomHandler
+
+### task 6
+
+Api : user/owned-items
+input : header Cookie
+output: OwnedItemsResponse
+handler : getOwnedItemsHandler
+
+Api : pool
+input : header Cookie
+output: PoolResponse
+handler : getPoolHandler

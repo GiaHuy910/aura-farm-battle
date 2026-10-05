@@ -16,6 +16,7 @@ import Data.Aeson (ToJSON)
 import Database.MongoDB
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
+import Config.Database (runDB)
 
 data Clothe = Clothe
   { clothe_id   :: Text
@@ -27,12 +28,6 @@ data Clothe = Clothe
 
 instance ToJSON Clothe
 
-runDB :: Action IO a -> IO a
-runDB action = do
-    pipe <- connect (host "127.0.0.1")
-    result <- access pipe master "aura-farm-battle" action
-    close pipe
-    return result
 
 docToClothe :: Document -> Clothe
 docToClothe doc = Clothe

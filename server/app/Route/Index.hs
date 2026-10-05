@@ -8,4 +8,5 @@ type Router =
          AuthRouter
     :<|> RoomRouter
     :<|> UserRouter
+    :<|> PoolRouter
    

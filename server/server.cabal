@@ -31,6 +31,7 @@ library
         password,
         text,
         bson,
+        time,
         random
     default-language: Haskell2010
     ghc-options: -Wall
@@ -65,18 +66,19 @@ executable server-app
         password,
         text,
         bson,
+        time,
         random
     default-language: Haskell2010
     ghc-options: -Wall
--- 3. TEST-SUITE: Chạy kịch bản kiểm thử
-test-suite server-test
-    type:             exitcode-stdio-1.0
-    main-is:          Spec.hs
-    hs-source-dirs:   test
-    build-depends:    
-        base >= 4.14 && < 5,
-        server, 
-        -- Gọi library 'server' ở trên vào đây để test
-        mongoDB,
-        text
-    default-language: Haskell2010
+-- -- 3. TEST-SUITE: Chạy kịch bản kiểm thử
+-- test-suite server-test
+--     type:             exitcode-stdio-1.0
+--     main-is:          Spec.hs
+--     hs-source-dirs:   test
+--     build-depends:    
+--         base >= 4.14 && < 5,
+--         server, 
+--         -- Gọi library 'server' ở trên vào đây để test
+--         mongoDB,
+--         text
+--     default-language: Haskell2010

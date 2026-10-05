@@ -7,7 +7,6 @@
 
 module Controllers.UserController
   ( getTicketsHandler
-  , getAvatarHandler
   , getEquippedSkillsHandler
   , getOwnedSkillsHandler
   , getEquippedClothesHandler
@@ -17,7 +16,6 @@ module Controllers.UserController
   , gachaSkillX1Handler
   , gachaSkillX10Handler
   , TicketsResponse(..)
-  , AvatarResponse(..)
     , EquippedSkillsResponse(..)
     , OwnedSkillsResponse(..)
     , EquippedClothesResponse(..)
@@ -48,9 +46,6 @@ import Controllers.AuthController (withAuthenticatedUser)
 data TicketsResponse = TicketsResponse { tickets :: Int } deriving (Show, Generic)
 instance ToJSON TicketsResponse
 
--- GET user/avatar -> {"avatar": ""}
-data AvatarResponse = AvatarResponse { avatar :: Text } deriving (Show, Generic)
-instance ToJSON AvatarResponse
 
 -- GET user/equipped_skills -> {"equipped_skills": ["na_1", "s1_1", "s2_1", "ult_1"]}
 data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
@@ -60,13 +55,21 @@ instance ToJSON EquippedSkillsResponse
 data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedSkillsResponse
 
--- GET user/equipped_clothes -> {"equipped_clothes": ["accessory_1", "shirt_1", "shoes_1"]}
+-- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
 data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON EquippedClothesResponse
 
--- GET user/owned_clothes -> {"owned_clothes": ["accessory_1", "shirt_1", ...]}
+-- GET user/owned_clothes -> {"owned_clothes": ["acc_1", "shirt_1", ...]}
 data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedClothesResponse
+
+data OwnedItemsResponse = OwnedItemsResponse
+    {
+        owned_skills :: [Text],
+        owned_clothes :: [Text]
+    }
+                        deriving (Show, Generic)
+instance ToJSON OwnedItemsResponse
 
 data GachaResponse = GachaResponse
   { status :: String
@@ -83,9 +86,6 @@ instance ToJSON GachaResponse
 getTicketsHandler :: Maybe String -> Handler TicketsResponse
 getTicketsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ TicketsResponse u.tickets
 
--- GET user/avatar
-getAvatarHandler :: Maybe String -> Handler AvatarResponse
-getAvatarHandler cookie = withAuthenticatedUser cookie $ \u -> return $ AvatarResponse u.avatar
 
 -- GET user/equipped_skills
 getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
@@ -99,11 +99,16 @@ getOwnedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ Own
 -- GET user/equipped_clothes
 getEquippedClothesHandler :: Maybe String -> Handler EquippedClothesResponse
 getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> 
-    return $ EquippedClothesResponse [u.equipped_accessory, u.equipped_shirt, u.equipped_shoes]
+    return $ EquippedClothesResponse [u.equipped_acc, u.equipped_shirt, u.equipped_shoes]
 
 -- GET user/owned_clothes
 getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
 getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
+
+getOwnedItemsHandler :: Maybe String -> Handler OwnedItemsResponse
+getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
+    return $ OwnedItemsResponse (owned_skills u) (owned_clothes u)
+
 
 
 -- ============================================================================

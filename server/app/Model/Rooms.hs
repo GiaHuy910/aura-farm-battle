@@ -15,6 +15,7 @@ import Data.UUID.V4 (nextRandom)
 import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
+import Config.Database (runDB)
 
 -- 1. Định nghĩa cấu trúc dữ liệu
 data Room = Room
@@ -27,14 +28,6 @@ data Room = Room
   , is_private :: Bool
   } deriving (Show)
 
--- 2. Hàm tiện ích để tự động kết nối và đóng MongoDB
--- Tạo hàm này để bạn không phải viết lại code kết nối mỗi khi thêm tính năng mới
-runDB :: Action IO a -> IO a
-runDB action = do
-    pipe <- connect (host "127.0.0.1")
-    result <- access pipe master "aura-farm-battle" action
-    close pipe
-    return result
 
 -- 3. Hàm lấy danh sách phòng (Rất ngắn gọn khi dùng runDB)
 getRooms :: IO [Room]
