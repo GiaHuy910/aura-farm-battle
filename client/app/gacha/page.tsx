@@ -1,0 +1,176 @@
+"use client";
+import { useState } from "react";
+import Image from "next/image";
+
+import page from "@/styles/page.module.css";
+
+const banner_1 = "/gacha/background-gacha-1.jpg";
+const banner_2 = "/gacha/background-gacha-2.jpg";
+const banner_1_name = "Skins" as const;
+const banner_2_name = "Skills" as const;
+const gameTicket = "/game-ticket.ico";
+
+const gacha_1_button = "1";
+const gacha_2_button = "10";
+
+type BannerType = typeof banner_1_name | typeof banner_2_name;
+
+export default function GachaPage() {
+  const user = { ticket: 1 };
+
+  const [showBoard, setShowBoard] = useState(false);
+  const toggleBoard = () => {
+    setShowBoard((prev) => !prev);
+  };
+
+  const [selectedBanner, setSelectedBanner] =
+    useState<BannerType>(banner_1_name);
+  const handleSetSelectedBanner = (e: React.MouseEvent<HTMLButtonElement>) => {
+    const value = e.currentTarget.value;
+    // reason to force this type cuz typescript would not believe me
+    setSelectedBanner(value as BannerType);
+  };
+
+  const validateSufficient = (amount: any) => {
+    if (user.ticket >= amount) return true;
+    else return false;
+  };
+  const handleGacha = async (e: React.MouseEvent<HTMLButtonElement>) => {
+    const gachaAmmount = e.currentTarget.value;
+    const isValid = validateSufficient(gachaAmmount);
+    if (!isValid) {
+      toggleBoard();
+      return;
+    }
+    // await gacha(gachaAmmount);
+  };
+  const handlePayment = () => {
+    toggleBoard();
+  };
+  return (
+    <div
+      className={`${page.roomsPage} position-relative my-5 d-flex justify-content-center align-items-center flex-column gap-3 container w-100 h-100`}
+      style={{
+        border: "10px solid rgba(178, 140, 15, 0.69)",
+        backgroundColor: "rgba(255, 255, 255, 0.23)",
+        backdropFilter: "blur(5px)",
+        padding: "10px",
+      }}
+    >
+      <div className="header w-100 d-flex">
+        <button
+          className={`btn btn-warning btn-lg ${selectedBanner === banner_1_name ? "disabled" : ""} flex-fill rounded-0 border border-light`}
+          value={banner_1_name}
+          onClick={handleSetSelectedBanner}
+        >
+          {banner_1_name}
+        </button>
+        <button
+          className={`btn btn-warning btn-lg ${selectedBanner === banner_2_name ? "disabled" : ""} flex-fill rounded-0 border border-light`}
+          value={banner_2_name}
+          onClick={handleSetSelectedBanner}
+        >
+          {banner_2_name}
+        </button>
+      </div>
+      <div className="w-100 d-flex justify-content-end align-items-center">
+        <div
+          style={{
+            backgroundColor: "rgba(117, 112, 112, 0.82)",
+            backdropFilter: "blur(10px)",
+          }}
+          className="btn rounded-5 d-flex justify-content-center align-items-center gap-4"
+        >
+          <Image
+            src={gameTicket}
+            width={40}
+            height={35}
+            alt="game-ticket"
+            priority
+          />
+          {user.ticket}
+          <button className="btn btn-light rounded-5" onClick={handlePayment}>
+            +
+          </button>
+        </div>
+      </div>
+      {showBoard && (
+        <div
+          className="position-absolute vh-100 vw-100"
+          style={{
+            zIndex: 1000,
+          }}
+        ></div>
+      )}
+      {showBoard && (
+        <div
+          className="position-absolute bg-white border rounded-3 shadow p-3 w-100 d-flex align-items-center justify-content-center flex-column gap-3 text-center"
+          style={{
+            maxWidth: "400px",
+            height: "auto",
+            minHeight: "150px",
+            top: "50%",
+            left: "50%",
+            transform: "translate(-50%, -50%)",
+            zIndex: 1050,
+          }}
+        >
+          <div className="fw-bold fs-5 text-danger">BBno money?</div>
+          <div className="d-flex gap-5 ">
+            <button
+              onClick={toggleBoard}
+              className="btn btn-dark text-info text-decoration-underline"
+            >
+              NO(payment)
+            </button>
+            <button
+              onClick={toggleBoard}
+              className="btn"
+              style={{ background: "pink" }}
+            >
+              yes
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedBanner === banner_1_name && (
+        <Image
+          src={banner_1}
+          alt={banner_1_name}
+          className={`popIn border border-light`}
+          width={700}
+          height={380}
+          priority
+        />
+      )}
+      {selectedBanner === banner_2_name && (
+        <Image
+          src={banner_2}
+          alt={banner_2_name}
+          className={`popIn border border-light`}
+          width={700}
+          height={380}
+          priority
+        />
+      )}
+      <div className="footer w-100 d-flex justify-content-end gap-2">
+        <button
+          className="btn btn-light btn-lg rounded-5"
+          style={{ minWidth: "80px" }}
+          value={gacha_1_button}
+          onClick={handleGacha}
+        >
+          x{gacha_1_button}
+        </button>
+        <button
+          className="btn btn-light btn-lg rounded-5"
+          style={{ minWidth: "80px" }}
+          value={gacha_2_button}
+          onClick={handleGacha}
+        >
+          x{gacha_2_button}
+        </button>
+      </div>
+    </div>
+  );
+}

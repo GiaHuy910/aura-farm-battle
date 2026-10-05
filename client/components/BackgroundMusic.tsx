@@ -2,20 +2,27 @@
 
 import { useEffect, useRef, useState } from "react";
 
-const sourceAudio = "/game-background-music-dynamic.mp3";
+const sourceAudio = "/game-background-music-dynamic.m4a";
 
 export default function BackgroundMusic() {
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
 
-  const togglePlay = () => {
-    if (audioRef.current) {
-      if (isPlaying) {
-        audioRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        audioRef.current.play();
+  const togglePlay = async () => {
+    if (!audioRef.current) return;
+    if (isPlaying) {
+      audioRef.current.pause();
+      setIsPlaying(false);
+    } else {
+      try {
+        await audioRef.current.play();
         setIsPlaying(true);
+      } catch (error) {
+        console.warn(
+          "Không thể phát nhạc do chính sách trình duyệt hoặc lỗi file:",
+          error,
+        );
+        setIsPlaying(false);
       }
     }
   };
@@ -36,25 +43,27 @@ export default function BackgroundMusic() {
 
   return (
     <div>
-      <audio ref={audioRef} src={sourceAudio} loop preload="auto" />
-      {!isPlaying && (
-        <button
-          onClick={togglePlay}
-          style={{
-            position: "fixed",
-            bottom: "20px",
-            right: "20px",
-            zIndex: 9999,
-            padding: "10px 15px",
-            background: "#000",
-            color: "#fff",
-            borderRadius: "8px",
-            cursor: "pointer",
-          }}
-        >
-          MUSIC ON
-        </button>
-      )}
+      <audio ref={audioRef} loop preload="auto">
+        <source src={sourceAudio} type="audio/mp4" />
+      </audio>
+      {/* {!isPlaying && ( */}
+      <button
+        onClick={togglePlay}
+        style={{
+          position: "fixed",
+          bottom: "20px",
+          right: "20px",
+          zIndex: 9999,
+          padding: "10px 15px",
+          background: "#000",
+          color: "#fff",
+          borderRadius: "8px",
+          cursor: "pointer",
+        }}
+      >
+        {isPlaying ? "MUSIC OFF" : "MUSIC ON"}
+      </button>
+      {/* )} */}
     </div>
   );
 }

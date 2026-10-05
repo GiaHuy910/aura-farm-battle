@@ -63,7 +63,7 @@ export default function Home() {
           className="img-fluid"
           src={gameLogo}
           alt="AURA FARMING BATTLE"
-          preload={true}
+          priority
         />
       </div>
       <div>
