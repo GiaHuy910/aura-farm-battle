@@ -5,7 +5,7 @@
 module Route.PoolRouter (PoolRouter) where
 
 import Servant
-import Controllers.PoolController( PoolResponse(..), getPoolHandler ) -- Nhớ import handler
+import Controllers.PoolController( PoolResponse(..) ) -- Nhớ import handler
 
 type PoolRouter =
     "pool"

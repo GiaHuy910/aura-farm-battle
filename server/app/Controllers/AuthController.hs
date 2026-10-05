@@ -23,7 +23,6 @@ import Data.Aeson hiding (Result(..))
 import Data.Text (Text, pack, unpack)
 import GHC.Generics
 import Servant
-import Data.Time.Clock (getCurrentTime, addUTCTime, UTCTime, posixSecondsToUTCTime)
 
 import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..) )
 import Model.Session (createSession, getUserBySession, deleteSession)
