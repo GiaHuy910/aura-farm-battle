@@ -65,7 +65,7 @@ export default function RoomsPage() {
               }}
               onClick={handleDetail}
             >
-              LEAVE
+              RETURN
             </button>
           </div>
         </div>

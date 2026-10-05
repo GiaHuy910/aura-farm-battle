@@ -1,12 +1,16 @@
 "use client";
 import { useState } from "react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 
 import page from "@/styles/page.module.css";
+import home from "@/styles/home.module.css";
+import { useAuth } from "@/contexts/auth/useAuth";
+import { sendGachaRequest } from "@/api/user";
 
 const banner_1 = "/gacha/background-gacha-1.jpg";
 const banner_2 = "/gacha/background-gacha-2.jpg";
-const banner_1_name = "Skins" as const;
+const banner_1_name = "Clothes" as const;
 const banner_2_name = "Skills" as const;
 const gameTicket = "/game-ticket.ico";
 
@@ -16,7 +20,8 @@ const gacha_2_button = "10";
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
 export default function GachaPage() {
-  const user = { ticket: 1 };
+  const { user } = useAuth();
+  const router = useRouter();
 
   const [showBoard, setShowBoard] = useState(false);
   const toggleBoard = () => {
@@ -32,7 +37,7 @@ export default function GachaPage() {
   };
 
   const validateSufficient = (amount: any) => {
-    if (user.ticket >= amount) return true;
+    if ((user?.tickets ?? 0) >= amount) return true;
     else return false;
   };
   const handleGacha = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -42,10 +47,19 @@ export default function GachaPage() {
       toggleBoard();
       return;
     }
-    // await gacha(gachaAmmount);
+
+    const amount = "x" + gachaAmmount;
+    const sendGachaForm: GachaRequest = {
+      wish: amount,
+      wish_type: selectedBanner.toLowerCase(),
+    };
+    const resultItem = await sendGachaRequest(sendGachaForm);
   };
   const handlePayment = () => {
     toggleBoard();
+  };
+  const handleReturn = () => {
+    router.push("/");
   };
   return (
     <div
@@ -88,7 +102,7 @@ export default function GachaPage() {
             alt="game-ticket"
             priority
           />
-          {user.ticket}
+          {user?.tickets ?? 0}
           <button className="btn btn-light rounded-5" onClick={handlePayment}>
             +
           </button>
@@ -153,23 +167,37 @@ export default function GachaPage() {
           priority
         />
       )}
-      <div className="footer w-100 d-flex justify-content-end gap-2">
-        <button
-          className="btn btn-light btn-lg rounded-5"
-          style={{ minWidth: "80px" }}
-          value={gacha_1_button}
-          onClick={handleGacha}
-        >
-          x{gacha_1_button}
-        </button>
-        <button
-          className="btn btn-light btn-lg rounded-5"
-          style={{ minWidth: "80px" }}
-          value={gacha_2_button}
-          onClick={handleGacha}
-        >
-          x{gacha_2_button}
-        </button>
+      <div className="footer w-100 d-flex justify-content-between">
+        <div className="d-flex justify-content-start">
+          <button
+            className={`${home.optionBtn}`}
+            style={{
+              color: "white",
+              background: "red",
+            }}
+            onClick={handleReturn}
+          >
+            RETURN
+          </button>
+        </div>
+        <div className="d-flex justify-content-end gap-3">
+          <button
+            className="btn btn-light btn-lg rounded-5"
+            style={{ minWidth: "80px" }}
+            value={gacha_1_button}
+            onClick={handleGacha}
+          >
+            x{gacha_1_button}
+          </button>
+          <button
+            className="btn btn-light btn-lg rounded-5"
+            style={{ minWidth: "80px" }}
+            value={gacha_2_button}
+            onClick={handleGacha}
+          >
+            x{gacha_2_button}
+          </button>
+        </div>
       </div>
     </div>
   );
