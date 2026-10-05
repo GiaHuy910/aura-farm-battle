@@ -12,9 +12,11 @@ import Servant
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
 import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
 import Controllers.UserController( getEquippedSkillsHandler, getOwnedSkillsHandler, getEquippedClothesHandler, getOwnedClothesHandler, getTicketsHandler, getAvatarHandler)
+import Controllers.PoolController( getPoolHandler )
 import Route.AuthRouter( AuthRouter)
 import Route.RoomRouter( RoomRouter)
 import Route.UserRouter( UserRouter)
+import Route.PoolRouter( PoolRouter)
 import Route.Index(Router)
 
 authServer :: Server AuthRouter
@@ -40,12 +42,16 @@ userServer =
   :<|> getTicketsHandler
   :<|> getAvatarHandler
 
+poolServer :: Server PoolRouter
+poolServer =
+        getPoolHandler
+
 server :: Server Router
 server =
        authServer
   :<|> roomServer
   :<|> userServer
-  :<|> getPoolHandler
+  :<|> poolServer
 
 api :: Proxy Router
 api = Proxy
