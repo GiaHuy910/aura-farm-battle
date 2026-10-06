@@ -127,7 +127,7 @@ logoutHandler mCookieHeader = do
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u -> do
       let skills = mapEquippedSkills u.equipped_na u.equipped_s1 u.equipped_s2 u.equipped_ult
-          clothes = mapEquippedClothes u.quipped_acc u.equipped_shirt u.equipped_shoes
+          clothes = mapEquippedClothes u.equipped_acc u.equipped_shirt u.equipped_shoes
       return $ MeResponse 
             (AuthResponse "success" "OK") 
             (PublicUser 

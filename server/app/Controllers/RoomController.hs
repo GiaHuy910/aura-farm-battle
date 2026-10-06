@@ -143,5 +143,5 @@ leaveRoomHandler cookie req = do
   -- Thực hiện xóa/rời phòng theo room_id và userId
   withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
-    success <- liftIO $ deleteRoom req.room_id uid
+    liftIO $ deleteRoom req.room_id uid
     return $ StatusResponse "success" 
