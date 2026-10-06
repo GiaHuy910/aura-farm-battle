@@ -37,3 +37,8 @@
 
 - chay cabal build ong se thay warning, sua cac warning do di
 - warning dong thu 42 o session.hs hinh nhu la do ten bien trung voi ten field, chac la ong lam ten bien khac lai xem no van hoat dong bth khong nha
+
+### task 8
+
+- dau tien la sua lai cho dung ten api user/equip-item
+- lam 1 viec nay nha, ong hay sap xep toan bo code trong controller lai sao cho request,response,handler cua moi api dung gan nhau cho de nhin hon (bay h la no dang request dung 1 ben, handler dung 1 ben kieu v)
