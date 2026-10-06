@@ -33,7 +33,7 @@ import GHC.Generics
 import Servant
 import System.Random (randomRIO)
 
-import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems )
+import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity )
 import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), getSkillsPool)
 import qualified Model.Clothe as Clothe
@@ -125,22 +125,44 @@ getWeight "Rare"      = 20
 getWeight "Uncommon"  = 30
 getWeight _           = 50
 
-pickItem :: Int -> [a] -> (a -> Text) -> (a -> Text) -> [Int] -> Text
-pickItem _ [item] getId _ _ = getId item
-pickItem randVal (item:restItems) getId getRarity (w:ws)
-    | randVal <= w = getId item
-    | otherwise    = pickItem (randVal - w) restItems getId getRarity ws
-pickItem _ _ _ _ _ = ""
+pickItem :: Int -> [a] -> (a -> Text) -> [Int] -> a
+pickItem _ [item] _ _ = item
+pickItem randVal (item:restItems) getRarity (w:ws)
+    | randVal <= w = item
+    | otherwise    = pickItem (randVal - w) restItems getRarity ws
+pickItem _ _ _ _ = error "Pool emty"
 
-getRandomItemWithRate :: [a] -> (a -> Text) -> (a -> Text) -> IO Text
-getRandomItemWithRate pool getId getRarity = do
-    let weights = map (getWeight . getRarity) pool
-    let totalWeight = sum weights
-    randVal <- randomRIO (1, totalWeight)
-    return $ pickItem randVal pool getId getRarity weights
+-- Lõi random 1 lần: Kiểm tra pity, nếu chạm 100 thì ép ra Legendary, ra xong reset về 0
+rollSingle :: Int -> [a] -> (a -> Text) -> (a -> Text) -> IO (Text, Int)
+rollSingle currentPity pool getId getRarity = do
+    if currentPity >= 100
+        then do
+            -- Pity max: Lọc ra toàn bộ đồ Legendary và bốc ngẫu nhiên 1 món
+            let legPool = filter (\x -> getRarity x == "Legendary") pool
+            idx <- randomRIO (0, length legPool - 1)
+            let item = legPool !! idx
+            return (getId item, 0) -- Nổ bảo hiểm -> Reset pity về 0
+        else do
+            -- Chưa đủ Pity: Roll theo rate bình thường
+            let weights = map (getWeight . getRarity) pool
+            let totalWeight = sum weights
+            randVal <- randomRIO (1, totalWeight)
+            let item = pickItem randVal pool getRarity weights
+            
+            if getRarity item == "Legendary"
+                then return (getId item, 0) -- Hên nổ sớm -> Reset pity
+                else return (getId item, currentPity + 1) -- Đen đủi -> Tích thêm 1 pity
 
-runGachaCore :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> Maybe String -> Handler GachaResponse
-runGachaCore count category getPool getId getRarity cookie = withAuthenticatedUser cookie $ \u -> do
+-- Đệ quy thực hiện N lần quay (Dùng chung cho cả x1 và x10)
+rollMultiple :: Int -> Int -> [a] -> (a -> Text) -> (a -> Text) -> IO ([Text], Int)
+rollMultiple 0 currentPity _ _ _ = return ([], currentPity)
+rollMultiple n currentPity pool getId getRarity = do
+    (itemId, nextPity) <- rollSingle currentPity pool getId getRarity
+    (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
+    return (itemId : restIds, finalPity)
+
+runGachaCore :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Maybe String -> Handler GachaResponse
+runGachaCore count category getPool getId getRarity getPityFunc pityField cookie = withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
     success <- liftIO $ deductTickets uid count
     if not success
@@ -150,15 +172,23 @@ runGachaCore count category getPool getId getRarity cookie = withAuthenticatedUs
             if null pool
                 then throwError err500 { errBody = "Pool rỗng!" }
                 else do
-                    rolledIDs <- liftIO $ replicateM count (getRandomItemWithRate pool getId getRarity)
+                    let currentPity = getPityFunc u -- Lấy pity hiện tại
+                    
+                    -- Chạy random x1 hoặc x10, lấy về mảng ID và Pity chốt cuối cùng
+                    (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
+                    
+                    -- Cập nhật đồng loạt đồ gacha và Pity mới vào DB
                     liftIO $ addGachaItems uid category rolledIDs
+                    liftIO $ updatePity uid pityField finalPity
+                    
                     return $ GachaResponse "success" rolledIDs
 
+-- Cập nhật lại 4 Handler truyền đúng trường pity tương ứng:
 gachaX1Handler, gachaX10Handler :: Maybe String -> Handler GachaResponse
-gachaX1Handler = runGachaCore 1  ClotheType getClothesPool clothe_id Clothe.rarity
-gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rarity
+gachaX1Handler  = runGachaCore 1  ClotheType getClothesPool clothe_id Clothe.rarity (\u -> u.pity_clothe_leg) "pity_clothe_leg"
+gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rarity (\u -> u.pity_clothe_leg) "pity_clothe_leg"
 
 gachaSkillX1Handler, gachaSkillX10Handler :: Maybe String -> Handler GachaResponse
-gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity
-gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity
+gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity (\u -> u.pity_skill_leg) "pity_skill_leg"
+gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity (\u -> u.pity_skill_leg) "pity_skill_leg"
 

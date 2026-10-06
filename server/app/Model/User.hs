@@ -14,6 +14,7 @@ module Model.User
         addGachaItems,
         mapEquippedSkills,
         mapEquippedClothes,
+        updatePity,
         RegisterStatus(..),
         LoginStatus(..),
         ItemType(..)
@@ -165,6 +166,11 @@ deductTickets uid amount = runDB $ do
                            ["$inc" =: ["tickets" =: (-amount)]]
                     return True
                 else return False
+
+updatePity :: Text -> Text -> Int -> IO ()
+updatePity uid pityField newPity = runDB $ do
+    modify (select ["user_id" =: uid] "user")
+           ["$set" =: [pityField =: newPity]]
 
 data ItemType = ClotheType | SkillType deriving (Show, Eq)
 
