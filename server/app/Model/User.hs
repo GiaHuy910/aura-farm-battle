@@ -12,6 +12,8 @@ module Model.User
         loginUser,
         deductTickets,
         addGachaItems,
+        mapEquippedSkills,
+        mapEquippedClothes,
         RegisterStatus(..),
         LoginStatus(..),
         ItemType(..)
@@ -38,7 +40,7 @@ data User = User
   , equipped_s1            :: Text
   , equipped_s2            :: Text
   , equipped_ult           :: Text
-  , equipped_acc     :: Text
+  , equipped_acc            :: Text
   , equipped_shirt         :: Text
   , equipped_shoes         :: Text
   , owned_clothes :: [Text]
@@ -176,3 +178,9 @@ addGachaItems uid itemType newIDs = do
       SkillType -> do
         runDB $ modify (select ["user_id" =: uid] "user")
                         ["$addToSet" =: ["owned_skills" =: ["$each" =: newIDs]]]
+
+mapEquippedSkills :: Text -> Text -> Text -> Text -> [Text]
+mapEquippedSkills na s1 s2 ult = [na, s1, s2, ult]
+
+mapEquippedClothes :: Text -> Text -> Text -> [Text]
+mapEquippedClothes acc shirt shoes = [acc, shirt, shoes]
