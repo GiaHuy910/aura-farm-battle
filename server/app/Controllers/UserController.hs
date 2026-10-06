@@ -12,16 +12,14 @@ module Controllers.UserController
   , getEquippedClothesHandler
   , getOwnedClothesHandler
   , getOwnedItemsHandler
-  , gachaX1Handler
-  , gachaX10Handler
-  , gachaSkillX1Handler
-  , gachaSkillX10Handler
+  , getGachaHandler
   , TicketsResponse(..)
     , EquippedSkillsResponse(..)
     , OwnedSkillsResponse(..)
     , EquippedClothesResponse(..)
     , OwnedItemsResponse(..)
     , OwnedClothesResponse(..)
+    , GachaRequest(..)
     , GachaResponse(..)
   ) where
 
@@ -74,10 +72,18 @@ data OwnedItemsResponse = OwnedItemsResponse
 instance ToJSON OwnedItemsResponse
 
 data GachaResponse = GachaResponse
-  { status :: String
-  , items  :: [Text]
+  { status :: Text
+  , message :: Text
+  , added_items  :: Maybe [Text]
   } deriving (Show, Generic)
 instance ToJSON GachaResponse
+
+data GachaRequest = GachaRequest
+    {
+        wish :: Text
+    ,   wish_type :: Text
+    } deriving (Show, Generic)
+instance FromJSON GachaRequest
 
 
 -- ============================================================================
@@ -130,30 +136,26 @@ pickItem _ [item] _ _ = item
 pickItem randVal (item:restItems) getRarity (w:ws)
     | randVal <= w = item
     | otherwise    = pickItem (randVal - w) restItems getRarity ws
-pickItem _ _ _ _ = error "Pool emty"
+pickItem _ _ _ _ = error "Pool empty"
 
--- Lõi random 1 lần: Kiểm tra pity, nếu chạm 100 thì ép ra Legendary, ra xong reset về 0
 rollSingle :: Int -> [a] -> (a -> Text) -> (a -> Text) -> IO (Text, Int)
 rollSingle currentPity pool getId getRarity = do
     if currentPity >= 100
         then do
-            -- Pity max: Lọc ra toàn bộ đồ Legendary và bốc ngẫu nhiên 1 món
             let legPool = filter (\x -> getRarity x == "Legendary") pool
             idx <- randomRIO (0, length legPool - 1)
             let item = legPool !! idx
-            return (getId item, 0) -- Nổ bảo hiểm -> Reset pity về 0
+            return (getId item, 0)
         else do
-            -- Chưa đủ Pity: Roll theo rate bình thường
             let weights = map (getWeight . getRarity) pool
             let totalWeight = sum weights
             randVal <- randomRIO (1, totalWeight)
             let item = pickItem randVal pool getRarity weights
             
             if getRarity item == "Legendary"
-                then return (getId item, 0) -- Hên nổ sớm -> Reset pity
-                else return (getId item, currentPity + 1) -- Đen đủi -> Tích thêm 1 pity
+                then return (getId item, 0)
+                else return (getId item, currentPity + 1)
 
--- Đệ quy thực hiện N lần quay (Dùng chung cho cả x1 và x10)
 rollMultiple :: Int -> Int -> [a] -> (a -> Text) -> (a -> Text) -> IO ([Text], Int)
 rollMultiple 0 currentPity _ _ _ = return ([], currentPity)
 rollMultiple n currentPity pool getId getRarity = do
@@ -161,34 +163,42 @@ rollMultiple n currentPity pool getId getRarity = do
     (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
     return (itemId : restIds, finalPity)
 
-runGachaCore :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Maybe String -> Handler GachaResponse
-runGachaCore count category getPool getId getRarity getPityFunc pityField cookie = withAuthenticatedUser cookie $ \u -> do
+-- Handler chính xử lý gộp
+getGachaHandler :: Maybe String -> GachaRequest -> Handler GachaResponse
+getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
-    success <- liftIO $ deductTickets uid count
-    if not success
-        then throwError err400 { errBody = "Không đủ vé để quay!" }
+    
+    -- 1. Xác định số lượng vé cần trừ
+    let (count, isValidCount) = case req.wish of
+                                  "x1"  -> (1, True)
+                                  "x10" -> (10, True)
+                                  _     -> (0, False)
+                                  
+    if not isValidCount
+        then return $ GachaResponse "failure" "Quantity not valid" Nothing
         else do
-            pool <- liftIO getPool
-            if null pool
-                then throwError err500 { errBody = "Pool rỗng!" }
+            -- 2. Trừ vé
+            success <- liftIO $ deductTickets uid count
+            if not success
+                then return $ GachaResponse "failure" "Too Poor huhu" Nothing -- Báo lỗi y hệt spec
                 else do
-                    let currentPity = getPityFunc u -- Lấy pity hiện tại
-                    
-                    -- Chạy random x1 hoặc x10, lấy về mảng ID và Pity chốt cuối cùng
-                    (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
-                    
-                    -- Cập nhật đồng loạt đồ gacha và Pity mới vào DB
-                    liftIO $ addGachaItems uid category rolledIDs
-                    liftIO $ updatePity uid pityField finalPity
-                    
-                    return $ GachaResponse "success" rolledIDs
+                    -- 3. Phân nhánh xử lý theo loại gacha
+                    case req.wish_type of
+                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u
+                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u
+                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing
 
--- Cập nhật lại 4 Handler truyền đúng trường pity tương ứng:
-gachaX1Handler, gachaX10Handler :: Maybe String -> Handler GachaResponse
-gachaX1Handler  = runGachaCore 1  ClotheType getClothesPool clothe_id Clothe.rarity (\u -> u.pity_clothe_leg) "pity_clothe_leg"
-gachaX10Handler = runGachaCore 10 ClotheType getClothesPool clothe_id Clothe.rarity (\u -> u.pity_clothe_leg) "pity_clothe_leg"
-
-gachaSkillX1Handler, gachaSkillX10Handler :: Maybe String -> Handler GachaResponse
-gachaSkillX1Handler  = runGachaCore 1  SkillType getSkillsPool skill_id Skill.rarity (\u -> u.pity_skill_leg) "pity_skill_leg"
-gachaSkillX10Handler = runGachaCore 10 SkillType getSkillsPool skill_id Skill.rarity (\u -> u.pity_skill_leg) "pity_skill_leg"
-
+-- Hàm con chạy logic random và cập nhật Data
+processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Handler GachaResponse
+processGacha count category getPool getId getRarity getPityFunc pityField uid u = do
+    pool <- liftIO getPool
+    if null pool
+        then return $ GachaResponse "failure" "Nothing in Pool" Nothing
+        else do
+            let currentPity = getPityFunc u
+            (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
+            
+            liftIO $ addGachaItems uid category rolledIDs
+            liftIO $ updatePity uid pityField finalPity
+            
+            return $ GachaResponse "success" "Success" (Just rolledIDs)
