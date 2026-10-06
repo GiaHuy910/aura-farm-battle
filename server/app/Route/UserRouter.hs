@@ -4,7 +4,7 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Route.UserRouter(UserRouter) where
 
-import Controllers.UserController (EquippedSkillsResponse(..), EquippedClothesResponse(..), TicketsResponse(..), OwnedItemsResponse(..))
+import Controllers.UserController (EquippedSkillsResponse(..), EquippedClothesResponse(..), TicketsResponse(..), OwnedItemsResponse(..), GachaRequest(..), GachaResponse(..))
 import Servant
 
 type UserRouter =
@@ -20,3 +20,7 @@ type UserRouter =
     :<|>"user" :> "owned-items"
                :> Header "Cookie" String
                :> Get '[JSON] OwnedItemsResponse
+    :<|>"user" :> "gacha"
+               :> Header "Cookie" String
+               :> ReqBody '[JSON] GachaRequest
+               :> Post '[JSON] GachaResponse
