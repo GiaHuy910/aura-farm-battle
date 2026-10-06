@@ -24,7 +24,7 @@ import Data.Text (Text, pack, unpack)
 import GHC.Generics
 import Servant
 
-import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..) )
+import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), mapEquippedSkills, mapEquippedClothes )
 import Model.Session (createSession, getUserBySession, deleteSession)
 
 data RegisterRequest = RegisterRequest
@@ -66,8 +66,8 @@ data PublicUser = PublicUser
   { user_id       :: Text
   , username      :: Text
   , tickets       :: Int
-  , owned_skills  :: [Text]
-  , owned_clothes :: [Text]
+  , equipped_skills  :: [Text]
+  , equipped_clothes :: [Text]
   , pity_skill_leg        :: Int
   , pity_clothe_leg       :: Int
   } deriving (Show, Generic)
@@ -125,18 +125,20 @@ logoutHandler mCookieHeader = do
     Nothing -> return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
 
 meHandler :: Maybe String -> Handler MeResponse
-meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u ->
-    return $ MeResponse 
-          (AuthResponse "success" "OK") 
-          (PublicUser 
-              u.user_id 
-              u.username 
-              u.tickets 
-              u.owned_skills 
-              u.owned_clothes
-              u.pity_skill_leg
-              u.pity_clothe_leg
-              )
+meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u -> do
+      let skills = mapEquippedSkills u.equipped_na u.equipped_s1 u.equipped_s2 u.equipped_ult
+          clothes = mapEquippedClothes u.quipped_acc u.equipped_shirt u.equipped_shoes
+      return $ MeResponse 
+            (AuthResponse "success" "OK") 
+            (PublicUser 
+                  u.user_id 
+                  u.username 
+                  u.tickets 
+                  skills
+                  clothes
+                  u.pity_skill_leg
+                  u.pity_clothe_leg
+                  )
 
 withAuthenticatedUser :: Maybe String -> (User -> Handler a) -> Handler a
 withAuthenticatedUser cookieHeader action = do
