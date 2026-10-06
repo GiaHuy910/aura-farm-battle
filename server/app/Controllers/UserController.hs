@@ -13,6 +13,7 @@ module Controllers.UserController
   , getOwnedClothesHandler
   , getOwnedItemsHandler
   , getGachaHandler
+  , getEquipItemHandler
   , TicketsResponse(..)
     , EquippedSkillsResponse(..)
     , OwnedSkillsResponse(..)
@@ -21,17 +22,20 @@ module Controllers.UserController
     , OwnedClothesResponse(..)
     , GachaRequest(..)
     , GachaResponse(..)
+    , EquipRequest(..)
+    , EquipResponse(..)
   ) where
 
 import Control.Monad (replicateM)
 import Control.Monad.IO.Class
 import Data.Aeson hiding (Result(..))
 import Data.Text (Text)
+import qualified Data.Text as T
 import GHC.Generics
 import Servant
 import System.Random (randomRIO)
 
-import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity )
+import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity, updateEquippedItem )
 import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), getSkillsPool)
 import qualified Model.Clothe as Clothe
@@ -84,6 +88,20 @@ data GachaRequest = GachaRequest
     ,   wish_type :: Text
     } deriving (Show, Generic)
 instance FromJSON GachaRequest
+
+data EquipRequest = EquipRequest
+    {
+        equip_item :: Text
+    } deriving (Show, Generic)
+instance FromJSON EquipRequest
+
+data EquipResponse = EquipResponse
+    {
+        status :: Text,
+        message :: Text,
+        equipped_item :: Text
+    } deriving (Show, Generic)
+instance ToJSON EquipResponse
 
 
 -- ============================================================================
@@ -202,3 +220,39 @@ processGacha count category getPool getId getRarity getPityFunc pityField uid u 
             liftIO $ updatePity uid pityField finalPity
             
             return $ GachaResponse "success" "Success" (Just rolledIDs)
+
+-- Hàm helper phân loại item dựa trên prefix và xác định field DB tương ứng:
+categorizeItem :: Text -> Maybe (ItemType, Text)
+categorizeItem item
+  | "na_"    `T.isPrefixOf` item = Just (SkillType, "equipped_na")
+  | "s1_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s1")
+  | "s2_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s2")
+  | "ult_"   `T.isPrefixOf` item = Just (SkillType, "equipped_ult")
+  | "acc_"   `T.isPrefixOf` item = Just (ClotheType, "equipped_acc")
+  | "shirt_" `T.isPrefixOf` item = Just (ClotheType, "equipped_shirt")
+  | "shoes_" `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
+  | "shoe_"  `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
+  | otherwise                    = Nothing
+
+
+-- Handler chính xử lý trang bị vật phẩm
+getEquipItemHandler :: Maybe String -> EquipRequest -> Handler EquipResponse
+getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
+    let targetItem = req.equip_item
+        uid = u.user_id
+
+    case categorizeItem targetItem of
+        Nothing ->
+            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
+
+        Just (category, dbField) -> do
+            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
+            let isOwned = case category of
+                    SkillType  -> targetItem `elem` u.owned_skills
+                    ClotheType -> targetItem `elem` u.owned_clothes
+
+            if not isOwned
+                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
+                else do
+                    liftIO $ updateEquippedItem uid dbField targetItem
+                    return $ EquipResponse "success" "Trang bị thành công!" targetItem

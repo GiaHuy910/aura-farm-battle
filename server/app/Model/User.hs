@@ -15,6 +15,7 @@ module Model.User
         mapEquippedSkills,
         mapEquippedClothes,
         updatePity,
+        updateEquippedItem,
         RegisterStatus(..),
         LoginStatus(..),
         ItemType(..)
@@ -180,7 +181,7 @@ addGachaItems uid itemType newIDs = do
     case itemType of
       ClotheType -> do
         runDB $ modify (select ["user_id" =: uid] "user")
-                        ["$addToSet" =: ["owned_clothes" =: ["$each" =: newIDs]]]
+                        ["$addToSet" =: ["owned_clothes" =: ["$each" =: newIDs]]] --addToSet đã xử lý việc trùng lấp rồi ko cần phải viết hàm thêm, còn each là để xử lý việc thêm nhiều item
       SkillType -> do
         runDB $ modify (select ["user_id" =: uid] "user")
                         ["$addToSet" =: ["owned_skills" =: ["$each" =: newIDs]]]
@@ -190,3 +191,8 @@ mapEquippedSkills na s1 s2 ult = [na, s1, s2, ult]
 
 mapEquippedClothes :: Text -> Text -> Text -> [Text]
 mapEquippedClothes acc shirt shoes = [acc, shirt, shoes]
+
+updateEquippedItem :: Text -> Text -> Text -> IO ()
+updateEquippedItem uid dbField itemId = runDB $ do
+    modify (select ["user_id" =: uid] "user")
+           ["$set" =: [dbField =: itemId]]

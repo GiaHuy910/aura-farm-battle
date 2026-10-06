@@ -11,7 +11,7 @@ import Servant
 
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
 import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
-import Controllers.UserController( getEquippedSkillsHandler, getEquippedClothesHandler, getTicketsHandler, getOwnedItemsHandler, getGachaHandler )
+import Controllers.UserController( getEquippedSkillsHandler, getEquippedClothesHandler, getTicketsHandler, getOwnedItemsHandler, getGachaHandler, getEquipItemHandler)
 import Controllers.PoolController( getPoolHandler )
 import Route.AuthRouter( AuthRouter)
 import Route.RoomRouter( RoomRouter)
@@ -40,6 +40,7 @@ userServer =
   :<|> getTicketsHandler
   :<|> getOwnedItemsHandler
   :<|> getGachaHandler
+  :<|> getEquipItemHandler
 
 poolServer :: Server PoolRouter
 poolServer =
