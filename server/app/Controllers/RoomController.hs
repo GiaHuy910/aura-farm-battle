@@ -29,10 +29,9 @@ import Servant
 import Model.Rooms (Room(..), getRooms, createRoom, deleteRoom, joinRoom)
 import Controllers.AuthController (withAuthenticatedUser)
 
--- ============================================================================
--- 1. REQUEST & RESPONSE MODELS (Khớp chính xác 100% với Spec JSON)
--- ============================================================================
-
+-- ___________________________________________________________________________________________
+-- OK bây giờ tui sẽ làm cho nó theo thứ tự là request -> response -> handler cho dễ nhìn nha
+-- ___________________________________________________________________________________________
 -- POST /room/create
 data CreateRoomRequest = CreateRoomRequest
   { room_name  :: Text
@@ -54,46 +53,12 @@ data CreateRoomResponse = CreateRoomResponse
   } deriving (Show, Generic)
 instance ToJSON CreateRoomResponse
 
--- GET /room/getRooms
-data RoomSummary = RoomSummary
-  { room_name  :: Text
-  , room_id    :: Text
-  , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
-  } deriving (Show, Generic)
-instance ToJSON RoomSummary
-
--- POST /room/joinRoom
-data JoinRoomRequest = JoinRoomRequest
-  { room_id  :: Text
-  , password :: Text
-  } deriving (Show, Generic)
-instance FromJSON JoinRoomRequest
-
--- DELETE /room/leave
-data LeaveRoomRequest = LeaveRoomRequest
-  { room_id :: Text
-  } deriving (Show, Generic)
-instance FromJSON LeaveRoomRequest
-
--- Common Status Response {"status": "success" | "failure"}
-data StatusResponse = StatusResponse
-  { status :: Text
-  } deriving (Show, Generic)
-instance ToJSON StatusResponse
-
-
--- ============================================================================
--- 2. HANDLERS (Xử lý các endpoint phòng)
--- ============================================================================
-
 -- POST /room/create
 createRoomHandler :: Maybe String -> CreateRoomRequest -> Handler CreateRoomResponse
 createRoomHandler cookie req = do
   -- Gọi withAuthenticatedUser và đẩy toàn bộ logic xuống dưới
   withAuthenticatedUser cookie $ \u -> do
-    
     let uid = u.user_id -- Lấy trực tiếp user_id từ object u
-    
     let newRoom = Room
           { room_id       = "" 
           , room_name     = req.room_name
@@ -103,16 +68,21 @@ createRoomHandler cookie req = do
           , occupancy     = 1
           , is_private    = req.is_private
           }
-          
     created <- liftIO $ createRoom newRoom
-    
     let rDetail = CreatedRoomDetail
           { room_id   = created.room_id
           , room_name = created.room_name
           , owner_id  = created.owner_id
           }
-          
     return $ CreateRoomResponse "success" rDetail
+
+-- GET /room/getRooms
+data RoomSummary = RoomSummary
+  { room_name  :: Text
+  , room_id    :: Text
+  , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
+  } deriving (Show, Generic)
+instance ToJSON RoomSummary
 
 -- GET /room/getRooms
 getRoomsHandler :: Handler [RoomSummary]
@@ -127,6 +97,12 @@ getRoomsHandler = do
       }
 
 -- POST /room/joinRoom
+data JoinRoomRequest = JoinRoomRequest
+  { room_id  :: Text
+  , password :: Text
+  } deriving (Show, Generic)
+instance FromJSON JoinRoomRequest
+-- POST /room/joinRoom
 joinRoomHandler :: Maybe String -> JoinRoomRequest -> Handler StatusResponse
 joinRoomHandler cookie req = do
   withAuthenticatedUser cookie $ \u -> do
@@ -138,6 +114,11 @@ joinRoomHandler cookie req = do
       else return $ StatusResponse "failure"
 
 -- DELETE /room/leave
+data LeaveRoomRequest = LeaveRoomRequest
+  { room_id :: Text
+  } deriving (Show, Generic)
+instance FromJSON LeaveRoomRequest
+-- DELETE /room/leave
 leaveRoomHandler :: Maybe String -> LeaveRoomRequest -> Handler StatusResponse
 leaveRoomHandler cookie req = do
   -- Thực hiện xóa/rời phòng theo room_id và userId
@@ -145,3 +126,9 @@ leaveRoomHandler cookie req = do
     let uid = u.user_id
     liftIO $ deleteRoom req.room_id uid
     return $ StatusResponse "success" 
+
+-- Common Status Response {"status": "success" | "failure"}
+data StatusResponse = StatusResponse
+  { status :: Text
+  } deriving (Show, Generic)
+instance ToJSON StatusResponse

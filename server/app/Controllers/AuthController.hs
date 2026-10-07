@@ -27,6 +27,11 @@ import Servant
 import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), mapEquippedSkills, mapEquippedClothes )
 import Model.Session (createSession, getUserBySession, deleteSession)
 
+-- ___________________________________________________________________________________________
+
+-- OK bây giờ tui sẽ làm cho nó theo thứ tự là request -> response -> handler cho dễ nhìn nha
+
+-- ___________________________________________________________________________________________
 data RegisterRequest = RegisterRequest
   { regUsername :: Text
   , regPassword :: Text
@@ -40,6 +45,16 @@ instance FromJSON RegisterRequest where
           "regPassword" -> "password"
           _             -> field
     }
+registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
+registerHandler req = do
+  result <- liftIO $ registerUser (regUsername req) (regPassword req)
+  case result of
+    Success newUserID -> do
+      let maxage = 172800
+      sID <- liftIO $ createSession newUserID maxage
+      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage -- 60*60*24*3 = 3 days
+      return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
+    UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
 
 data LoginRequest = LoginRequest
   { loginUsername :: Text
@@ -54,6 +69,17 @@ instance FromJSON LoginRequest where
           "loginPassword" -> "password"
           _               -> field
     }
+
+loginHandler :: LoginRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
+loginHandler req = do
+  loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
+  case loginStatus of
+    LoginSuccess uID -> do
+      let maxage = 172800
+      sID <- liftIO $ createSession uID maxage
+      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage-- 60*60*24*3 = 3 days
+      return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
+    LoginFailed -> throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
 
 data AuthResponse = AuthResponse
   { status  :: String
@@ -80,49 +106,6 @@ data MeResponse = MeResponse
     } deriving (Show, Generic)
 
 instance ToJSON MeResponse
-
-parseSessionId :: String -> Maybe Text
-parseSessionId cookieHeader =
-  let cpairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
-      trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
-  in case lookup "session_id" [(trim k, drop 1 (trim v)) | (k, v) <- cpairs] of
-       Just val -> Just (pack val)
-       Nothing  -> Nothing
-  where
-    wordsWhen p s = case dropWhile p s of
-                      "" -> []
-                      s' -> let (w, s'') = break p s' in w : wordsWhen p s''
-
-registerHandler :: RegisterRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
-registerHandler req = do
-  result <- liftIO $ registerUser (regUsername req) (regPassword req)
-  case result of
-    Success newUserID -> do
-      let maxage = 172800
-      sID <- liftIO $ createSession newUserID maxage
-      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage -- 60*60*24*3 = 3 days
-      return $ addHeader cookieValue (AuthResponse "success" "Đăng ký thành công!")
-    UserAlreadyExists -> throwError err400 { errBody = "Tên tài khoản đã tồn tại!" }
-
-loginHandler :: LoginRequest -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
-loginHandler req = do
-  loginStatus <- liftIO $ loginUser (loginUsername req) (loginPassword req)
-  case loginStatus of
-    LoginSuccess uID -> do
-      let maxage = 172800
-      sID <- liftIO $ createSession uID maxage
-      let cookieValue = "session_id=" ++ unpack sID ++ "; Path=/; HttpOnly; SameSite=Lax; Max-Age=" ++ show maxage-- 60*60*24*3 = 3 days
-      return $ addHeader cookieValue (AuthResponse "success" "Đăng nhập thành công!")
-    LoginFailed -> throwError err401 { errBody = "Tài khoản hoặc mật khẩu không chính xác!" }
-
-logoutHandler :: Maybe String -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)
-logoutHandler mCookieHeader = do
-  let expiredCookie = "session_id=; Path=/; HttpOnly; Max-Age=0"
-  case mCookieHeader >>= parseSessionId of
-    Just sID -> do
-      liftIO $ deleteSession sID
-      return $ addHeader expiredCookie (AuthResponse "success" "Đăng xuất thành công!")
-    Nothing -> return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")
 
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u -> do
@@ -153,3 +136,25 @@ withAuthenticatedUser cookieHeader action = do
                     case mUser of
                         Nothing -> throwError err404 { errBody = "Không tìm thấy người dùng!" }
                         Just u  -> action u
+
+parseSessionId :: String -> Maybe Text
+parseSessionId cookieHeader =
+  let cpairs = map (break (== '=')) $ wordsWhen (== ';') cookieHeader
+      trim = reverse . dropWhile (== ' ') . reverse . dropWhile (== ' ')
+  in case lookup "session_id" [(trim k, drop 1 (trim v)) | (k, v) <- cpairs] of
+       Just val -> Just (pack val)
+       Nothing  -> Nothing
+  where
+    wordsWhen p s = case dropWhile p s of
+                      "" -> []
+                      s' -> let (w, s'') = break p s' in w : wordsWhen p s''
+
+
+logoutHandler :: Maybe String -> Handler (Headers '[Header "Set-Cookie" String] AuthResponse)--Tạm thời chưa dùng tới
+logoutHandler mCookieHeader = do
+  let expiredCookie = "session_id=; Path=/; HttpOnly; Max-Age=0"
+  case mCookieHeader >>= parseSessionId of
+    Just sID -> do
+      liftIO $ deleteSession sID
+      return $ addHeader expiredCookie (AuthResponse "success" "Đăng xuất thành công!")
+    Nothing -> return $ addHeader expiredCookie (AuthResponse "success" "Không tìm thấy phiên đăng nhập!")

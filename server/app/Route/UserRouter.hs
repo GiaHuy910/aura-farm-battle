@@ -24,7 +24,7 @@ type UserRouter =
                :> Header "Cookie" String
                :> ReqBody '[JSON] GachaRequest
                :> Post '[JSON] GachaResponse
-    :<|>"user" :> "equipped-item"
+    :<|>"user" :> "equip-item"
                :> Header "Cookie" String
                :> ReqBody '[JSON] EquipRequest
                :> Post '[JSON] EquipResponse
