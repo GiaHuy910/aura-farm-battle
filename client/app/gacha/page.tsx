@@ -1,5 +1,6 @@
 "use client";
-import { useState } from "react";
+
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
@@ -20,12 +21,30 @@ const gacha_2_button = "10";
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
 export default function GachaPage() {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   const router = useRouter();
 
-  const [showBoard, setShowBoard] = useState(false);
+  useEffect(() => {
+    if (user?.tickets !== undefined) {
+      setUserTickets(user.tickets);
+    }
+  }, [user?.tickets]);
+
+  const [userTickets, setUserTickets] = useState(user?.tickets);
+
+  const [isAnimating, setIsAnimating] = useState(false);
+  const toggleAnimating = () => {
+    setIsAnimating((prev) => !prev);
+  };
+  const [showResult, setShowResult] = useState(false);
+  const toggleResult = () => {
+    setShowResult((prev) => !prev);
+  };
+  const [gachaResultItems, setGachaResultItems] = useState<string[]>([]);
+
+  const [showPaymentBoard, setShowPaymentBoard] = useState(false);
   const toggleBoard = () => {
-    setShowBoard((prev) => !prev);
+    setShowPaymentBoard((prev) => !prev);
   };
 
   const [selectedBanner, setSelectedBanner] =
@@ -37,23 +56,36 @@ export default function GachaPage() {
   };
 
   const validateSufficient = (amount: any) => {
-    if ((user?.tickets ?? 0) >= amount) return true;
+    if ((userTickets ?? 0) >= amount) return true;
     else return false;
   };
   const handleGacha = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    const gachaAmmount = e.currentTarget.value;
-    const isValid = validateSufficient(gachaAmmount);
-    if (!isValid) {
+    const gachaAmount = e.currentTarget.value;
+    if (!validateSufficient(gachaAmount)) {
       toggleBoard();
       return;
     }
 
-    const amount = "x" + gachaAmmount;
+    const amount = "x" + gachaAmount;
     const sendGachaForm: GachaRequest = {
       wish: amount,
       wish_type: selectedBanner.toLowerCase(),
     };
-    const resultItem = await sendGachaRequest(sendGachaForm);
+
+    const resultItem: GachaResposne = await sendGachaRequest(sendGachaForm);
+
+    if (resultItem && resultItem.added_items) {
+      setGachaResultItems(resultItem.added_items);
+      toggleAnimating();
+
+      // resolve try catch error here
+      setUserTickets(resultItem.remaining_tickets);
+
+      setTimeout(() => {
+        toggleAnimating();
+        toggleResult();
+      }, 3000);
+    }
   };
   const handlePayment = () => {
     toggleBoard();
@@ -102,13 +134,74 @@ export default function GachaPage() {
             alt="game-ticket"
             priority
           />
-          {user?.tickets ?? 0}
+          {userTickets}
           <button className="btn btn-light rounded-5" onClick={handlePayment}>
             +
           </button>
         </div>
       </div>
-      {showBoard && (
+      {/* Animation part */}
+      {isAnimating && (
+        <div
+          className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
+          style={{
+            zIndex: 1100,
+            background: "rgba(0, 0, 0, 0.8)",
+          }}
+        >
+          {/* thay class hoac lottie vao day */}
+          <div className="text-warning fw-bold fs-1 dynamic-pulse-effect">
+            Bảng gacha tạm thời thôi nha
+          </div>
+        </div>
+      )}
+      {/* AddedItem Part */}
+      {showResult && (
+        <div
+          className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
+          style={{
+            zIndex: 1200,
+            background: "rgba(0, 0, 0, 0.85)",
+            cursor: "pointer",
+          }}
+          onClick={toggleResult}
+        >
+          <div
+            className="bg-dark text-white border border-warning rounded-3 p-4 text-center"
+            style={{ maxWidth: "600px", width: "90%" }}
+          >
+            <h3 className="text-warning fw-bold mb-4">Reward</h3>
+            <div className="d-flex flex-wrap justify-content-center gap-3 my-3">
+              {gachaResultItems.map((item, index) => {
+                const folder =
+                  selectedBanner === banner_1_name ? "clothes" : "skills";
+                const typeFolder = item.startsWith("shirt_")
+                  ? "SHIRT"
+                  : item.startsWith("acc_")
+                    ? "ACC"
+                    : "SHOES";
+                return (
+                  <div
+                    key={index}
+                    className="d-flex flex-column align-items-center bg-secondary p-2 rounded"
+                  >
+                    <Image
+                      src={`/${folder}/${typeFolder}/${item}.png`}
+                      alt={item}
+                      width={80}
+                      height={80}
+                      className="border rounded bg-light"
+                    />
+                  </div>
+                );
+              })}
+            </div>
+            <div>Click anywhere to close</div>
+          </div>
+        </div>
+      )}
+      {/* PaymentBoard Part */}
+      {showPaymentBoard && (
         <div
           className="position-absolute vh-100 vw-100"
           style={{
@@ -116,7 +209,7 @@ export default function GachaPage() {
           }}
         ></div>
       )}
-      {showBoard && (
+      {showPaymentBoard && (
         <div
           className="position-absolute bg-white border rounded-3 shadow p-3 w-100 d-flex align-items-center justify-content-center flex-column gap-3 text-center"
           style={{
@@ -147,6 +240,7 @@ export default function GachaPage() {
           </div>
         </div>
       )}
+      {/* Banner Part */}
       {selectedBanner === banner_1_name && (
         <Image
           src={banner_1}

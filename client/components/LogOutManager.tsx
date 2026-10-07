@@ -81,7 +81,7 @@ export default function LogOutManager() {
           onClick={toggleLogoutBoard}
           style={{
             position: "fixed",
-            bottom: "20px",
+            bottom: "10px",
             right: "200px",
             zIndex: 9999,
             padding: "10px 15px",

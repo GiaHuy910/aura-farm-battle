@@ -50,7 +50,7 @@ export default function BackgroundMusic() {
         onClick={togglePlay}
         style={{
           position: "fixed",
-          bottom: "20px",
+          bottom: "10px",
           right: "20px",
           zIndex: 9999,
           padding: "10px 15px",

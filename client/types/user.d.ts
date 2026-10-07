@@ -3,17 +3,22 @@ type User = {
   username: string;
 };
 
-type UserInfo = {
-  user_id: string;
-  username: string;
-  tickets: number;
-  equipped_skills: [string];
-  equipped_clothes: [string];
-  pity_skill_leg: number;
-  pity_clothe_leg: number;
-};
-
 type GachaRequest = {
   wish: string;
   wish_type: string;
+};
+type GachaResposne = {
+  status: string;
+  message: string;
+  added_items: sting[];
+  remaining_tickets: int;
+};
+
+type equipItemRequest = {
+  equip_item: string;
+};
+type equipItemResponse = {
+  status: string;
+  message: string;
+  equipped_item: string | "";
 };
