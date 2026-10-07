@@ -42,3 +42,11 @@
 
 - dau tien la sua lai cho dung ten api user/equip-item
 - lam 1 viec nay nha, ong hay sap xep toan bo code trong controller lai sao cho request,response,handler cua moi api dung gan nhau cho de nhin hon (bay h la no dang request dung 1 ben, handler dung 1 ben kieu v)
+
+### task 9
+
+- them remaining_tickets vao trong response cua api user/gacha (nam chung voi addedItem, status,message)
+
+### task 10
+
+- tui ms check lai logic cua api pool thi co ty van de, viec ong dang cho clothe : [Clothe] voi skill : [Skill] khien cho no tao ra cac field khong can thiet nhu in_pool, item_name rong de tra ve luon do
