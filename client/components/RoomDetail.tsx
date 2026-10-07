@@ -1,5 +1,5 @@
 "use client";
-import { useState, Suspense, use, useEffect } from "react";
+import { useState, useEffect } from "react";
 
 import { useRooms } from "@/api/rooms";
 
@@ -23,15 +23,17 @@ export default function RoomDetail() {
               className="d-flex align-items-center justify-content-between rounded p-1"
               style={{ border: "5px solid white" }}
             >
-              <div className="ps-2">{room.room_name}</div>
+              <div className="ps-2" style={{ maxWidth: "300px" }}>
+                {room.room_name}
+              </div>
               <div className="ps-2">
                 {room.is_private ? <div>Private</div> : <div>Public</div>}
               </div>
               <button
                 className="btn btn-secondary rounded-0 d-flex"
-                disabled={!(room.occupancy === 1)}
+                disabled={!(room.occupation === "1/2")}
               >
-                <div>{room.occupancy}/2 </div>
+                <div>{room.occupation}</div>
                 <div className="ms-2">Join</div>
               </button>
             </div>

@@ -6,6 +6,6 @@ type createRoomForm = {
 };
 type Room = {
   room_name: string;
-  occupancy: number;
+  occupation: string;
   is_private: Boolean;
 };

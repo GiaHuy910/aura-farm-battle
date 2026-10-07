@@ -8,23 +8,15 @@ import page from "../../styles/page.module.css";
 import UserCharacter from "@/components/UserCharacter";
 import BackgroundButton from "@/components/BackgroundButton";
 import { useAuth } from "@/contexts/auth/useAuth";
-import { getUserOwnedItems } from "@/api/user";
+import { equipUserItem, getUserOwnedItems } from "@/api/user";
 
-const skill_1 = "/skills/na/na_1.png";
+const baseSkillsUrl = `/skills`;
+const baseClothesUrl = `/clothes`;
+
 const skill_1_name = "NA" as const;
-const skill_2 = "/skills/s1/s1_1.png";
 const skill_2_name = "S1" as const;
-const skill_3 = "/skills/s2/s2_1.png";
 const skill_3_name = "S2" as const;
-const skill_4 = "/skills/ult/ult_1.png";
 const skill_4_name = "ULT" as const;
-
-const SKILL_IMAGES: Record<string, string> = {
-  na_1: skill_1,
-  s1_1: skill_2,
-  s2_1: skill_3,
-  ult_1: skill_4,
-};
 
 const clothe_1_name = "ACC" as const;
 const clothe_2_name = "SHIRT" as const;
@@ -40,38 +32,40 @@ type ClotheType =
   | typeof clothe_2_name
   | typeof clothe_3_name;
 
+type ownedItemResponse = {
+  owned_skills: [string];
+  owned_clothes: [string];
+};
+
 export default function UserPage() {
-  const { user } = useAuth();
   const router = useRouter();
-  // const ownedItems = getUserOwnedItems();
-  const ownedItems = {
-    owned_skills: [
-      "na_1",
-      "s1_1",
-      "s2_1",
-      "ult_1",
-      "ult_2",
-      "na_2",
-      "s1_3",
-      "s2_4",
-      "s2_5",
-      "ult_6",
-    ],
-    owned_clothes: [
-      "acc_1",
-      "shirt_1",
-      "shoes_1",
-      "shirt_2",
-      "shirt_3",
-      "shoes_2",
-      "shoes_4",
-      "acc_5",
-    ],
-  };
+  const { user, loading } = useAuth();
+
+  const [equippedClothes, setEquippedClothes] = useState<string[]>([
+    "acc_1",
+    "shirt_1",
+    "shoes_1",
+  ]);
+  const [equippedSkills, setEquippedSkills] = useState<string[]>([
+    "na_1",
+    "s1_1",
+    "s2_1",
+    "ult_1",
+  ]);
+
   useEffect(() => {
-    setOwnedClothes(ownedItems.owned_clothes);
-    setOwnedSkills(ownedItems.owned_skills);
-  }, []);
+    if (!loading && user) {
+      if (user.equipped_clothes) setEquippedClothes(user.equipped_clothes);
+      if (user.equipped_skills) setEquippedSkills(user.equipped_skills);
+
+      const fetchOwnedItems = async () => {
+        const ownedItems: ownedItemResponse = await getUserOwnedItems();
+        setOwnedClothes(ownedItems.owned_clothes);
+        setOwnedSkills(ownedItems.owned_skills);
+      };
+      fetchOwnedItems();
+    }
+  }, [loading, user]);
 
   const [showSkills, setShowSkills] = useState(false);
   const [ownedSkills, setOwnedSkills] = useState<string[]>([
@@ -122,10 +116,63 @@ export default function UserPage() {
   const handleReturn = () => {
     router.push("/");
   };
-  const handleSelected = (id: string) => {};
+  const handleSelected = async (item_id: string) => {
+    const equipSend: equipItemRequest = {
+      equip_item: item_id,
+    };
+    try {
+      const data = await equipUserItem(equipSend);
+      const addedItem = data.equipped_item;
+
+      if (
+        item_id.startsWith("na_") ||
+        item_id.startsWith("s1_") ||
+        item_id.startsWith("s2_") ||
+        item_id.startsWith("ult_")
+      ) {
+        setEquippedSkills((prev) => {
+          const nextSkills = [...prev];
+          if (addedItem.startsWith("na_")) nextSkills[0] = addedItem;
+          else if (addedItem.startsWith("s1_")) nextSkills[1] = addedItem;
+          else if (addedItem.startsWith("s2_")) nextSkills[2] = addedItem;
+          else if (addedItem.startsWith("ult_")) nextSkills[3] = addedItem;
+          return nextSkills;
+        });
+      } else {
+        setEquippedClothes((prev) => {
+          const nextClothes = [...prev];
+          if (addedItem.startsWith("acc_")) nextClothes[0] = addedItem;
+          else if (addedItem.startsWith("shirt_")) nextClothes[1] = addedItem;
+          else if (addedItem.startsWith("shoes_")) nextClothes[2] = addedItem;
+          return nextClothes;
+        });
+      }
+    } catch (error) {
+      // resolve error
+      console.error("Error while processing equipment", error);
+    }
+  };
+
+  if (loading || equippedClothes.length === 0 || equippedSkills.length === 0) {
+    return (
+      <div className="position-relative d-flex justify-content-center align-items-center">
+        Loading character...
+      </div>
+    );
+  }
+
+  const clothes_0_equipped = "/clothes/base-character.png";
+  const clothes_1_equipped = `/clothes/ACC/${equippedClothes[0]}.png`;
+  const clothes_2_equipped = `/clothes/SHIRT/${equippedClothes[1]}.png`;
+  const clothes_3_equipped = `/clothes/SHOES/${equippedClothes[2]}.png`;
+
+  const skill_1_equipped = `/skills/NA/${equippedSkills[0]}.png`;
+  const skill_2_equipped = `/skills/S1/${equippedSkills[1]}.png`;
+  const skill_3_equipped = `/skills/S2/${equippedSkills[2]}.png`;
+  const skill_4_equipped = `/skills/ULT/${equippedSkills[3]}.png`;
   return (
     <div
-      className={`${page.roomsPage} container h-100 position-relative overflow-hidden`}
+      className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-5`}
       style={{ border: "5px solid darkgoldenrod", background: "transparent" }}
     >
       <button
@@ -167,24 +214,29 @@ export default function UserPage() {
             {clothe_3_name}
           </button>
         </div>
-        <div>
+        <div className="pt-2">
           <button className="close-btn-left" onClick={handleCloseClothes}>
             &times;
           </button>
           <div className="d-flex justify-content-start h-100">
-            <div className="d-flex flex-column h-100">
-              {ownedClothes?.map((clothe_name) => {
-                const currentImage = SKILL_IMAGES[clothe_name];
-                const isMatch =
-                  clothe_name.split("_")[0].toUpperCase() ===
-                  selectedClotheType;
+            <div
+              className="d-flex flex-row flex-wrap overflow-auto gap-2"
+              style={{ height: "70vh" }}
+            >
+              {ownedClothes?.map((clothe_id) => {
+                const prefixClothes = clothe_id.split("_")[0].toUpperCase();
+                const currentImage = `${baseClothesUrl}/${prefixClothes}/${clothe_id}.png`;
+                const isMatch = prefixClothes === selectedClotheType;
+                const isEquipped = equippedClothes.includes(clothe_id);
                 return (
                   isMatch && (
-                    <div className="dropdown-content" key={clothe_name}>
+                    <div className={`dropdown-content`} key={clothe_id}>
                       <BackgroundButton
                         imageUrl={currentImage}
-                        buttonName={clothe_name}
-                        onOpen={() => handleSelected(clothe_name)}
+                        buttonName={clothe_id}
+                        onOpen={() => handleSelected(clothe_id)}
+                        isDisabled={isEquipped}
+                        isEquipped={isEquipped}
                       />
                     </div>
                   )
@@ -202,30 +254,38 @@ export default function UserPage() {
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_1}
+                imageUrl={skill_1_equipped}
                 buttonName={skill_1_name}
                 onOpen={handleShowSkills}
+                isDisabled={false}
+                isEquipped={false}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_2}
+                imageUrl={skill_2_equipped}
                 buttonName={skill_2_name}
                 onOpen={handleShowSkills}
+                isDisabled={false}
+                isEquipped={false}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_3}
+                imageUrl={skill_3_equipped}
                 buttonName={skill_3_name}
                 onOpen={handleShowSkills}
+                isDisabled={false}
+                isEquipped={false}
               />
             </div>
             <div className="component-item">
               <BackgroundButton
-                imageUrl={skill_4}
+                imageUrl={skill_4_equipped}
                 buttonName={skill_4_name}
                 onOpen={handleShowSkills}
+                isDisabled={false}
+                isEquipped={false}
               />
             </div>
           </div>
@@ -237,7 +297,12 @@ export default function UserPage() {
         >
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
             <div className="component-item">
-              <UserCharacter />
+              <UserCharacter
+                base_user_url={clothes_0_equipped}
+                acc_user_url={clothes_1_equipped}
+                shirt_user_url={clothes_2_equipped}
+                shoes_user_url={clothes_3_equipped}
+              />
             </div>
             <div className="component-item">
               <button
@@ -286,23 +351,29 @@ export default function UserPage() {
             {skill_4_name}
           </button>
         </div>
-        <div>
+        <div className="pt-2">
           <button className="close-btn-right" onClick={handleCloseSkills}>
             &times;
           </button>
           <div className="d-flex justify-content-end h-100">
-            <div className="d-flex flex-column h-100">
-              {ownedSkills?.map((skill_name) => {
-                const currentImage = SKILL_IMAGES[skill_name];
-                const isMatch =
-                  skill_name.split("_")[0].toUpperCase() === selectedSkillType;
+            <div
+              className="d-flex flex-column flex-wrap gap-2"
+              style={{ height: "70vh" }}
+            >
+              {ownedSkills?.map((skill_id) => {
+                const prefixSkill = skill_id.split("_")[0].toUpperCase();
+                const currentImage = `${baseSkillsUrl}/${prefixSkill}/${skill_id}.png`;
+                const isMatch = prefixSkill === selectedSkillType;
+                const isEquipped = equippedSkills.includes(skill_id);
                 return (
                   isMatch && (
-                    <div className="dropdown-content" key={skill_name}>
+                    <div className={`dropdown-content`} key={skill_id}>
                       <BackgroundButton
                         imageUrl={currentImage}
-                        buttonName={skill_name}
-                        onOpen={() => handleSelected(skill_name)}
+                        buttonName={skill_id}
+                        onOpen={() => handleSelected(skill_id)}
+                        isDisabled={isEquipped}
+                        isEquipped={isEquipped}
                       />
                     </div>
                   )

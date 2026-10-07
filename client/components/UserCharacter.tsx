@@ -1,11 +1,17 @@
 import Image from "next/image";
 
-const base_char = "/clothes/base-character.png";
-const acc_char = "/clothes/accs/acc_1.png";
-const shirt_char = "/clothes/shirts/shirt_1.png";
-const shoes_char = "/clothes/shoes/shoes_1.png";
-
-const UserCharacter = () => {
+type Props = {
+  base_user_url: string;
+  acc_user_url: string;
+  shirt_user_url: string;
+  shoes_user_url: string;
+};
+const UserCharacter = ({
+  base_user_url,
+  acc_user_url,
+  shirt_user_url,
+  shoes_user_url,
+}: Props) => {
   return (
     <div
       className="position-relative"
@@ -19,7 +25,7 @@ const UserCharacter = () => {
         className="position-absolute"
         width={256}
         height={256}
-        src={base_char}
+        src={base_user_url}
         alt="base_char"
         priority
       />
@@ -27,7 +33,7 @@ const UserCharacter = () => {
         className="position-absolute "
         width={256}
         height={256}
-        src={shoes_char}
+        src={shoes_user_url}
         alt="shoes_char"
         priority
       />
@@ -35,7 +41,7 @@ const UserCharacter = () => {
         className="position-absolute"
         width={256}
         height={256}
-        src={shirt_char}
+        src={shirt_user_url}
         alt="shirt_char"
         priority
       />
@@ -43,7 +49,7 @@ const UserCharacter = () => {
         className="position-absolute"
         width={256}
         height={256}
-        src={acc_char}
+        src={acc_user_url}
         alt="shoes_char"
         priority
       />

@@ -10,3 +10,13 @@ type AuthMeResponse = {
   };
   me: UserInfo;
 };
+
+type UserInfo = {
+  user_id: string;
+  username: string;
+  tickets: number;
+  equipped_skills: string[];
+  equipped_clothes: string[];
+  pity_skill_leg: number;
+  pity_clothe_leg: number;
+};
