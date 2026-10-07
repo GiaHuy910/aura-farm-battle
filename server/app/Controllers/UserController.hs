@@ -42,104 +42,102 @@ import qualified Model.Clothe as Clothe
 import qualified Model.Skill as Skill
 import Controllers.AuthController (withAuthenticatedUser)
 
--- ============================================================================
--- 1. RESPONSE MODELS (Khớp 100% với tên Key trong API Spec)
--- ============================================================================
 
 -- GET user/tickets -> {"tickets": 100}
 data TicketsResponse = TicketsResponse { tickets :: Int } deriving (Show, Generic)
 instance ToJSON TicketsResponse
-
-
--- GET user/equipped_skills -> {"equipped_skills": ["na_1", "s1_1", "s2_1", "ult_1"]}
-data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
-instance ToJSON EquippedSkillsResponse
-
--- GET user/owned_skills -> {"owned_skills": ["na_1", "s1_1", ...]}
-data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
-instance ToJSON OwnedSkillsResponse
-
--- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
-data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
-instance ToJSON EquippedClothesResponse
-
--- GET user/owned_clothes -> {"owned_clothes": ["acc_1", "shirt_1", ...]}
-data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
-instance ToJSON OwnedClothesResponse
-
-data OwnedItemsResponse = OwnedItemsResponse
-    {
-        owned_skills :: [Text],
-        owned_clothes :: [Text]
-    }
-                        deriving (Show, Generic)
-instance ToJSON OwnedItemsResponse
-
-data GachaResponse = GachaResponse
-  { status :: Text
-  , message :: Text
-  , added_items  :: Maybe [Text]
-  } deriving (Show, Generic)
-instance ToJSON GachaResponse
-
-data GachaRequest = GachaRequest
-    {
-        wish :: Text
-    ,   wish_type :: Text
-    } deriving (Show, Generic)
-instance FromJSON GachaRequest
-
-data EquipRequest = EquipRequest
-    {
-        equip_item :: Text
-    } deriving (Show, Generic)
-instance FromJSON EquipRequest
-
-data EquipResponse = EquipResponse
-    {
-        status :: Text,
-        message :: Text,
-        equipped_item :: Text
-    } deriving (Show, Generic)
-instance ToJSON EquipResponse
-
-
--- ============================================================================
--- 2. HANDLERS (Đã đổi tên đồng bộ với API)
--- ============================================================================
 
 -- GET user/tickets
 getTicketsHandler :: Maybe String -> Handler TicketsResponse
 getTicketsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ TicketsResponse u.tickets
 
 
+-- GET user/equipped_skills -> {"equipped_skills": ["na_1", "s1_1", "s2_1", "ult_1"]}
+data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
+instance ToJSON EquippedSkillsResponse
 -- GET user/equipped_skills
 getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
 getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> 
     return $ EquippedSkillsResponse [u.equipped_na, u.equipped_s1, u.equipped_s2, u.equipped_ult]
 
+-- GET user/owned_skills -> {"owned_skills": ["na_1", "s1_1", ...]}
+data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
+instance ToJSON OwnedSkillsResponse
 -- GET user/owned_skills
 getOwnedSkillsHandler :: Maybe String -> Handler OwnedSkillsResponse
 getOwnedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedSkillsResponse u.owned_skills
 
+-- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
+data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
+instance ToJSON EquippedClothesResponse
+-- GET user/owned_clothes
+getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
+getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
+
+-- GET user/owned_clothes -> {"owned_clothes": ["acc_1", "shirt_1", ...]}
+data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
+instance ToJSON OwnedClothesResponse
 -- GET user/equipped_clothes
 getEquippedClothesHandler :: Maybe String -> Handler EquippedClothesResponse
 getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> 
     return $ EquippedClothesResponse [u.equipped_acc, u.equipped_shirt, u.equipped_shoes]
 
--- GET user/owned_clothes
-getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
-getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
-
+data OwnedItemsResponse = OwnedItemsResponse{ owned_skills :: [Text], owned_clothes :: [Text] } deriving (Show, Generic)
+instance ToJSON OwnedItemsResponse
 getOwnedItemsHandler :: Maybe String -> Handler OwnedItemsResponse
 getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
     return $ OwnedItemsResponse { owned_skills = u.owned_skills, owned_clothes = u.owned_clothes }
 
+data GachaRequest = GachaRequest{wish :: Text, wish_type :: Text } deriving (Show, Generic)
+instance FromJSON GachaRequest
+data GachaResponse = GachaResponse{ status :: Text, message :: Text, added_items  :: Maybe [Text]} deriving (Show, Generic)
+instance ToJSON GachaResponse
+getGachaHandler :: Maybe String -> GachaRequest -> Handler GachaResponse
+getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id
+    -- 1. Xác định số lượng vé cần trừ
+    let (count, isValidCount) = case req.wish of
+                                  "x1"  -> (1, True)
+                                  "x10" -> (10, True)
+                                  _     -> (0, False)         
+    if not isValidCount
+        then return $ GachaResponse "failure" "Quantity not valid" Nothing
+        else do
+            -- 2. Trừ vé
+            success <- liftIO $ deductTickets uid count
+            if not success
+                then return $ GachaResponse "failure" "Too Poor huhu" Nothing -- Báo lỗi y hệt spec
+                else do
+                    -- 3. Phân nhánh xử lý theo loại gacha
+                    case req.wish_type of
+                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u
+                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u
+                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing
 
+data EquipRequest = EquipRequest{equip_item :: Text} deriving (Show, Generic)
+instance FromJSON EquipRequest
+data EquipResponse = EquipResponse{status :: Text,message :: Text,equipped_item :: Text} deriving (Show, Generic)
+instance ToJSON EquipResponse
+getEquipItemHandler :: Maybe String -> EquipRequest -> Handler EquipResponse
+getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
+    let targetItem = req.equip_item
+        uid = u.user_id
 
--- ============================================================================
--- 3. HỆ THỐNG GACHA
--- ============================================================================
+    case categorizeItem targetItem of
+        Nothing ->
+            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
+
+        Just (category, dbField) -> do
+            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
+            let isOwned = case category of
+                    SkillType  -> targetItem `elem` u.owned_skills
+                    ClotheType -> targetItem `elem` u.owned_clothes
+
+            if not isOwned
+                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
+                else do
+                    liftIO $ updateEquippedItem uid dbField targetItem
+                    return $ EquipResponse "success" "Trang bị thành công!" targetItem
 
 getWeight :: Text -> Int
 getWeight "Mythical"  = 1     --pity 0
@@ -180,32 +178,6 @@ rollMultiple n currentPity pool getId getRarity = do
     (itemId, nextPity) <- rollSingle currentPity pool getId getRarity
     (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
     return (itemId : restIds, finalPity)
-
--- Handler chính xử lý gộp
-getGachaHandler :: Maybe String -> GachaRequest -> Handler GachaResponse
-getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
-    let uid = u.user_id
-    
-    -- 1. Xác định số lượng vé cần trừ
-    let (count, isValidCount) = case req.wish of
-                                  "x1"  -> (1, True)
-                                  "x10" -> (10, True)
-                                  _     -> (0, False)
-                                  
-    if not isValidCount
-        then return $ GachaResponse "failure" "Quantity not valid" Nothing
-        else do
-            -- 2. Trừ vé
-            success <- liftIO $ deductTickets uid count
-            if not success
-                then return $ GachaResponse "failure" "Too Poor huhu" Nothing -- Báo lỗi y hệt spec
-                else do
-                    -- 3. Phân nhánh xử lý theo loại gacha
-                    case req.wish_type of
-                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u
-                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u
-                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing
-
 -- Hàm con chạy logic random và cập nhật Data
 processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Handler GachaResponse
 processGacha count category getPool getId getRarity getPityFunc pityField uid u = do
@@ -234,25 +206,3 @@ categorizeItem item
   | "shoe_"  `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
   | otherwise                    = Nothing
 
-
--- Handler chính xử lý trang bị vật phẩm
-getEquipItemHandler :: Maybe String -> EquipRequest -> Handler EquipResponse
-getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
-    let targetItem = req.equip_item
-        uid = u.user_id
-
-    case categorizeItem targetItem of
-        Nothing ->
-            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
-
-        Just (category, dbField) -> do
-            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
-            let isOwned = case category of
-                    SkillType  -> targetItem `elem` u.owned_skills
-                    ClotheType -> targetItem `elem` u.owned_clothes
-
-            if not isOwned
-                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
-                else do
-                    liftIO $ updateEquippedItem uid dbField targetItem
-                    return $ EquipResponse "success" "Trang bị thành công!" targetItem
