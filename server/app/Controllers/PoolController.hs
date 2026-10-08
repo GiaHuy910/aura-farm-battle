@@ -24,7 +24,6 @@ data PoolData = PoolData
     {
         item_id  :: Text
         , item_name :: Text
-        , rarity :: Text
     } deriving(Show, Generic)
 instance ToJSON PoolData
 
@@ -53,7 +52,6 @@ clothesToPoolData c = PoolData
     {
         item_id = c.clothe_id
     ,   item_name = c.clothe_name
-    ,   rarity = c.rarity
     }
 
 skillsToPoolData :: Skill -> PoolData
@@ -61,5 +59,4 @@ skillsToPoolData s = PoolData
     {
         item_id = s.skill_id
     ,   item_name = s.skill_name
-    ,   rarity = s.rarity
     }
