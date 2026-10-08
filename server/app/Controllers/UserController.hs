@@ -205,4 +205,3 @@ categorizeItem item
   | "shoes_" `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
   | "shoe_"  `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
   | otherwise                    = Nothing
-
