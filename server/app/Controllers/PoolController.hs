@@ -52,8 +52,8 @@ skillToItem s = SkillPoolItem
   }
 
 -- Handler xử lý
-getPoolHandler :: Maybe String -> Handler PoolResponse
-getPoolHandler _cookie = do
+getPoolHandler :: Handler PoolResponse
+getPoolHandler = do
     rawClothes <- liftIO getClothesPool
     rawSkills  <- liftIO getSkillsPool
     
