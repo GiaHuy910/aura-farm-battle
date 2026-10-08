@@ -1,3 +1,7 @@
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE OverloadedStrings #-}
+{-# LANGUAGE OverloadedRecordDot #-}
+{-# LANGUAGE DuplicateRecordFields #-}
 module Controllers.PoolController where
 
 import GHC.Generics (Generic)
@@ -6,46 +10,54 @@ import Data.Text (Text)
 import Servant
 import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), getSkillsPool)
+import Control.Monad.IO.Class (liftIO)
 
--- 1. Struct dữ liệu từng Item trong Pool
-data PoolData = PoolData
-  { item_id   :: Text
-  , item_name :: Text
+-- DTO cho từng món Clothe trong Pool
+data ClothePoolItem = ClothePoolItem
+  { clothe_id   :: Text
+  , clothe_name :: Text
+  , rarity      :: Text
   } deriving (Show, Generic)
+instance ToJSON ClothePoolItem
 
-instance ToJSON PoolData
+-- DTO cho từng món Skill trong Pool
+data SkillPoolItem = SkillPoolItem
+  { skill_id   :: Text
+  , skill_name :: Text
+  , rarity     :: Text
+  } deriving (Show, Generic)
+instance ToJSON SkillPoolItem
 
--- 2. Struct Response trả về (dùng số ít `clothe` và `skill` )
+-- Struct Response chính cho API GET /pool
 data PoolResponse = PoolResponse
-  { clothe :: [PoolData]
-  , skill  :: [PoolData]
+  { clothe :: [ClothePoolItem]
+  , skill  :: [SkillPoolItem]
   } deriving (Show, Generic)
-
 instance ToJSON PoolResponse
 
--- 3. Các hàm Map dữ liệu
-clothesToPoolData :: Clothe -> PoolData
-clothesToPoolData c = PoolData
-  { item_id   = c.clothe_id
-  , item_name = c.clothe_name
+-- Mapper cho Clothe
+clotheToItem :: Clothe -> ClothePoolItem
+clotheToItem c = ClothePoolItem
+  { clothe_id   = c.clothe_id
+  , clothe_name = c.clothe_name
+  , rarity      = c.rarity
   }
 
-skillsToPoolData :: Skill -> PoolData
-skillsToPoolData s = PoolData
-  { item_id   = s.skill_id
-  , item_name = s.skill_name
+-- Mapper cho Skill
+skillToItem :: Skill -> SkillPoolItem
+skillToItem s = SkillPoolItem
+  { skill_id   = s.skill_id
+  , skill_name = s.skill_name
+  , rarity     = s.rarity
   }
 
--- 4. Handler API
+-- Handler xử lý
 getPoolHandler :: Maybe String -> Handler PoolResponse
 getPoolHandler _cookie = do
     rawClothes <- liftIO getClothesPool
     rawSkills  <- liftIO getSkillsPool
     
-    let cleanClothes = Prelude.map clothesToPoolData rawClothes
-        cleanSkills  = Prelude.map skillsToPoolData rawSkills
-        
     return $ PoolResponse
-      { clothe = cleanClothes
-      , skill  = cleanSkills
+      { clothe = Prelude.map clotheToItem rawClothes
+      , skill  = Prelude.map skillToItem rawSkills
       }
