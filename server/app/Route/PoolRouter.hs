@@ -9,5 +9,4 @@ import Controllers.PoolController( PoolResponse(..) ) -- Nhớ import handler
 
 type PoolRouter =
     "pool"
-        :> Header "Cookie" String
         :> Get '[JSON] PoolResponse

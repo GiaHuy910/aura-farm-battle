@@ -48,10 +48,10 @@ skillToDoc s =
 
 getSkillsPool :: IO [Skill]
 getSkillsPool = runDB $ do
-    docs <- find (select ["in_pool" =: True] "skills") >>= rest
+    docs <- find ((select ["in_pool" =: True] "skills") {project = ["skill_id" =: (1 :: Int),"skill_name" =: (1::Int), "rarity" =: (1 :: Int)]}) >>= rest
     return (map docToSkill docs)
 
 getSkillsByIds :: [Text] -> IO [Skill]
 getSkillsByIds ids = runDB $ do
-    docs <- find (select ["skill_id" =: ["$in" =: ids]] "skills") >>= rest
+    docs <- find ((select ["skill_id" =: ["$in" =: ids]] "skills") {project = ["skill_id" =: (1:: Int),"skill_name" =: (1::Int), "rarity" =: (1 :: Int)]}) >>= rest
     return (map docToSkill docs)

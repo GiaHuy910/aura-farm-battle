@@ -49,10 +49,10 @@ clotheToDoc c =
 
 getClothesPool :: IO [Clothe]
 getClothesPool = runDB $ do
-    docs <- find (select ["in_pool" =: True] "clothes") >>= rest
+    docs <- find ((select ["in_pool" =: True] "clothes") {project = ["clothe_id" =: (1 :: Int),"clothe_name" =: (1 :: Int), "rarity" =: (1 ::Int)]}) >>= rest
     return (map docToClothe docs)
 
 getClothesByIds :: [Text] -> IO [Clothe]
 getClothesByIds ids = runDB $ do
-    docs <- find (select ["clothe_id" =: ["$in" =: ids]] "clothes") >>= rest
+    docs <- find ((select ["clothe_id" =: ["$in" =: ids]] "clothes") {project = ["clothe_id" =: (1:: Int),"clothe_name" =: (1 :: Int), "rarity" =: (1 :: Int)]}) >>= rest
     return (map docToClothe docs)

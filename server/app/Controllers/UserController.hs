@@ -35,7 +35,7 @@ import GHC.Generics
 import Servant
 import System.Random (randomRIO)
 
-import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity, updateEquippedItem )
+import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity, updateEquippedItem)
 import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), getSkillsPool)
 import qualified Model.Clothe as Clothe
@@ -90,30 +90,30 @@ getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
 
 data GachaRequest = GachaRequest{wish :: Text, wish_type :: Text } deriving (Show, Generic)
 instance FromJSON GachaRequest
-data GachaResponse = GachaResponse{ status :: Text, message :: Text, added_items  :: Maybe [Text]} deriving (Show, Generic)
+data GachaResponse = GachaResponse{ status :: Text, message :: Text, added_items  :: Maybe [Text], remaining_tickets :: Maybe Int} deriving (Show, Generic)
 instance ToJSON GachaResponse
 getGachaHandler :: Maybe String -> GachaRequest -> Handler GachaResponse
 getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
-    -- 1. Xác định số lượng vé cần trừ
+
     let (count, isValidCount) = case req.wish of
                                   "x1"  -> (1, True)
                                   "x10" -> (10, True)
-                                  _     -> (0, False)         
-    if not isValidCount
-        then return $ GachaResponse "failure" "Quantity not valid" Nothing
-        else do
-            -- 2. Trừ vé
-            success <- liftIO $ deductTickets uid count
-            if not success
-                then return $ GachaResponse "failure" "Too Poor huhu" Nothing -- Báo lỗi y hệt spec
-                else do
-                    -- 3. Phân nhánh xử lý theo loại gacha
-                    case req.wish_type of
-                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u
-                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u
-                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing
+                                  _     -> (0, False)
 
+    if not isValidCount
+        then return $ GachaResponse "failure" "Quantity not valid" Nothing Nothing
+        else do
+            mRemaining <- liftIO $ deductTickets uid count
+            case mRemaining of
+                Nothing -> 
+                    return $ GachaResponse "failure" "Too Poor huhu" Nothing (Just u.tickets)
+                Just remaining -> do
+                    -- Trừ vé thành công, truyền `remaining` trực tiếp vào processGacha
+                    case req.wish_type of
+                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u remaining
+                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u remaining
+                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing Nothing
 data EquipRequest = EquipRequest{equip_item :: Text} deriving (Show, Generic)
 instance FromJSON EquipRequest
 data EquipResponse = EquipResponse{status :: Text,message :: Text,equipped_item :: Text} deriving (Show, Generic)
@@ -179,19 +179,19 @@ rollMultiple n currentPity pool getId getRarity = do
     (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
     return (itemId : restIds, finalPity)
 -- Hàm con chạy logic random và cập nhật Data
-processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Handler GachaResponse
-processGacha count category getPool getId getRarity getPityFunc pityField uid u = do
+processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Int -> Handler GachaResponse
+processGacha count category getPool getId getRarity getPityFunc pityField uid u remainingTickets = do
     pool <- liftIO getPool
     if null pool
-        then return $ GachaResponse "failure" "Nothing in Pool" Nothing
+        then return $ GachaResponse "failure" "Nothing in Pool" Nothing (Just u.tickets)
         else do
             let currentPity = getPityFunc u
             (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
             
             liftIO $ addGachaItems uid category rolledIDs
             liftIO $ updatePity uid pityField finalPity
-            
-            return $ GachaResponse "success" "Success" (Just rolledIDs)
+
+            return $ GachaResponse "success" "Success" (Just rolledIDs) (Just remainingTickets)
 
 -- Hàm helper phân loại item dựa trên prefix và xác định field DB tương ứng:
 categorizeItem :: Text -> Maybe (ItemType, Text)
@@ -205,4 +205,3 @@ categorizeItem item
   | "shoes_" `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
   | "shoe_"  `T.isPrefixOf` item = Just (ClotheType, "equipped_shoes")
   | otherwise                    = Nothing
-
