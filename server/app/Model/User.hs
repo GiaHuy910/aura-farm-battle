@@ -154,19 +154,20 @@ loginUser uname pass = do
                     return (LoginSuccess uid)
                 _ -> return LoginFailed
 
-deductTickets :: Text -> Int -> IO Bool
+deductTickets :: Text -> Int -> IO (Maybe Int)
 deductTickets uid amount = runDB $ do
     mDoc <- findOne ((select ["user_id" =: uid] "user") {project = ["tickets" =: (1 :: Int)]}) --Tìm user qua user_id
     case mDoc of
-        Nothing -> return False   --Nếu k có user nào
+        Nothing -> return Nothing   --Nếu k có user nào
         Just doc -> do
             let currentTickets = fromMaybe 0 (doc !? "tickets")  --Lấy tickets và tính
             if currentTickets >= amount
                 then do
+                    let remaining = currentTickets - amount
                     modify (select ["user_id" =: uid] "user")
                            ["$inc" =: ["tickets" =: (-amount)]]
-                    return True
-                else return False
+                    return (Just remaining)
+                else return Nothing
 
 updatePity :: Text -> Text -> Int -> IO ()
 updatePity uid pityField newPity = runDB $ do
