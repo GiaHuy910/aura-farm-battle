@@ -4,6 +4,7 @@ acc_6:weird_hat
 acc_7:knight_hat
 acc_8:magic_hat
 acc_12:happy_hat
+acc_29:glasses
 UNCOMMON
 acc_4:magical_hat
 acc_10:chef_hat
@@ -19,12 +20,16 @@ EPIC
 acc_1:bunny_ear
 acc_16:horn_hat
 acc_17: plant_pot
+acc_28:bowtie
 LEGENDARY
 acc_9:conical_hat 
 acc_18:clover
 acc_19:angel
 acc_24:gladiator_helmet
+acc_25:small_angelwing
 MYTHICAL
 acc_21:samurai_hat
 acc_22:monster_hat
 acc_23:blue Superhero_helmet
+acc_26:angelwing
+acc_27:devilwing
