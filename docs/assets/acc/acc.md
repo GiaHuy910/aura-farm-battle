@@ -21,9 +21,10 @@ acc_1:bunny_ear
 acc_16:horn_hat
 acc_17: plant_pot
 acc_28:bowtie
+acc_18:clover
 LEGENDARY
 acc_9:conical_hat 
-acc_18:clover
+acc_30:mask
 acc_19:angel
 acc_24:gladiator_helmet
 acc_25:small_angelwing
