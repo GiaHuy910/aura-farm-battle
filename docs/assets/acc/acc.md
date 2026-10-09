@@ -34,3 +34,5 @@ acc_22:monster_hat
 acc_23:blue Superhero_helmet
 acc_26:angelwing
 acc_27:devilwing
+acc_31: icewing
+acc_32: bloodwing
