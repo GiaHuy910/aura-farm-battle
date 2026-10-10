@@ -49,4 +49,15 @@
 
 ### task 10
 
-- tui ms check lai logic cua api pool thi co ty van de, viec ong dang cho clothe : [Clothe] voi skill : [Skill] khien cho no tao ra cac field khong can thiet nhu in_pool, item_name rong de tra ve luon do
+- tui ms check lai logic cua api pool thi co ty van de, viec ong dang cho clothe : [Clothe] voi skill : [Skill] khien cho no tao ra cac field khong can thiet nhu in_pool, item_name rong de tra ve luo
+
+## BIG TASK 11
+
+- tui vua viet json de mo phong database vua duoc them cho no de hieu, bao gom user, ult va skill thi co chut khac biet, acc thi tuong tu voi shirt shoes cung vay. xem de hieu cau truc nhu the nao nha. ong k ro doan nao thi hoi tui mat cong lam truoc fix nhieu
+- dau tien la minh phai tu tay soan cac thuoc tinh them cua clothes va skills (soan trong database truc tiep roi moi den model ). sau do viet ham khoi tao cho clothe va skill ( de co the viet script test/kiem tra)
+- dung vay cac thong tin moi nay minh se co tra ve client nen hay them vao cac api co lien quan ( cai nao can moi tra ra nha tr)
+- chi khi da sua xong database cua clothes vs skill thi moi viet tiep user. minh se them cac thuoc tinh cua user vao model truoc, sau do them thuoc tinh vao phan khoi tao.
+- Tao 1 ham dung de tinh final_stats cho user, bang cach lay array equipped_clothes cua user, tim ra thong tin cua tung clothe va lay bonus_stats cua tung clothe cong vao nhau de ra bonus_stats cuoi cung, return xong thi ra ngoai thay thay doi gia tri ban dau "bonus_stats" cua user la xong.
+- cac field moi ben user se co tra ra bonus_stats voi final_stats luon nen hay kiem tra cac api lien quan ( cai nao can moi tra ra nha tr)
+- sau khi xong cac buoc do thi phai chay server, chay client va thu moi chuc nang xem co cho nao hong hoc hay k da roi moi qua buoc tiep theo - lam room.
+- neu qua roi thi bat dau voi viec viet websocket( tutu thoi kieu gi cung chua toi)
