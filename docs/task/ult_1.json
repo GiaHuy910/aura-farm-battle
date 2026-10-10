@@ -1,0 +1,12 @@
+{
+  "skill": {
+    "energy_consumption": 5,
+    "bonus_stats_proc": { "aura": 45 },
+    "effects": [
+      {
+        "type": "freeze",
+        "duration": 2
+      }
+    ]
+  }
+}

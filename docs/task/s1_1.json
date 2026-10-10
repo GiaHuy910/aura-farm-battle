@@ -1,0 +1,6 @@
+{
+  "skill": {
+    "bonus_stats_proc": { "aura": 15 },
+    "energy_increment": 1
+  }
+}
