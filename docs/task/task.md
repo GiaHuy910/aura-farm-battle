@@ -53,6 +53,8 @@
 
 ## BIG TASK 11
 
+- them field status : string. default "waiting" cho database room, api tao phong, cac api co tra ve phong thi tra ve cho no luon
+
 - tui vua viet json de mo phong database vua duoc them cho no de hieu, bao gom user, ult va skill thi co chut khac biet, acc thi tuong tu voi shirt shoes cung vay. xem de hieu cau truc nhu the nao nha. ong k ro doan nao thi hoi tui mat cong lam truoc fix nhieu
 - dau tien la minh phai tu tay soan cac thuoc tinh them cua clothes va skills (soan trong database truc tiep roi moi den model ). sau do viet ham khoi tao cho clothe va skill ( de co the viet script test/kiem tra)
 - dung vay cac thong tin moi nay minh se co tra ve client nen hay them vao cac api co lien quan ( cai nao can moi tra ra nha tr)
