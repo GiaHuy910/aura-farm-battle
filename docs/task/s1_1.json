@@ -1,6 +1,8 @@
 {
   "skill": {
-    "bonus_stats_proc": { "aura": 15 },
+    "skill_type": "s1",
+    "rarity": "epic",
+    "bonus_stats_proc": { "aura_mul": 2.2 },
     "energy_increment": 1
   }
 }

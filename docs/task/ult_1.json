@@ -1,7 +1,9 @@
 {
   "skill": {
     "energy_consumption": 5,
-    "bonus_stats_proc": { "aura": 45 },
+    "skill_type": "ult",
+    "rarity": "epic",
+    "bonus_stats_proc": { "aura_mul": 2.2 },
     "effects": [
       {
         "type": "freeze",
