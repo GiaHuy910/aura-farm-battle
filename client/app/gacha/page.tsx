@@ -21,7 +21,7 @@ const gacha_2_button = "10";
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
 export default function GachaPage() {
-  const { user, loading } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
@@ -145,7 +145,7 @@ export default function GachaPage() {
         <div
           className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
           style={{
-            zIndex: 1100,
+            zIndex: 3,
             background: "rgba(0, 0, 0, 0.8)",
           }}
         >
@@ -160,7 +160,7 @@ export default function GachaPage() {
         <div
           className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
           style={{
-            zIndex: 1200,
+            zIndex: 4,
             background: "rgba(0, 0, 0, 0.85)",
             cursor: "pointer",
           }}
@@ -205,7 +205,7 @@ export default function GachaPage() {
         <div
           className="position-absolute vh-100 vw-100"
           style={{
-            zIndex: 1000,
+            zIndex: 1,
           }}
         ></div>
       )}
@@ -219,7 +219,7 @@ export default function GachaPage() {
             top: "50%",
             left: "50%",
             transform: "translate(-50%, -50%)",
-            zIndex: 1050,
+            zIndex: 2,
           }}
         >
           <div className="fw-bold fs-5 text-danger">BBno money?</div>
@@ -266,6 +266,7 @@ export default function GachaPage() {
           <button
             className={`${home.optionBtn}`}
             style={{
+              padding: "10px 10px",
               color: "white",
               background: "red",
             }}
