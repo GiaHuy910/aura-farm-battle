@@ -26,7 +26,6 @@ module Controllers.UserController
     , EquipResponse(..)
   ) where
 
-import Control.Monad (replicateM)
 import Control.Monad.IO.Class
 import Data.Aeson hiding (Result(..))
 import Data.Text (Text)
