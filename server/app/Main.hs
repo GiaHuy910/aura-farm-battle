@@ -2,117 +2,82 @@
 module Main where
 
 import Data.Text (Text)
-import qualified Data.Text as T
 
-import Model.Clothe (createClothe)
 import Model.Skill (createSkill, Effect(..), countSkills)
-import Config.GameConfig (userBaseAura, rarityBase, userTotalAura, clotheFlatBase, skillBase, ultBase, allRarities, Rarity(..))
 
-data SkillSeed = SkillSeed
-  { seedName           :: Text
-  , seedRarity         :: Text
-  , seedIsUlt          :: Bool
-  , seedConsumption    :: Int   
-  , seedRecovery       :: Int   
-  , seedEffectType     :: Text 
-  , seedEffectDuration :: Int  
-  }
-normal :: Text -> Text -> Int -> SkillSeed
-normal name r recovery = SkillSeed name r False 0 recovery "" 0
+noEffect :: Effect
+noEffect = Effect { effect_type = "", effect_duration = 0 }
 
-ult :: Text -> Text -> Int -> Text -> Int -> SkillSeed
-ult name r consumption effType effDur =
-  SkillSeed name r True consumption 0 effType effDur
+normal :: Text -> Text -> Text -> Text -> Int -> IO ()
+normal sid sType name r recovery =
+  createSkill sid name sType 0 recovery r noEffect True
 
-skillSeeds :: [SkillSeed]
-skillSeeds =
-  [ 
-    normal "default dance" "common" 1
-  , normal "asian squat" "common" 1
-  , normal "hit the griddy" "common" 1
-  , normal "hit the nae nae" "common" 1
-  , ult "happy dog" "common" 5 "freeze" 2
-  , normal "rainbow n sunshine" "common" 1
-  , normal "wise monk rage lion" "common" 1
-  , normal "dabing" "common" 1
+ult :: Text -> Text -> Text -> Int -> Text -> Int -> IO ()
+ult sid name r consumption effType effDur =
+  createSkill sid name "ult" consumption 0 r
+    (Effect { effect_type = effType, effect_duration = effDur }) True
 
-  , normal "flossing" "uncommon" 1
-  , normal "orange justice" "uncommon" 1
-  , ult "chill guy" "uncommon" 5 "freeze" 2
-  , normal "scuba" "uncommon" 1
-  , normal "piccolo" "uncommon" 1
-  , normal "sonion" "uncommon" 1
-  , ult "degloving" "uncommon" 5 "freeze" 2
-  , normal "emo kid" "uncommon" 1
+seedAll :: IO ()
+seedAll = do
 
-  , normal "city boy" "rare" 1
-  , normal "L" "rare" 1
-  , normal "the worm" "rare" 1
-  , normal "nerds" "rare" 1
-  , normal "tukang tari" "rare" 1
-  , normal "b-b-bugging" "rare" 1
-  , normal "chopass" "rare" 1
-  , ult "dispose of" "rare" 5 "freeze" 2
-  , ult "fire writing" "rare" 5 "freeze" 2
-  , normal "dihcipline" "rare" 1
+  normal "s1_1" "s1" "default dance" "common" 1
+  normal "s2_1" "s2" "asian squat" "common" 1
+  normal "s3_1" "s3" "hit the griddy" "common" 1
+  normal "s1_2" "s1" "hit the nae nae" "common" 1
+  ult "ult_1" "happy dog" "common" 5 "freeze" 2
+  normal "s2_2" "s2" "rainbow n sunshine" "common" 1
+  normal "s3_2" "s3" "wise monk rage lion" "common" 1
+  normal "s1_3" "s1" "dabing" "common" 1
 
-  , normal "freddy jumpscare" "epic" 1
-  , normal "tea baggin" "epic" 1
-  , normal "laughing stock" "epic" 1
-  , normal "baller" "epic" 1
-  , normal "bro really thought" "epic" 1
-  , normal "pickleball man" "epic" 1
-  , normal "nothing to do" "epic" 1
-  , ult "rick roll" "epic" 5 "freeze" 2
-  , normal "nae nae" "epic" 1
-  , ult "manipulator" "epic" 5 "freeze" 2
+  normal "s2_3" "s2" "flossing" "uncommon" 1
+  normal "s3_3" "s3" "orange justice" "uncommon" 1
+  ult "ult_2" "chill guy" "uncommon" 5 "freeze" 2
+  normal "s1_4" "s1" "scuba" "uncommon" 1
+  normal "s2_4" "s2" "piccolo" "uncommon" 1
+  normal "s3_4" "s3" "sonion" "uncommon" 1
+  ult "ult_3" "degloving" "uncommon" 5 "freeze" 2
+  normal "s1_5" "s1" "emo kid" "uncommon" 1
 
-  , ult "la peace" "legendary" 5 "freeze" 2
-  , normal "diamond diamond" "legendary" 1
-  , ult "sean o'pry" "legendary" 5 "freeze" 2
-  , normal "lone wolf" "legendary" 1
-  , normal "sharp chin boy" "legendary" 1
-  , normal "mogging" "legendary" 1
-  , normal "sunshine man" "legendary" 1
-  , ult "36" "legendary" 5 "freeze" 2
-  , normal "job application" "legendary" 1
-  , normal "jak does snacks" "legendary" 1
-  , normal "mewing" "legendary" 1
-  , ult "broken man" "legendary" 5 "freeze" 2
+  normal "s2_5" "s2" "city boy" "rare" 1
+  normal "s3_5" "s3" "L" "rare" 1
+  normal "s1_6" "s1" "the worm" "rare" 1
+  normal "s2_6" "s2" "nerds" "rare" 1
+  normal "s3_6" "s3" "tukang tari" "rare" 1
+  normal "s1_7" "s1" "b-b-bugging" "rare" 1
+  normal "s2_7" "s2" "chopass" "rare" 1
+  ult "ult_4" "dispose of" "rare" 5 "freeze" 2
+  ult "ult_5" "fire writing" "rare" 5 "freeze" 2
+  normal "s3_7" "s3" "dihcipline" "rare" 1
 
-  , ult "67" "mythical" 5 "freeze" 2
-  , normal "super chad" "mythical" 1
-  , normal "verity" "mythical" 1
-  , normal "kimi no nawa" "mythical" 1
-  , ult "we are Charlie Kirk" "mythical" 5 "freeze" 2
-  ]
+  normal "s1_8" "s1" "freddy jumpscare" "epic" 1
+  normal "s2_8" "s2" "tea baggin" "epic" 1
+  normal "s3_8" "s3" "laughing stock" "epic" 1
+  normal "s1_9" "s1" "baller" "epic" 1
+  normal "s2_9" "s2" "bro really thought" "epic" 1
+  normal "s3_9" "s3" "pickleball man" "epic" 1
+  normal "s1_10" "s1" "nothing to do" "epic" 1
+  ult "ult_6" "rick roll" "epic" 5 "freeze" 2
+  normal "s2_10" "s2" "nae nae" "epic" 1
+  ult "ult_7" "manipulator" "epic" 5 "freeze" 2
 
-assignTypes :: Int -> [SkillSeed] -> [(Text, SkillSeed)]
-assignTypes _ [] = []
-assignTypes n (s : xs)
-  | seedIsUlt s = ("ult", s) : assignTypes n xs
-  | otherwise   = (["s1", "s2", "s3"] !! (n `mod` 3), s) : assignTypes (n + 1) xs
+  ult "ult_8" "la peace" "legendary" 5 "freeze" 2
+  normal "s3_10" "s3" "diamond diamond" "legendary" 1
+  ult "ult_9" "sean o'pry" "legendary" 5 "freeze" 2
+  normal "s1_11" "s1" "lone wolf" "legendary" 1
+  normal "s2_11" "s2" "sharp chin boy" "legendary" 1
+  normal "s3_11" "s3" "mogging" "legendary" 1
+  normal "s1_12" "s1" "sunshine man" "legendary" 1
+  ult "ult_10" "36" "legendary" 5 "freeze" 2
+  normal "s2_12" "s2" "job application" "legendary" 1
+  normal "s3_12" "s3" "jak does snacks" "legendary" 1
+  normal "s1_13" "s1" "mewing" "legendary" 1
+  ult "ult_11" "broken man" "legendary" 5 "freeze" 2
 
-withIds :: [(Text, SkillSeed)] -> [(Text, Text, SkillSeed)]
-withIds xs =
-  [ (sType <> "_" <> T.pack (show (sameTypeBefore i sType + 1)), sType, s)
-  | (i, (sType, s)) <- zip [0 ..] xs
-  ]
-  where
-    sameTypeBefore i t = length [() | (t', _) <- take i xs, t' == t]
-
-seedSkill :: (Text, Text, SkillSeed) -> IO ()
-seedSkill (skillId, sType, s) =
-  createSkill
-    skillId
-    (seedName s)
-    sType
-    (seedConsumption s)
-    (seedRecovery s)
-    (seedRarity s)
-    Effect { effect_type = seedEffectType s
-           , effect_duration = seedEffectDuration s }
-    True
+  ult "ult_12" "67" "mythical" 5 "freeze" 2
+  normal "s2_13" "s2" "super chad" "mythical" 1
+  normal "s3_13" "s3" "verity" "mythical" 1
+  normal "s1_14" "s1" "kimi no nawa" "mythical" 1
+  ult "ult_13" "we are Charlie Kirk" "mythical" 5 "freeze" 2
 
 main :: IO ()
 main = do
@@ -120,6 +85,5 @@ main = do
   if existing > 0
     then putStrLn ("Skills already exist (" ++ show existing ++ "), skip seeding.")
     else do
-      let seeds = withIds (assignTypes 0 skillSeeds)
-      mapM_ seedSkill seeds
-      putStrLn ("Seeded " ++ show (length seeds) ++ " skills.")
+      seedAll
+      putStrLn "Seeded 53 skills."
