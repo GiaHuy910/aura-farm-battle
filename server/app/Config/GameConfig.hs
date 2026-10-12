@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Config.GameConfig
   ( userBaseAura
    , Rarity (..)
@@ -7,7 +8,11 @@ module Config.GameConfig
   , skillBase
   , userTotalAura 
   , ultBase
+  , textToRarity
   ) where
+
+import Data.Text(Text)
+import qualified Data.Text as T
 
 userBaseAura :: Int
 userBaseAura = 100
@@ -49,3 +54,12 @@ ultBase rarity = skillBase rarity * ultMultiplier
 
 userTotalAura :: Int -> Rarity -> Rarity -> Rarity -> Int
 userTotalAura userBase accessoryRarity shirtRarity shoesRarity = userBase + clotheFlatBase userBase accessoryRarity + clotheFlatBase userBase shirtRarity + clotheFlatBase userBase shoesRarity
+
+textToRarity :: Text -> Rarity
+textToRarity rtxt = case T.toLower rtxt of
+  "uncommon" -> UncommonBase
+  "rare"     -> RareBase
+  "epic"     -> EpicBase
+  "legendary"-> LegendaryBase
+  "mythical" -> MythicalBase
+  _          -> CommonBase

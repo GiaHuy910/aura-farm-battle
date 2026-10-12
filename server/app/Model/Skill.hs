@@ -19,7 +19,7 @@ import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 
 import Config.Database (runDB)
-import Config.GameConfig (skillBase, ultBase)
+import Config.GameConfig (Rarity(..) ,skillBase, ultBase, textToRarity)
 
 data Effect = Effect {
   effect_type :: Text,
@@ -81,7 +81,8 @@ getSkillBaseValue _     rarity = skillBase rarity
 
 createSkill :: Text -> Text -> Text -> Int -> Int -> Text -> Effect -> Bool -> IO ()
 createSkill skillId skillName skillType energyConsumption energyRecovery rarity effect inPool = do
-    let calculatedMultiplier = getSkillBaseValue skillType rarity 
+    let rarityEnum = textToRarity rarity
+    let calculatedMultiplier = getSkillBaseValue skillType rarityEnum 
     let newSkill = Skill{skill_id = skillId, skill_name = skillName, skill_type = skillType, energy_consumption = energyConsumption, energy_recovery = energyRecovery, aura_multiplier = calculatedMultiplier, rarity = rarity, effect = effect, in_pool = inPool}
     runDB $ insert_ "skills" (skillToDoc newSkill)
 
