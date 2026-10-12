@@ -16,7 +16,7 @@ legendary_base = 3.4
 mythical_base = 5.0
 
 Cách tính aura flat cho clothes
-(đây là hệ số biến động không cần config và chỉ để làm ví dụ cho giai đoạn khởi tạo 1 cloth)
+(đây là hệ số biến động chỉ cần config công thức là được )
 common_clothe_base = common_base * user_base_aura
 uncommon_clothe_base = uncommon_base * user_base_aura
 rare_clothe_base = rare_base * user_base_aura
@@ -30,7 +30,7 @@ mythical_clothe_base = mythical_base * user_base_aura
     }
 
 VÍ DỤ sau khi user đã trang bị xong 3 món epic epic epic 
-(đây là hệ số biến động và chỉ để làm ví dụ cho cách tính total aura của user sau khi khởi tạo user)
+(đây là hệ số biến động không cần config, công thức áp dụng trong kia)
 user_total_aura = user_base_aura + epic_clothe_base + epic_clothe_base + epic_clothe_base
 user_total_aura = 825
 khi này ô sẽ có field 

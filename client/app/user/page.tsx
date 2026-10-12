@@ -178,6 +178,7 @@ export default function UserPage() {
       <button
         className={`${home.optionBtn} position-absolute mt-3`}
         style={{
+          padding: "10px 10px",
           color: "white",
           background: "red",
         }}

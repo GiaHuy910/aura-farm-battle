@@ -5,10 +5,12 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
-import home from "../styles/home.module.css";
-import gameLogo from "../public/game-logo-small.png";
+import home from "@/styles/home.module.css";
+import gameLogo from "@/public/game-logo-small.png";
 import LogInPage from "@/components/LogIn";
 import RegisterPage from "@/components/Register";
+import LogOutManager from "@/components/LogOutManager";
+import SettingManager from "@/components/SettingManager";
 import { useAuth } from "@/contexts/auth/useAuth";
 
 export default function Home() {
@@ -47,7 +49,7 @@ export default function Home() {
   }
   return (
     <div
-      className={`d-flex justify-content-center align-items-center vh-100 vw-100 flex-column`}
+      className={`position-relative d-flex justify-content-center align-items-center vh-100 vw-100 flex-column`}
     >
       <div
         className={`${home.logoWrapper}`}
@@ -159,6 +161,7 @@ export default function Home() {
           onSuccess={handleRefresh}
         />
       )}
+      <SettingManager />
     </div>
   );
 }

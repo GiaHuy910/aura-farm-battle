@@ -1,11 +1,22 @@
+"use client";
+
+import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-import chatBobble from "../public/chat-bobble.png";
-import mommyImage from "../public/mommy.png";
-import page from "../styles/page.module.css";
+import { useBackgroundMusic } from "@/contexts/music/useBackgroundMusic";
+import chatBobble from "@/public/chat-bobble.png";
+import mommyImage from "@/public/mommy-small.png";
+import page from "@/styles/page.module.css";
 
 const NotFound = () => {
+  const { selectSource } = useBackgroundMusic();
+
+  useEffect(() => {
+    selectSource("/404-mommy-page.mp4");
+    return () => selectSource(null);
+  }, [selectSource]);
+
   return (
     <div
       className={`${page.roomsPage} d-flex justify-content-center align-items-center not-found text-dark h-100 w-100`}
