@@ -1,7 +1,5 @@
 {
   "clothe": {
-    "bonus_stats": {
-      "aura": 10
-    }
+    "aura_bonus": 10
   }
 }

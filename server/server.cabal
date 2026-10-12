@@ -8,6 +8,7 @@ library
     hs-source-dirs:   app
     exposed-modules:  
                       Config.Database
+                    , Config.GameConfig
                     , Controllers.AuthController
                     , Controllers.RoomController
                     , Controllers.UserController
@@ -41,10 +42,11 @@ library
 
 -- 2. EXECUTABLE: Chạy API Server chính
 executable server-app
-    main-is:          Server.hs
+    main-is:          Main.hs
     hs-source-dirs:   app
     other-modules:  
         Config.Database
+        , Config.GameConfig
         , Controllers.AuthController
         , Controllers.RoomController
         , Controllers.UserController

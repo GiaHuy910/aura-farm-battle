@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+
+import home from "@/styles/home.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
 
 export default function LogOutManager() {
@@ -52,8 +54,8 @@ export default function LogOutManager() {
                 </button>
                 <button
                   type="button"
-                  className="btn btn-danger px-4"
-                  style={{ borderRadius: "8px" }}
+                  className="btn px-4 text-light"
+                  style={{ borderRadius: "8px", background: "red" }}
                   onClick={handleConfirmLogout}
                 >
                   Yes
@@ -65,13 +67,12 @@ export default function LogOutManager() {
       )}
       {user && (
         <button
+          className={`${home.optionBtn}`}
           onClick={toggleLogoutBoard}
           style={{
-            padding: "10px 15px",
-            background: "#000",
+            padding: "5px 7x",
+            background: "red",
             color: "#fff",
-            borderRadius: "8px",
-            cursor: "pointer",
           }}
         >
           Log Out

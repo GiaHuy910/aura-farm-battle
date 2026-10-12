@@ -2,7 +2,7 @@
   "skill": {
     "skill_type": "s1",
     "rarity": "epic",
-    "bonus_stats_proc": { "aura_mul": 2.2 },
-    "energy_increment": 1
+    "aura_multiplier": 2.2,
+    "energy_recovery": 1
   }
 }
