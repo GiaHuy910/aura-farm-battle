@@ -26,7 +26,7 @@ data Room = Room
   , user_ids   :: [Text]
   , occupancy :: Int
   , is_private :: Bool
-  , status :: String
+  , status :: Text
   } deriving (Show)
 
 

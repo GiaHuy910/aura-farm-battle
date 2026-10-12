@@ -44,7 +44,7 @@ data CreatedRoomDetail = CreatedRoomDetail
   { room_id   :: Text
   , room_name :: Text
   , owner_id  :: Text
-  , status :: String
+  , status :: Text
   } deriving (Show, Generic)
 instance ToJSON CreatedRoomDetail
 
@@ -84,7 +84,7 @@ data RoomSummary = RoomSummary
   { room_name  :: Text
   , room_id    :: Text
   , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
-  , status     :: String
+  , status     :: Text
   } deriving (Show, Generic)
 instance ToJSON RoomSummary
 
