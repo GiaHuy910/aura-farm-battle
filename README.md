@@ -79,6 +79,9 @@ And thank you to the people whom assets was borrowed from is credited here (but 
 - "Yuta Okkotsu - Jujutsu Kaisen.
   En mode Asian Squat" Art of [animathish](https://www.instagram.com/p/DXqsFLRiJN_/) on Instagram.
 - "Rankbreaker" Item from [AOV-ArenaOfValor](https://www.arenaofvalor.com/)
+- "Do Phu Quy" for using your image ingame, Vietnamese singer [instagram](https://www.instagram.com/dophuqui/)
+- "Wowkie Zhang" for using your image ingame, Chinese singer [Youtube](https://www.youtube.com/playlist?list=PLrguboq_L_r5WMWt8vNoFYsqjRBemH75t)
+- "KHÔNG CẦN LO CHO TAO - MCK (OFFICIAL MUSIC VIDEO)" for using your image ingame, [Youtube](https://www.youtube.com/watch?v=WmHIk7QNjac&list=RDWmHIk7QNjac&start_radio=1)
 
 ### Cach khoi tao project
 
