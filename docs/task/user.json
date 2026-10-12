@@ -1,15 +1,7 @@
 {
   "user": {
-    "stats": {
-      "base_stats": {
-        "aura": 0
-      },
-      "bonus_stats": {
-        "aura": 0
-      },
-      "final_stats": {
-        "aura": 0
-      }
-    }
+    "base_aura": 100,
+    "bonus_aura": 0,
+    "final_aura": 0
   }
 }
