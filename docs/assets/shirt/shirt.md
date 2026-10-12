@@ -18,5 +18,9 @@ shirt_epic_2:police_uniform
 shirt_epic_3:wizard_robe
 
 LEGENDARY
+shirt_legend_1:cyber_mach_armor
+shirt_legend_2:gladiator_armor
 
 MYTHICAL
+shirt_myth_1:archangel_holy_armor
+shirt_myth_2:dragon_god_robe
