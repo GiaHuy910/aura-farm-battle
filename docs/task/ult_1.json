@@ -3,12 +3,10 @@
     "energy_consumption": 5,
     "skill_type": "ult",
     "rarity": "epic",
-    "bonus_stats_proc": { "aura_mul": 2.2 },
-    "effects": [
-      {
-        "type": "freeze",
-        "duration": 2
-      }
-    ]
+    "aura_multiplier": 5.5,
+    "effect": {
+      "effect_type": "freeze",
+      "effect_duration": 2
+    }
   }
 }
