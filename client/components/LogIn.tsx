@@ -57,7 +57,10 @@ export default function LogInPage({ onRegister, onLeave, onSuccess }: Props) {
         await login(LogInSend);
         onSuccess();
       } catch (error) {
-        console.error("Error Logging in:", error);
+        setErrors({
+          password: "Username or password incorrect!!",
+          username: "",
+        });
       }
     }
   };

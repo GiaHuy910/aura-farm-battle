@@ -9,7 +9,6 @@ import home from "@/styles/home.module.css";
 import gameLogo from "@/public/game-logo-small.png";
 import LogInPage from "@/components/LogIn";
 import RegisterPage from "@/components/Register";
-import LogOutManager from "@/components/LogOutManager";
 import SettingManager from "@/components/SettingManager";
 import { useAuth } from "@/contexts/auth/useAuth";
 

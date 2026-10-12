@@ -34,48 +34,42 @@ export default function BackgroundMusic({ children }: { children: ReactNode }) {
   const routeFactor = ROUTE_FACTORS[pathname] ?? 1;
   const volume = masterVolume * routeFactor;
   useEffect(() => {
-    const audio = audioRef.current;
-    if (audio) {
-      audio.volume = volume;
+    if (audioRef.current) {
+      audioRef.current.volume = volume;
     }
   }, [volume]);
-  const handleChangeVolume = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setMasterVolume(Number(e.target.value));
-  };
 
   useEffect(() => {
     const audio = audioRef.current;
-    if (!audio) return;
-
-    audio.load();
-    if (shouldPlayRef.current) {
-      audio.play().then(
-        () => setIsPlaying(true),
-        () => setIsPlaying(false),
-      );
-    }
+    if (audio && shouldPlayRef.current) audio.play().catch(() => {});
   }, [source]);
 
-  const togglePlay = async () => {
+  const togglePlay = useCallback(async () => {
     const audio = audioRef.current;
     if (!audio) return;
 
-    if (isPlaying) {
+    if (!audio.paused) {
       shouldPlayRef.current = false;
       audio.pause();
-      setIsPlaying(false);
     } else {
       shouldPlayRef.current = true;
       try {
         await audio.play();
-        setIsPlaying(true);
       } catch (error) {
         console.warn("Can not play music in error", error);
-        setIsPlaying(false);
       }
     }
-  };
-  const value = useMemo(() => ({ selectSource }), [selectSource]);
+  }, []);
+  const value = useMemo(
+    () => ({
+      selectSource,
+      isPlaying,
+      togglePlay,
+      masterVolume,
+      setMasterVolume,
+    }),
+    [selectSource, isPlaying, togglePlay, masterVolume],
+  );
   return (
     <BackgroundMusicContext.Provider value={value}>
       {children}
@@ -87,43 +81,6 @@ export default function BackgroundMusic({ children }: { children: ReactNode }) {
         onPlay={() => setIsPlaying(true)}
         onPause={() => setIsPlaying(false)}
       />
-      <input
-        type="range"
-        min={0}
-        max={1}
-        step={0.01}
-        style={{
-          width: "180px",
-          position: "fixed",
-          bottom: "60px",
-          right: "10px",
-          zIndex: 10,
-          padding: "10px 15px",
-          background: "#000",
-          color: "#fff",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-        value={volume}
-        onChange={handleChangeVolume}
-      />
-      <button
-        onClick={togglePlay}
-        style={{
-          width: "180px",
-          position: "fixed",
-          bottom: "10px",
-          right: "1000px",
-          zIndex: 10,
-          padding: "10px 15px",
-          background: "#000",
-          color: "#fff",
-          borderRadius: "8px",
-          cursor: "pointer",
-        }}
-      >
-        {isPlaying ? "MUSIC OFF" : "MUSIC ON"}
-      </button>
     </BackgroundMusicContext.Provider>
   );
 }
