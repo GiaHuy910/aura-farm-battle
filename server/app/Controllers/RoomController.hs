@@ -44,6 +44,7 @@ data CreatedRoomDetail = CreatedRoomDetail
   { room_id   :: Text
   , room_name :: Text
   , owner_id  :: Text
+  , status :: String
   } deriving (Show, Generic)
 instance ToJSON CreatedRoomDetail
 
@@ -67,12 +68,14 @@ createRoomHandler cookie req = do
           , user_ids      = [uid]  -- Gán uid lấy từ cookie
           , occupancy     = 1
           , is_private    = req.is_private
+          , status        = "waiting"
           }
     created <- liftIO $ createRoom newRoom
     let rDetail = CreatedRoomDetail
           { room_id   = created.room_id
           , room_name = created.room_name
           , owner_id  = created.owner_id
+          , status    = created.status
           }
     return $ CreateRoomResponse "success" rDetail
 
@@ -81,6 +84,7 @@ data RoomSummary = RoomSummary
   { room_name  :: Text
   , room_id    :: Text
   , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
+  , status     :: String
   } deriving (Show, Generic)
 instance ToJSON RoomSummary
 
@@ -90,10 +94,11 @@ getRoomsHandler = do
   rooms <- liftIO getRooms
   return $ map toSummary rooms
   where
-    toSummary (Room rid rname _ _ _ occ _) = RoomSummary
-      { room_name  = rname
+    toSummary (Room rid rname _ _ _ occ _ rstatus) = RoomSummary
+      { room_name  = rname 
       , room_id    = rid
       , occupation = pack (show occ ++ "/2") -- Chuyển occupancy Int -> "1/2"
+      , status     = rstatus
       }
 
 -- POST /room/joinRoom

@@ -26,6 +26,7 @@ data Room = Room
   , user_ids   :: [Text]
   , occupancy :: Int
   , is_private :: Bool
+  , status :: String
   } deriving (Show)
 
 
@@ -48,6 +49,7 @@ docToRoom doc = Room
   , user_ids   = fromMaybe []    (doc !? "user_ids")
   , occupancy = fromMaybe 0     (doc !? "occupancy")
   , is_private = fromMaybe False (doc !? "is_private")
+  , status = fromMaybe "waiting" (doc !? "status")
   }
 
 -- ==========================================
@@ -64,6 +66,7 @@ roomToDoc r =
   , "user_ids"    =: user_ids r
   , "occupancy" =: occupancy r
   , "is_private" =: is_private r
+  , "status" =: status r
   ]
 
 -- 1. Hàm tạo phòng mới
