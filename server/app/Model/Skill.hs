@@ -10,6 +10,8 @@ module Model.Skill
     , docToSkill
     , skillToDoc
     , createSkill
+    ,countSkills,
+    Effect(..)
     ) where
 
 import GHC.Generics (Generic)
@@ -75,14 +77,25 @@ skillToDoc s =
   , "effect" =: effectToDoc (effect s)
   ]
 
+textToRarity :: Text -> Rarity
+textToRarity t = case t of
+  "uncommon"  -> UncommonBase
+  "rare"      -> RareBase
+  "epic"      -> EpicBase
+  "legendary" -> LegendaryBase
+  "mythical"  -> MythicalBase
+  _           -> CommonBase 
+
+countSkills :: IO Int
+countSkills = runDB $ count (select [] "skills")
+
 getSkillBaseValue :: Text -> Rarity -> Double
 getSkillBaseValue "ult" rarity = ultBase rarity     
 getSkillBaseValue _     rarity = skillBase rarity
 
 createSkill :: Text -> Text -> Text -> Int -> Int -> Text -> Effect -> Bool -> IO ()
 createSkill skillId skillName skillType energyConsumption energyRecovery rarity effect inPool = do
-    let rarityEnum = textToRarity rarity
-    let calculatedMultiplier = getSkillBaseValue skillType rarityEnum 
+    let calculatedMultiplier = getSkillBaseValue skillType rarity 
     let newSkill = Skill{skill_id = skillId, skill_name = skillName, skill_type = skillType, energy_consumption = energyConsumption, energy_recovery = energyRecovery, aura_multiplier = calculatedMultiplier, rarity = rarity, effect = effect, in_pool = inPool}
     runDB $ insert_ "skills" (skillToDoc newSkill)
 
