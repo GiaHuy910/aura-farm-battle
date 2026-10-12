@@ -1,11 +1,21 @@
 COMMON
-shirt_1 : (NAME)
+shirt_common_1:patched_shirt
+shirt_common_2:sack_cloth
+
 
 UNCOMMON
+shirt_uncommon_1:chef_uniform
+shirt_uncommon_2:scout_tunic
 
 RARE
+shirt_rare_1:winter_down_jacket
+shirt_rare_2:lady_dress
+shirt_rare_3:taoist_robe
 
 EPIC
+shirt_epic_1:viking_armor
+shirt_epic_2:police_uniform
+shirt_epic_3:wizard_robe
 
 LEGENDARY
 
