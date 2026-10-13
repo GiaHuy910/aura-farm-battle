@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Config.GameConfig
   ( userBaseAura
    , Rarity (..)
@@ -8,6 +9,7 @@ module Config.GameConfig
   , userTotalAura 
   , ultBase
   ) where
+
 
 userBaseAura :: Int
 userBaseAura = 100
