@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 
 import page from "@/styles/page.module.css";
 import home from "@/styles/home.module.css";
+import { getBorderColor } from "@/helpers/getBorderColor";
 import { useAuth } from "@/contexts/auth/useAuth";
+import { usePool } from "@/api/pool";
 import { sendGachaRequest } from "@/api/user";
 
 const banner_1 = "/gacha/background-gacha-1.jpg";
@@ -22,15 +24,8 @@ type BannerType = typeof banner_1_name | typeof banner_2_name;
 
 export default function GachaPage() {
   const { user, fetchMe } = useAuth();
+  const { poolData } = usePool();
   const router = useRouter();
-
-  useEffect(() => {
-    if (user?.tickets) {
-      setUserTickets(user.tickets);
-    }
-  }, [user?.tickets]);
-
-  const [userTickets, setUserTickets] = useState(user?.tickets);
 
   const [isAnimating, setIsAnimating] = useState(false);
   const toggleAnimating = () => {
@@ -56,7 +51,7 @@ export default function GachaPage() {
   };
 
   const validateSufficient = (amount: any) => {
-    if ((userTickets ?? 0) >= amount) return true;
+    if ((user?.tickets ?? 0) >= amount) return true;
     else return false;
   };
   const handleGacha = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -78,9 +73,7 @@ export default function GachaPage() {
       setGachaResultItems(resultItem.added_items);
       toggleAnimating();
 
-      // resolve try catch error here
       fetchMe();
-      setUserTickets(resultItem.remaining_tickets);
 
       setTimeout(() => {
         toggleAnimating();
@@ -94,6 +87,7 @@ export default function GachaPage() {
   const handleReturn = () => {
     router.push("/");
   };
+
   return (
     <div
       className={`${page.roomsPage} position-relative my-5 d-flex justify-content-center align-items-center flex-column gap-3 container w-100 h-100`}
@@ -135,7 +129,7 @@ export default function GachaPage() {
             alt="game-ticket"
             priority
           />
-          {userTickets}
+          {user?.tickets ?? 0}
           <button className="btn btn-light rounded-5" onClick={handlePayment}>
             +
           </button>
@@ -189,10 +183,23 @@ export default function GachaPage() {
                   item.startsWith(p.prefix),
                 );
                 const typeFolder = matched ? matched.folder : "";
+
+                const detailedItem =
+                  poolData?.clothe.find((c: Clothe) => c.clothe_id === item) ||
+                  poolData?.skill.find((s: Skill) => s.skill_id === item);
+                const itemRarity = detailedItem?.rarity || "common";
                 return (
                   <div
                     key={index}
                     className="d-flex flex-column align-items-center bg-secondary p-2 rounded"
+                    style={{
+                      border: getBorderColor(itemRarity),
+                      boxShadow:
+                        itemRarity !== "common"
+                          ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
+                          : "none",
+                      transition: "transform 0.2s",
+                    }}
                   >
                     <Image
                       src={`/${folder}/${typeFolder}/${item}.png`}

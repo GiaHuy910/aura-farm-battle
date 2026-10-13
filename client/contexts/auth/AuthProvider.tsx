@@ -1,46 +1,26 @@
 "use client";
-import { useEffect, useState, type ReactNode } from "react";
-import { useRouter } from "next/navigation";
+import { type ReactNode } from "react";
 
 import { AuthContext } from "./AuthContext";
-import { logOutUser, getCurrentUser, logInUser } from "../../api/auth";
+import { logOutUser, logInUser, useAuthMeSWR } from "../../api/auth";
 
 type Props = {
   children: ReactNode;
-  initialUser: UserInfo | null;
 };
 
-export const AuthProvider = ({ children, initialUser }: Props) => {
-  const [user, setUser] = useState<UserInfo | null>(initialUser);
-  const [loading, setLoading] = useState(!initialUser);
-  const router = useRouter();
-
-  const fetchMe = async () => {
-    getCurrentUser()
-      .then((user) => {
-        setUser(user);
-      })
-      .catch(() => {
-        // remove comment after done
-        // router.push("/");
-        setUser(null);
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    fetchMe();
-  }, []);
+export const AuthProvider = ({ children }: Props) => {
+  const { data, isLoading, mutate } = useAuthMeSWR();
 
   const login = async (userData: logInForm) => {
     await logInUser(userData);
+    await mutate();
+    // router.push("/");
   };
   const logout = async () => {
     try {
       await logOutUser();
-      setUser(null);
+      await mutate(null, false);
+      window.location.href = "/";
     } catch (error) {
       console.error(error);
     }
@@ -49,12 +29,11 @@ export const AuthProvider = ({ children, initialUser }: Props) => {
   return (
     <AuthContext.Provider
       value={{
-        user,
-        loading,
+        user: data?.me || null,
+        loading: isLoading,
         logout,
-        setUser,
         login,
-        fetchMe,
+        fetchMe: mutate,
       }}
     >
       {children}
