@@ -31,6 +31,8 @@ import Control.Monad.IO.Class (liftIO)
 import Data.Password.Bcrypt (PasswordHash(..), PasswordCheck(..), hashPassword, mkPassword, unPasswordHash, checkPassword)
 import Data.Text (Text, pack)
 import Config.Database (runDB)
+import Config.GameConfig (userBaseAura, userTotalAura, userBonusAura)
+import Model.Skill (textToRarity)
 --Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
@@ -49,6 +51,9 @@ data User = User
   , owned_skills  :: [Text]
   , pity_skill_leg        :: Int
   , pity_clothe_leg       :: Int
+  , base_aura             :: Int
+  , bonus_aura            :: Int
+  , total_aura            :: Int
   } deriving (Show, Generic)
 
 instance ToJSON User
@@ -88,6 +93,9 @@ docToUser doc = User
   , owned_skills  = fromMaybe [] (doc !? "owned_skills")
   , pity_skill_leg        = fromMaybe 0 (doc !? "pity_skill_leg")
   , pity_clothe_leg       = fromMaybe 0 (doc !? "pity_clothe_leg")
+  , base_aura             = fromMaybe 0 (doc !? "base_aura")
+  , bonus_aura            = fromMaybe 0 (doc !? "bonus_aura")
+  , total_aura             = fromMaybe 0 (doc !? "total_aura")
   }
 
 userToDoc :: User -> Document
@@ -105,12 +113,48 @@ userToDoc u =
   , "equipped_shoes"         =: equipped_shoes u
   , "owned_clothes" =: owned_clothes u
   , "owned_skills"  =: owned_skills u
-    , "pity_skill_leg"        =: pity_skill_leg u
-    , "pity_clothe_leg"       =: pity_clothe_leg u
+  , "pity_skill_leg"        =: pity_skill_leg u
+  , "pity_clothe_leg"       =: pity_clothe_leg u
+  , "base_aura"             =: base_aura u
+  , "bonus_aura"            =: bonus_aura u 
+  , "total_aura"            =: total_aura u
   ]
 
 data RegisterStatus = Success Text | UserAlreadyExists deriving (Show, Eq)
 data LoginStatus = LoginSuccess Text | LoginFailed deriving (Show, Eq)
+
+createUser :: Text -> Text -> IO Text
+createUser uname pass = do
+    hashedPass <- hashPassword (mkPassword pass)
+    userID <- liftIO nextRandom
+    let generatedUserID = pack (toString userID)
+        defAcc = "acc_1"
+        defShirt = "shirt_1"
+        defShoes = "shoes_1"
+        calculatedBonus = userBonusAura userBaseAura (textToRarity defAcc) (textToRarity defShirt) (textToRarity defShoes)
+        calculatedTotal = userTotalAura userBaseAura (textToRarity defAcc) (textToRarity defShirt) (textToRarity defShoes)
+    let newUser = User
+          { user_id          = generatedUserID
+          , username         = uname
+          , password         = unPasswordHash hashedPass
+          , tickets          = 0
+          , equipped_na      = "na_1"
+          , equipped_s1      = "s1_1"
+          , equipped_s2      = "s2_1"
+          , equipped_ult     = "ult_1"
+          , equipped_acc     = defAcc
+          , equipped_shirt   = defShirt
+          , equipped_shoes   = defShoes
+          , owned_clothes    = ["shoes_1", "shirt_1", "acc_1"]
+          , owned_skills     = ["ult_1", "s2_1", "s1_1", "na_1"]
+          , pity_skill_leg   = 0
+          , pity_clothe_leg  = 0
+          , base_aura        = userBaseAura 
+          , bonus_aura       = calculatedBonus
+          , total_aura       = calculatedTotal 
+          }
+    runDB $ insert_ "user" (userToDoc newUser)
+    return generatedUserID
 
 registerUser :: Text -> Text -> IO RegisterStatus
 registerUser uname pass = do
@@ -118,26 +162,7 @@ registerUser uname pass = do
     if not (null existingDocs)
         then return UserAlreadyExists
         else do
-            hashedPass <- hashPassword (mkPassword pass)
-            userID <- liftIO nextRandom
-            let generatedUserID = pack (toString userID)
-            let newUser = User
-                  { user_id = generatedUserID
-                  , username = uname
-                  , password = unPasswordHash hashedPass
-                  , tickets = 0
-                  , equipped_na = "na_1"
-                  , equipped_s1 = "s1_1"
-                  , equipped_s2 = "s2_1"
-                  , equipped_ult = "ult_1"
-                  , equipped_acc = "acc_1"
-                  , equipped_shirt = "shirt_1"
-                  , equipped_shoes = "shoes_1"
-                  , owned_clothes = ["shoes_1","shirt_1","acc_1"], owned_skills = ["ult_1","s2_1","s1_1","na_1"]
-                  , pity_skill_leg = 0
-                  , pity_clothe_leg = 0
-                  }
-            runDB $ insert_ "user" (userToDoc newUser)
+            generatedUserID <- createUser uname pass
             return (Success generatedUserID)
 
 loginUser :: Text -> Text -> IO LoginStatus
