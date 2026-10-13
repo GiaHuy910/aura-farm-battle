@@ -57,7 +57,7 @@ instance ToJSON EquippedSkillsResponse
 -- GET user/equipped_skills
 getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
 getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> 
-    return $ EquippedSkillsResponse [u.equipped_na, u.equipped_s1, u.equipped_s2, u.equipped_ult]
+    return $ EquippedSkillsResponse [u.equipped_s1, u.equipped_s2, u.equipped_s3, u.equipped_ult]
 
 -- GET user/owned_skills -> {"owned_skills": ["na_1", "s1_1", ...]}
 data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)

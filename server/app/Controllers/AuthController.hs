@@ -112,7 +112,7 @@ instance ToJSON MeResponse
 
 meHandler :: Maybe String -> Handler MeResponse
 meHandler cookieHeader = withAuthenticatedUser cookieHeader $ \u -> do
-      let skills = mapEquippedSkills u.equipped_na u.equipped_s1 u.equipped_s2 u.equipped_ult
+      let skills = mapEquippedSkills u.equipped_s1 u.equipped_s2 u.equipped_s3 u.equipped_ult
           clothes = mapEquippedClothes u.equipped_acc u.equipped_shirt u.equipped_shoes
       return $ MeResponse 
             (AuthResponse "success" "OK") 
