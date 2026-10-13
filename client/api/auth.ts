@@ -1,8 +1,28 @@
+"use client";
+
+import useSWR from "swr";
+
+import { fetcher } from "./customFetcher";
+
 const baseApi = `http://localhost:3001/auth`;
+
+export const useAuthMeSwr = () => {
+  const { data, error, isLoading, mutate } = useSWR<AuthMeResponse | undefined>(
+    `${baseApi}/me`,
+    fetcher,
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false,
+    },
+  );
+  return { data, error, isLoading, mutate };
+};
 
 export const getCurrentUser = async () => {
   const response = await fetch(`${baseApi}/me`, {
     credentials: "include",
+    method: "GET",
   });
   const data: AuthMeResponse = await response.json();
   if (!response.ok) {
