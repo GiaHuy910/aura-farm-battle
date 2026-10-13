@@ -24,18 +24,18 @@ seedAll = do
   normal "s2_1" "s2" "asian squat" "common" 1
   normal "s3_1" "s3" "hit the griddy" "common" 1
   normal "s1_2" "s1" "hit the nae nae" "common" 1
-  ult "ult_1" "happy dog" "common" 5 "freeze" 2
+  ult "ult_1" "happy dog" "common" 5 "" 0
   normal "s2_2" "s2" "rainbow n sunshine" "common" 1
   normal "s3_2" "s3" "wise monk rage lion" "common" 1
   normal "s1_3" "s1" "dabing" "common" 1
 
   normal "s2_3" "s2" "flossing" "uncommon" 1
   normal "s3_3" "s3" "orange justice" "uncommon" 1
-  ult "ult_2" "chill guy" "uncommon" 5 "freeze" 2
+  ult "ult_2" "chill guy" "uncommon" 5 "" 0
   normal "s1_4" "s1" "scuba" "uncommon" 1
   normal "s2_4" "s2" "piccolo" "uncommon" 1
   normal "s3_4" "s3" "sonion" "uncommon" 1
-  ult "ult_3" "degloving" "uncommon" 5 "freeze" 2
+  ult "ult_3" "degloving" "uncommon" 5 "" 0
   normal "s1_5" "s1" "emo kid" "uncommon" 1
 
   normal "s2_5" "s2" "city boy" "rare" 1
@@ -45,8 +45,8 @@ seedAll = do
   normal "s3_6" "s3" "tukang tari" "rare" 1
   normal "s1_7" "s1" "b-b-bugging" "rare" 1
   normal "s2_7" "s2" "chopass" "rare" 1
-  ult "ult_4" "dispose of" "rare" 5 "freeze" 2
-  ult "ult_5" "fire writing" "rare" 5 "freeze" 2
+  ult "ult_4" "dispose of" "rare" 5 "" 0
+  ult "ult_5" "fire writing" "rare" 5 "" 0
   normal "s3_7" "s3" "dihcipline" "rare" 1
 
   normal "s1_8" "s1" "freddy jumpscare" "epic" 1
@@ -56,9 +56,9 @@ seedAll = do
   normal "s2_9" "s2" "bro really thought" "epic" 1
   normal "s3_9" "s3" "pickleball man" "epic" 1
   normal "s1_10" "s1" "nothing to do" "epic" 1
-  ult "ult_6" "rick roll" "epic" 5 "freeze" 2
+  ult "ult_6" "rick roll" "epic" 5 "" 0
   normal "s2_10" "s2" "nae nae" "epic" 1
-  ult "ult_7" "manipulator" "epic" 5 "freeze" 2
+  ult "ult_7" "manipulator" "epic" 5 "" 0
 
   ult "ult_8" "la peace" "legendary" 5 "freeze" 2
   normal "s3_10" "s3" "diamond diamond" "legendary" 1

@@ -29,7 +29,6 @@ data Room = Room
   , status :: Text
   } deriving (Show)
 
-
 -- 3. Hàm lấy danh sách phòng (Rất ngắn gọn khi dùng runDB)
 getRooms :: IO [Room]
 getRooms = runDB $ do

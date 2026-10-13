@@ -40,9 +40,9 @@ data User = User
   , username      :: Text
   , password      :: Text
   , tickets       :: Int
-  , equipped_na            :: Text
   , equipped_s1            :: Text
   , equipped_s2            :: Text
+  , equipped_s3            :: Text
   , equipped_ult           :: Text
   , equipped_acc            :: Text
   , equipped_shirt         :: Text
@@ -82,9 +82,9 @@ docToUser doc = User
   , username      = fromMaybe "" (doc !? "username")
   , password      = fromMaybe "" (doc !? "password")
   , tickets       = fromMaybe 0  (doc !? "tickets")
-  , equipped_na            = fromMaybe "" (doc !? "equipped_na")
   , equipped_s1            = fromMaybe "" (doc !? "equipped_s1")
   , equipped_s2            = fromMaybe "" (doc !? "equipped_s2")
+  , equipped_s3            = fromMaybe "" (doc !? "equipped_s3")
   , equipped_ult           = fromMaybe "" (doc !? "equipped_ult")
   , equipped_acc     = fromMaybe "" (doc !? "equipped_acc")
   , equipped_shirt         = fromMaybe "" (doc !? "equipped_shirt")
@@ -104,9 +104,9 @@ userToDoc u =
   , "username"      =: username u
   , "password"      =: password u
   , "tickets"       =: tickets u
-  , "equipped_na"            =: equipped_na u
   , "equipped_s1"            =: equipped_s1 u
   , "equipped_s2"            =: equipped_s2 u
+  , "equipped_s3"            =: equipped_s3 u
   , "equipped_ult"           =: equipped_ult u
   , "equipped_acc"     =: equipped_acc u
   , "equipped_shirt"         =: equipped_shirt u
