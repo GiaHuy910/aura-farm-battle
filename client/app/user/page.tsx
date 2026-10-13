@@ -13,9 +13,9 @@ import { equipUserItem, getUserOwnedItems } from "@/api/user";
 const baseSkillsUrl = `/skills`;
 const baseClothesUrl = `/clothes`;
 
-const skill_1_name = "NA" as const;
-const skill_2_name = "S1" as const;
-const skill_3_name = "S2" as const;
+const skill_1_name = "S1" as const;
+const skill_2_name = "S2" as const;
+const skill_3_name = "S3" as const;
 const skill_4_name = "ULT" as const;
 
 const clothe_1_name = "ACC" as const;
@@ -39,7 +39,7 @@ type ownedItemResponse = {
 
 export default function UserPage() {
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading, fetchMe } = useAuth();
 
   const [equippedClothes, setEquippedClothes] = useState<string[]>([
     "acc_1",
@@ -47,9 +47,9 @@ export default function UserPage() {
     "shoes_1",
   ]);
   const [equippedSkills, setEquippedSkills] = useState<string[]>([
-    "na_1",
     "s1_1",
     "s2_1",
+    "s3_1",
     "ult_1",
   ]);
 
@@ -69,13 +69,13 @@ export default function UserPage() {
 
   const [showSkills, setShowSkills] = useState(false);
   const [ownedSkills, setOwnedSkills] = useState<string[]>([
-    "na_1",
     "s1_1",
     "s2_1",
+    "s3_1",
     "ult_1",
   ]);
   // rememebr to test more ownedskills
-  const [selectedSkillType, setSelectedSkillType] = useState<SkillType>("NA");
+  const [selectedSkillType, setSelectedSkillType] = useState<SkillType>("S1");
   const handleSetSelectedSkillType = (
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
@@ -123,18 +123,19 @@ export default function UserPage() {
     try {
       const data = await equipUserItem(equipSend);
       const addedItem = data.equipped_item;
+      fetchMe();
 
       if (
-        item_id.startsWith("na_") ||
         item_id.startsWith("s1_") ||
         item_id.startsWith("s2_") ||
+        item_id.startsWith("s3_") ||
         item_id.startsWith("ult_")
       ) {
         setEquippedSkills((prev) => {
           const nextSkills = [...prev];
-          if (addedItem.startsWith("na_")) nextSkills[0] = addedItem;
-          else if (addedItem.startsWith("s1_")) nextSkills[1] = addedItem;
-          else if (addedItem.startsWith("s2_")) nextSkills[2] = addedItem;
+          if (addedItem.startsWith("s1_")) nextSkills[0] = addedItem;
+          else if (addedItem.startsWith("s2_")) nextSkills[1] = addedItem;
+          else if (addedItem.startsWith("s3_")) nextSkills[2] = addedItem;
           else if (addedItem.startsWith("ult_")) nextSkills[3] = addedItem;
           return nextSkills;
         });
@@ -166,9 +167,9 @@ export default function UserPage() {
   const clothes_2_equipped = `/clothes/SHIRT/${equippedClothes[1]}.png`;
   const clothes_3_equipped = `/clothes/SHOES/${equippedClothes[2]}.png`;
 
-  const skill_1_equipped = `/skills/NA/${equippedSkills[0]}.png`;
-  const skill_2_equipped = `/skills/S1/${equippedSkills[1]}.png`;
-  const skill_3_equipped = `/skills/S2/${equippedSkills[2]}.png`;
+  const skill_1_equipped = `/skills/S1/${equippedSkills[0]}.png`;
+  const skill_2_equipped = `/skills/S2/${equippedSkills[1]}.png`;
+  const skill_3_equipped = `/skills/S3/${equippedSkills[2]}.png`;
   const skill_4_equipped = `/skills/ULT/${equippedSkills[3]}.png`;
   return (
     <div
@@ -253,7 +254,7 @@ export default function UserPage() {
           className="col-md-6 d-flex flex-column align-items-center justify-content-center"
         >
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-            <div className="component-item">
+            <div className="component-item popIn">
               <BackgroundButton
                 imageUrl={skill_1_equipped}
                 buttonName={skill_1_name}
@@ -262,7 +263,7 @@ export default function UserPage() {
                 isEquipped={false}
               />
             </div>
-            <div className="component-item">
+            <div className="component-item popIn">
               <BackgroundButton
                 imageUrl={skill_2_equipped}
                 buttonName={skill_2_name}
@@ -271,7 +272,7 @@ export default function UserPage() {
                 isEquipped={false}
               />
             </div>
-            <div className="component-item">
+            <div className="component-item popIn">
               <BackgroundButton
                 imageUrl={skill_3_equipped}
                 buttonName={skill_3_name}
@@ -280,7 +281,7 @@ export default function UserPage() {
                 isEquipped={false}
               />
             </div>
-            <div className="component-item">
+            <div className="component-item popIn">
               <BackgroundButton
                 imageUrl={skill_4_equipped}
                 buttonName={skill_4_name}
@@ -358,7 +359,7 @@ export default function UserPage() {
           </button>
           <div className="d-flex justify-content-end h-100">
             <div
-              className="d-flex flex-column flex-wrap gap-2"
+              className="d-flex flex-row flex-wrap overflow-auto gap-2"
               style={{ height: "70vh" }}
             >
               {ownedSkills?.map((skill_id) => {

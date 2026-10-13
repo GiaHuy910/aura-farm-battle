@@ -21,11 +21,11 @@ const gacha_2_button = "10";
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
 export default function GachaPage() {
-  const { user } = useAuth();
+  const { user, fetchMe } = useAuth();
   const router = useRouter();
 
   useEffect(() => {
-    if (user?.tickets !== undefined) {
+    if (user?.tickets) {
       setUserTickets(user.tickets);
     }
   }, [user?.tickets]);
@@ -79,6 +79,7 @@ export default function GachaPage() {
       toggleAnimating();
 
       // resolve try catch error here
+      fetchMe();
       setUserTickets(resultItem.remaining_tickets);
 
       setTimeout(() => {
@@ -175,11 +176,19 @@ export default function GachaPage() {
               {gachaResultItems.map((item, index) => {
                 const folder =
                   selectedBanner === banner_1_name ? "clothes" : "skills";
-                const typeFolder = item.startsWith("shirt_")
-                  ? "SHIRT"
-                  : item.startsWith("acc_")
-                    ? "ACC"
-                    : "SHOES";
+                const prefixMap = [
+                  { prefix: "shirt_", folder: "SHIRT" },
+                  { prefix: "acc_", folder: "ACC" },
+                  { prefix: "shoes_", folder: "SHOES" },
+                  { prefix: "s1_", folder: "S1" },
+                  { prefix: "s2_", folder: "S2" },
+                  { prefix: "s3_", folder: "S3" },
+                  { prefix: "ult_", folder: "ULT" },
+                ];
+                const matched = prefixMap.find((p) =>
+                  item.startsWith(p.prefix),
+                );
+                const typeFolder = matched ? matched.folder : "";
                 return (
                   <div
                     key={index}
