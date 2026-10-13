@@ -42,7 +42,7 @@ library
 
 -- 2. EXECUTABLE: Chạy API Server chính
 executable server-app
-    main-is:          Main.hs
+    main-is:          Server.hs
     hs-source-dirs:   app
     other-modules:  
         Config.Database

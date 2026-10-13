@@ -1,6 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
-{-# LANGUAGE RecordWildCards #-}
 {-# LANGUAGE DeriveGeneric #-}
 
 module Model.Clothe
@@ -11,6 +10,7 @@ module Model.Clothe
     , docToClothe
     , clotheToDoc
     , createClothe
+    , countClothes
     ) where
 
 import GHC.Generics (Generic)
@@ -19,6 +19,7 @@ import Database.MongoDB
 import Data.Maybe (fromMaybe)
 import Data.Text (Text)
 import Config.Database (runDB)
+import Config.GameConfig (clotheFlatBase,userBaseAura, Rarity(..))
 
 data Clothe = Clothe
   { clothe_id   :: Text
@@ -51,10 +52,29 @@ clotheToDoc c =
   , "in_pool"     =: in_pool c
   ]
 
-createClothe :: Text -> Text -> Text -> Int -> Text -> Bool -> IO ()
-createClothe clothe_id clothe_type clothe_name aura_bonus rarity in_pool = do
-    -- Automatically understand that these inside {..} are the fields of the Clothe data type
-    let newClothe = Clothe{..}
+textToRarity :: Text -> Rarity
+textToRarity t = case t of
+  "uncommon"  -> UncommonBase
+  "rare"      -> RareBase
+  "epic"      -> EpicBase
+  "legendary" -> LegendaryBase
+  "mythical"  -> MythicalBase
+  _           -> CommonBase 
+
+countClothes :: IO Int
+countClothes = runDB $ count (select [] "clothes")
+
+createClothe :: Text -> Text -> Text -> Text -> Bool -> IO ()
+createClothe clotheId clotheType clotheName rarity inPool = do
+    let calculatedAuraBonus = clotheFlatBase userBaseAura (textToRarity rarity)
+    let newClothe = Clothe{
+        clothe_id = clotheId,
+        clothe_type = clotheType,
+        clothe_name = clotheName,
+        aura_bonus = calculatedAuraBonus,
+        rarity = rarity,
+        in_pool = inPool
+    }
     runDB $ insert_ "clothes" (clotheToDoc newClothe)
 
 getClothesPool :: IO [Clothe]

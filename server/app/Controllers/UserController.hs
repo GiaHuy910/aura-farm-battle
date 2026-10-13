@@ -196,9 +196,9 @@ processGacha count category getPool getId getRarity getPityFunc pityField uid u 
 -- Hàm helper phân loại item dựa trên prefix và xác định field DB tương ứng:
 categorizeItem :: Text -> Maybe (ItemType, Text)
 categorizeItem item
-  | "na_"    `T.isPrefixOf` item = Just (SkillType, "equipped_na")
   | "s1_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s1")
   | "s2_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s2")
+  | "s3_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s3")
   | "ult_"   `T.isPrefixOf` item = Just (SkillType, "equipped_ult")
   | "acc_"   `T.isPrefixOf` item = Just (ClotheType, "equipped_acc")
   | "shirt_" `T.isPrefixOf` item = Just (ClotheType, "equipped_shirt")
