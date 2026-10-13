@@ -32,7 +32,7 @@ import Data.Password.Bcrypt (PasswordHash(..), PasswordCheck(..), hashPassword, 
 import Data.Text (Text, pack)
 import Config.Database (runDB)
 import Config.GameConfig (userBaseAura, userTotalAura, userBonusAura)
-import Control.Monad.Select (MonadSelect(select))
+import Model.Skill (textToRarity)
 --Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
@@ -128,6 +128,11 @@ createUser uname pass = do
     hashedPass <- hashPassword (mkPassword pass)
     userID <- liftIO nextRandom
     let generatedUserID = pack (toString userID)
+        defAcc = "acc_1"
+        defShirt = "shirt_1"
+        defShoes = "shoes_1"
+        calculatedBonus = userBonusAura userBaseAura (textToRarity defAcc) (textToRarity defShirt) (textToRarity defShoes)
+        calculatedTotal = userTotalAura userBaseAura (textToRarity defAcc) (textToRarity defShirt) (textToRarity defShoes)
     let newUser = User
           { user_id          = generatedUserID
           , username         = uname
@@ -137,16 +142,16 @@ createUser uname pass = do
           , equipped_s1      = "s1_1"
           , equipped_s2      = "s2_1"
           , equipped_ult     = "ult_1"
-          , equipped_acc     = "acc_1"
-          , equipped_shirt   = "shirt_1"
-          , equipped_shoes   = "shoes_1"
+          , equipped_acc     = defAcc
+          , equipped_shirt   = defShirt
+          , equipped_shoes   = defShoes
           , owned_clothes    = ["shoes_1", "shirt_1", "acc_1"]
           , owned_skills     = ["ult_1", "s2_1", "s1_1", "na_1"]
           , pity_skill_leg   = 0
           , pity_clothe_leg  = 0
-          , base_aura        = userBaseAura
-          , bonus_aura       = userBonusAura
-          , total_aura       = userTotalAura
+          , base_aura        = userBaseAura 
+          , bonus_aura       = calculatedBonus
+          , total_aura       = calculatedTotal 
           }
     runDB $ insert_ "user" (userToDoc newUser)
     return generatedUserID

@@ -10,8 +10,9 @@ module Model.Skill
     , docToSkill
     , skillToDoc
     , createSkill
-    ,countSkills,
-    Effect(..)
+    , countSkills
+    , Effect(..)
+    , textToRarity
     ) where
 
 import GHC.Generics (Generic)
