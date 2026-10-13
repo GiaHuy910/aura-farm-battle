@@ -1,24 +1,25 @@
 COMMON
+shoes_1: straw shoes
 shoes_3:iron shoes
-shoes_4:noisy_shoes
-shoes_9:rainbow_shoes
+shoes_4:noisy shoes
+shoes_9:rainbow shoes
 UNCOMMON
-shoes_7:leather_boots
-shoes_8:round_shoes
-shoes_17:elves_boots
+shoes_7:leather boots
+shoes_8:round shoes
+shoes_17:elves boots
 RARE
-shoes_5:apolo_sandal
-shoes_6:speeder_shoes
-shoes_11:sausage_boots
-shoes_15:orange_shoes
+shoes_5:apolo sandal
+shoes_6:speeder shoes
+shoes_11:sausage boots
+shoes_15:orange shoes
 EPIC
-shoes_1:high_heels
-shoes_2:running_shoes
-shoes_14:astronaut_boots
+shoes_19:high heels
+shoes_2:running shoes
+shoes_14:astronaut boots
 LEGENDARY
-shoes_12:horn_shoes
-shoes_10:unbreakable_shoes
-shoes_18:epic_boots
+shoes_12:horn shoes
+shoes_10:unbreakable shoes
+shoes_18:epic boots
 MYTHICAL
-shoes_13:magical_boots
-shoes_16:chosen_shoes
+shoes_13:magical boots
+shoes_16:chosen shoes
