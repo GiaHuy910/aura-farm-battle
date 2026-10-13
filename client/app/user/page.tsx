@@ -41,23 +41,8 @@ export default function UserPage() {
   const router = useRouter();
   const { user, loading, fetchMe } = useAuth();
 
-  const [equippedClothes, setEquippedClothes] = useState<string[]>([
-    "acc_1",
-    "shirt_1",
-    "shoes_1",
-  ]);
-  const [equippedSkills, setEquippedSkills] = useState<string[]>([
-    "s1_1",
-    "s2_1",
-    "s3_1",
-    "ult_1",
-  ]);
-
   useEffect(() => {
     if (!loading && user) {
-      if (user.equipped_clothes) setEquippedClothes(user.equipped_clothes);
-      if (user.equipped_skills) setEquippedSkills(user.equipped_skills);
-
       const fetchOwnedItems = async () => {
         const ownedItems: ownedItemResponse = await getUserOwnedItems();
         setOwnedClothes(ownedItems.owned_clothes);
@@ -121,40 +106,19 @@ export default function UserPage() {
       equip_item: item_id,
     };
     try {
-      const data = await equipUserItem(equipSend);
-      const addedItem = data.equipped_item;
+      await equipUserItem(equipSend);
       fetchMe();
-
-      if (
-        item_id.startsWith("s1_") ||
-        item_id.startsWith("s2_") ||
-        item_id.startsWith("s3_") ||
-        item_id.startsWith("ult_")
-      ) {
-        setEquippedSkills((prev) => {
-          const nextSkills = [...prev];
-          if (addedItem.startsWith("s1_")) nextSkills[0] = addedItem;
-          else if (addedItem.startsWith("s2_")) nextSkills[1] = addedItem;
-          else if (addedItem.startsWith("s3_")) nextSkills[2] = addedItem;
-          else if (addedItem.startsWith("ult_")) nextSkills[3] = addedItem;
-          return nextSkills;
-        });
-      } else {
-        setEquippedClothes((prev) => {
-          const nextClothes = [...prev];
-          if (addedItem.startsWith("acc_")) nextClothes[0] = addedItem;
-          else if (addedItem.startsWith("shirt_")) nextClothes[1] = addedItem;
-          else if (addedItem.startsWith("shoes_")) nextClothes[2] = addedItem;
-          return nextClothes;
-        });
-      }
     } catch (error) {
       // resolve error
       console.error("Error while processing equipment", error);
     }
   };
 
-  if (loading || equippedClothes.length === 0 || equippedSkills.length === 0) {
+  if (
+    loading ||
+    user?.equipped_clothes?.length === 0 ||
+    user?.equipped_skills?.length === 0
+  ) {
     return (
       <div className="position-relative d-flex justify-content-center align-items-center">
         Loading character...
@@ -163,14 +127,14 @@ export default function UserPage() {
   }
 
   const clothes_0_equipped = "/clothes/base-character.png";
-  const clothes_1_equipped = `/clothes/ACC/${equippedClothes[0]}.png`;
-  const clothes_2_equipped = `/clothes/SHIRT/${equippedClothes[1]}.png`;
-  const clothes_3_equipped = `/clothes/SHOES/${equippedClothes[2]}.png`;
+  const clothes_1_equipped = `/clothes/ACC/${user?.equipped_clothes?.[0]}.png`;
+  const clothes_2_equipped = `/clothes/SHIRT/${user?.equipped_clothes?.[1]}.png`;
+  const clothes_3_equipped = `/clothes/SHOES/${user?.equipped_clothes?.[2]}.png`;
 
-  const skill_1_equipped = `/skills/S1/${equippedSkills[0]}.png`;
-  const skill_2_equipped = `/skills/S2/${equippedSkills[1]}.png`;
-  const skill_3_equipped = `/skills/S3/${equippedSkills[2]}.png`;
-  const skill_4_equipped = `/skills/ULT/${equippedSkills[3]}.png`;
+  const skill_1_equipped = `/skills/S1/${user?.equipped_skills?.[0]}.png`;
+  const skill_2_equipped = `/skills/S2/${user?.equipped_skills?.[1]}.png`;
+  const skill_3_equipped = `/skills/S3/${user?.equipped_skills?.[2]}.png`;
+  const skill_4_equipped = `/skills/ULT/${user?.equipped_skills?.[3]}.png`;
   return (
     <div
       className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-5`}
@@ -229,7 +193,7 @@ export default function UserPage() {
                 const prefixClothes = clothe_id.split("_")[0].toUpperCase();
                 const currentImage = `${baseClothesUrl}/${prefixClothes}/${clothe_id}.png`;
                 const isMatch = prefixClothes === selectedClotheType;
-                const isEquipped = equippedClothes.includes(clothe_id);
+                const isEquipped = user?.equipped_clothes?.includes(clothe_id);
                 return (
                   isMatch && (
                     <div className={`dropdown-content`} key={clothe_id}>
@@ -237,8 +201,8 @@ export default function UserPage() {
                         imageUrl={currentImage}
                         buttonName={clothe_id}
                         onOpen={() => handleSelected(clothe_id)}
-                        isDisabled={isEquipped}
-                        isEquipped={isEquipped}
+                        isDisabled={isEquipped ?? false}
+                        isEquipped={isEquipped ?? false}
                       />
                     </div>
                   )
@@ -366,7 +330,7 @@ export default function UserPage() {
                 const prefixSkill = skill_id.split("_")[0].toUpperCase();
                 const currentImage = `${baseSkillsUrl}/${prefixSkill}/${skill_id}.png`;
                 const isMatch = prefixSkill === selectedSkillType;
-                const isEquipped = equippedSkills.includes(skill_id);
+                const isEquipped = user?.equipped_skills?.includes(skill_id);
                 return (
                   isMatch && (
                     <div className={`dropdown-content`} key={skill_id}>
@@ -374,8 +338,8 @@ export default function UserPage() {
                         imageUrl={currentImage}
                         buttonName={skill_id}
                         onOpen={() => handleSelected(skill_id)}
-                        isDisabled={isEquipped}
-                        isEquipped={isEquipped}
+                        isDisabled={isEquipped ?? false}
+                        isEquipped={isEquipped ?? false}
                       />
                     </div>
                   )

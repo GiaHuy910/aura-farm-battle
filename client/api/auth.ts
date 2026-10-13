@@ -6,8 +6,8 @@ import { fetcher } from "./customFetcher";
 
 const baseApi = `http://localhost:3001/auth`;
 
-export const useAuthMeSwr = () => {
-  const { data, error, isLoading, mutate } = useSWR<AuthMeResponse | undefined>(
+export const useAuthMeSWR = () => {
+  const { data, error, isLoading, mutate } = useSWR<AuthMeResponse | null>(
     `${baseApi}/me`,
     fetcher,
     {
@@ -16,7 +16,7 @@ export const useAuthMeSwr = () => {
       revalidateOnReconnect: false,
     },
   );
-  return { data, error, isLoading, mutate };
+  return { data: data || null, error, isLoading, mutate };
 };
 
 export const getCurrentUser = async () => {

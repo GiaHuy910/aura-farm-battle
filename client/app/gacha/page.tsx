@@ -24,14 +24,6 @@ export default function GachaPage() {
   const { user, fetchMe } = useAuth();
   const router = useRouter();
 
-  useEffect(() => {
-    if (user?.tickets) {
-      setUserTickets(user.tickets);
-    }
-  }, [user?.tickets]);
-
-  const [userTickets, setUserTickets] = useState(user?.tickets);
-
   const [isAnimating, setIsAnimating] = useState(false);
   const toggleAnimating = () => {
     setIsAnimating((prev) => !prev);
@@ -56,7 +48,7 @@ export default function GachaPage() {
   };
 
   const validateSufficient = (amount: any) => {
-    if ((userTickets ?? 0) >= amount) return true;
+    if ((user?.tickets ?? 0) >= amount) return true;
     else return false;
   };
   const handleGacha = async (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -78,9 +70,7 @@ export default function GachaPage() {
       setGachaResultItems(resultItem.added_items);
       toggleAnimating();
 
-      // resolve try catch error here
       fetchMe();
-      setUserTickets(resultItem.remaining_tickets);
 
       setTimeout(() => {
         toggleAnimating();
@@ -135,7 +125,7 @@ export default function GachaPage() {
             alt="game-ticket"
             priority
           />
-          {userTickets}
+          {user?.tickets ?? 0}
           <button className="btn btn-light rounded-5" onClick={handlePayment}>
             +
           </button>

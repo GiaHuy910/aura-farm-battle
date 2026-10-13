@@ -3,7 +3,8 @@
 import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+
+import { toast } from "react-toastify";
 
 import home from "@/styles/home.module.css";
 import gameLogo from "@/public/game-logo-small.png";
@@ -13,7 +14,6 @@ import SettingManager from "@/components/SettingManager";
 import { useAuth } from "@/contexts/auth/useAuth";
 
 export default function Home() {
-  const router = useRouter();
   const [isStart, setIsStart] = useState(false);
   const [showRegister, setShowRegister] = useState(false);
   const [showLogIn, setShowLogIn] = useState(false);
@@ -34,13 +34,39 @@ export default function Home() {
     setShowLogIn(false);
     setShowRegister(true);
   };
-  const handleRefresh = () => {
-    if (!loading && !user) {
+  const handleOnLoginSuccess = () => {
+    const logInProcess = async () => {
       fetchMe();
-      router.refresh();
-      setShowLogIn(false);
-      setShowRegister(false);
-    }
+    };
+
+    setShowLogIn(false);
+    setShowRegister(false);
+    toast.promise(logInProcess(), {
+      pending: "Logging in...",
+      success: "Login successful! Welcome back.",
+      error: {
+        render({ data }: { data: any }) {
+          return data?.message || "Failed to refresh user data.";
+        },
+      },
+    });
+  };
+  const handleOnRegisterSuccess = () => {
+    const refreshProcess = async () => {
+      fetchMe();
+    };
+
+    setShowLogIn(false);
+    setShowRegister(false);
+    toast.promise(refreshProcess(), {
+      pending: "Registering user...",
+      success: "Register successful!",
+      error: {
+        render({ data }: { data: any }) {
+          return data?.message || "Failed to refresh user data.";
+        },
+      },
+    });
   };
 
   if (loading) {
@@ -150,14 +176,14 @@ export default function Home() {
         <LogInPage
           onRegister={handleShowRegister}
           onLeave={handleLeave}
-          onSuccess={handleRefresh}
+          onSuccess={handleOnLoginSuccess}
         />
       )}
       {showRegister && (
         <RegisterPage
           onLogIn={handleShowLogIn}
           onLeave={handleLeave}
-          onSuccess={handleRefresh}
+          onSuccess={handleOnRegisterSuccess}
         />
       )}
       <SettingManager />
