@@ -8,6 +8,7 @@ import page from "../../styles/page.module.css";
 import UserCharacter from "@/components/UserCharacter";
 import BackgroundButton from "@/components/BackgroundButton";
 import { useAuth } from "@/contexts/auth/useAuth";
+import { usePool } from "@/api/pool";
 import { equipUserItem, getUserOwnedItems } from "@/api/user";
 
 const baseSkillsUrl = `/skills`;
@@ -39,6 +40,7 @@ type ownedItemResponse = {
 
 export default function UserPage() {
   const router = useRouter();
+  const { poolData } = usePool();
   const { user, loading, fetchMe } = useAuth();
 
   useEffect(() => {
@@ -135,6 +137,20 @@ export default function UserPage() {
   const skill_2_equipped = `/skills/S2/${user?.equipped_skills?.[1]}.png`;
   const skill_3_equipped = `/skills/S3/${user?.equipped_skills?.[2]}.png`;
   const skill_4_equipped = `/skills/ULT/${user?.equipped_skills?.[3]}.png`;
+
+  const skill_1_rarity = poolData?.skill.find(
+    (s: Skill) => s.skill_id === user?.equipped_skills?.[0],
+  )?.rarity;
+  const skill_2_rarity = poolData?.skill.find(
+    (s: Skill) => s.skill_id === user?.equipped_skills?.[1],
+  )?.rarity;
+  const skill_3_rarity = poolData?.skill.find(
+    (s: Skill) => s.skill_id === user?.equipped_skills?.[2],
+  )?.rarity;
+  const skill_4_rarity = poolData?.skill.find(
+    (s: Skill) => s.skill_id === user?.equipped_skills?.[3],
+  )?.rarity;
+
   return (
     <div
       className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-5`}
@@ -194,6 +210,11 @@ export default function UserPage() {
                 const currentImage = `${baseClothesUrl}/${prefixClothes}/${clothe_id}.png`;
                 const isMatch = prefixClothes === selectedClotheType;
                 const isEquipped = user?.equipped_clothes?.includes(clothe_id);
+
+                const detailedItem = poolData?.clothe.find(
+                  (c: Clothe) => c.clothe_id === clothe_id,
+                );
+                const itemRarity = detailedItem?.rarity || "common";
                 return (
                   isMatch && (
                     <div className={`dropdown-content`} key={clothe_id}>
@@ -203,6 +224,7 @@ export default function UserPage() {
                         onOpen={() => handleSelected(clothe_id)}
                         isDisabled={isEquipped ?? false}
                         isEquipped={isEquipped ?? false}
+                        itemRarity={itemRarity}
                       />
                     </div>
                   )
@@ -225,6 +247,7 @@ export default function UserPage() {
                 onOpen={handleShowSkills}
                 isDisabled={false}
                 isEquipped={false}
+                itemRarity={skill_1_rarity}
               />
             </div>
             <div className="component-item popIn">
@@ -234,6 +257,7 @@ export default function UserPage() {
                 onOpen={handleShowSkills}
                 isDisabled={false}
                 isEquipped={false}
+                itemRarity={skill_2_rarity}
               />
             </div>
             <div className="component-item popIn">
@@ -243,6 +267,7 @@ export default function UserPage() {
                 onOpen={handleShowSkills}
                 isDisabled={false}
                 isEquipped={false}
+                itemRarity={skill_3_rarity}
               />
             </div>
             <div className="component-item popIn">
@@ -252,6 +277,7 @@ export default function UserPage() {
                 onOpen={handleShowSkills}
                 isDisabled={false}
                 isEquipped={false}
+                itemRarity={skill_4_rarity}
               />
             </div>
           </div>
@@ -331,6 +357,11 @@ export default function UserPage() {
                 const currentImage = `${baseSkillsUrl}/${prefixSkill}/${skill_id}.png`;
                 const isMatch = prefixSkill === selectedSkillType;
                 const isEquipped = user?.equipped_skills?.includes(skill_id);
+
+                const detailedItem = poolData?.skill.find(
+                  (c: Skill) => c.skill_id === skill_id,
+                );
+                const itemRarity = detailedItem?.rarity || "common";
                 return (
                   isMatch && (
                     <div className={`dropdown-content`} key={skill_id}>
@@ -340,6 +371,7 @@ export default function UserPage() {
                         onOpen={() => handleSelected(skill_id)}
                         isDisabled={isEquipped ?? false}
                         isEquipped={isEquipped ?? false}
+                        itemRarity={itemRarity}
                       />
                     </div>
                   )

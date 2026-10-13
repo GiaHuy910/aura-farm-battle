@@ -1,11 +1,14 @@
 import React from "react";
 
+import { getBorderColor } from "@/helpers/getBorderColor";
+
 type Props = {
   imageUrl: string;
   buttonName: string;
   onOpen: () => void;
   isDisabled: boolean;
   isEquipped: boolean;
+  itemRarity: string | "common";
 };
 
 const BackgroundButton: React.FC<Props> = ({
@@ -14,6 +17,7 @@ const BackgroundButton: React.FC<Props> = ({
   onOpen,
   isDisabled,
   isEquipped,
+  itemRarity,
 }) => {
   const buttonStyle: React.CSSProperties = {
     backgroundImage: `url('${imageUrl}')`,
@@ -21,7 +25,11 @@ const BackgroundButton: React.FC<Props> = ({
     backgroundPosition: "center",
     width: buttonName === "ULT" ? "250px" : "150px",
     height: buttonName === "ULT" ? "80px" : "60px",
-    border: "4px solid grey",
+    border: getBorderColor(itemRarity),
+    boxShadow:
+      itemRarity !== "common"
+        ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
+        : "none",
   };
 
   const handleClick = () => {
@@ -30,14 +38,14 @@ const BackgroundButton: React.FC<Props> = ({
   return (
     <button
       type="button"
-      className={`${buttonName === "ULT" ? "rounded-5" : ""} ${isDisabled} d-flex justify-content-center align-items-center rounded-0 btn overflow-hidden position-relative`}
+      className={`${buttonName === "ULT" ? "rounded-5" : "rounded-0"} ${isDisabled} d-flex justify-content-center align-items-center btn overflow-hidden position-relative`}
       style={buttonStyle}
       onClick={handleClick}
       disabled={isDisabled}
     >
       <div
         style={{ maxWidth: "150px" }}
-        className="py-1 px-2 rounded-5 border border-light bg-info text-light fw-bold"
+        className="py-1 px-2 rounded-5 bg-info text-light fw-bold"
       >
         {isEquipped ? "Equipped" : buttonName}
       </div>
