@@ -62,3 +62,12 @@
 - Tao 1 ham dung de tinh final_stats cho user, bang cach lay array equipped_clothes cua user, tim ra thong tin cua tung clothe va lay bonus_stats.aura cua tung clothe cong vao nhau de ra bonus_stats cuoi cung , hay lay bonus_stats + base_stats de ra duoc final_stats, return xong thi ra ngoai thay thay doi gia tri ban dau "bonus_stats" va "final_stats" cua user la xong,
 - sau khi xong cac buoc do thi phai xoa toan bo database, chay lai server, chay client va thu moi chuc nang xem co cho nao hong hoc hay k da roi moi qua buoc tiep theo - lam room.
 - neu qua roi thi bat dau voi viec viet websocket( tutu thoi kieu gi cung chua toi)
+
+#### task 12
+
+- bay gio api pool chi tra ve
+- clothe : clothe_id,clothe_name,rarity
+- skill : skill_id,skill_name,rarity
+- gio ong hay tra ra them
+- clothe : clothe_id,clothe_name,rarity,aura_bonus
+- skill : skill_id,skill_name,rarity,energy_consumption,energy_recovery,aura_multiplier,effect
