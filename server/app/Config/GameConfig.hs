@@ -7,6 +7,7 @@ module Config.GameConfig
   , clotheFlatBase
   , skillBase
   , userTotalAura 
+  , userBonusAura
   , ultBase
   ) where
 
@@ -51,3 +52,6 @@ ultBase rarity = skillBase rarity * ultMultiplier
 
 userTotalAura :: Int -> Rarity -> Rarity -> Rarity -> Int
 userTotalAura userBase accessoryRarity shirtRarity shoesRarity = userBase + clotheFlatBase userBase accessoryRarity + clotheFlatBase userBase shirtRarity + clotheFlatBase userBase shoesRarity
+
+userBonusAura :: Int -> Rarity -> Rarity -> Rarity -> Int
+userBonusAura uBase accessoryRarity shirtRarity shoesRarity = clotheFlatBase uBase accessoryRarity + clotheFlatBase uBase shirtRarity + clotheFlatBase uBase shoesRarity
