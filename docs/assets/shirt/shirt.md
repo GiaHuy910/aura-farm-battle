@@ -1,26 +1,26 @@
 COMMON
-shirt_common_1:patched_shirt
-shirt_common_2:sack_cloth
+shirt_1:patched shirt
+shirt_2:sack cloth
 
 
 UNCOMMON
-shirt_uncommon_1:chef_uniform
-shirt_uncommon_2:scout_tunic
+shirt_3:chef uniform
+shirt_4:scout tunic
 
 RARE
-shirt_rare_1:winter_down_jacket
-shirt_rare_2:lady_dress
-shirt_rare_3:taoist_robe
+shirt_5:winter down jacket
+shirt_6:lady_dress
+shirt_7:taoist robe
 
 EPIC
-shirt_epic_1:viking_armor
-shirt_epic_2:police_uniform
-shirt_epic_3:wizard_robe
+shirt_8:viking armor
+shirt_9:police uniform
+shirt_10:wizard robe
 
 LEGENDARY
-shirt_legend_1:cyber_mach_armor
-shirt_legend_2:gladiator_armor
+shirt_11:cyber mach armor
+shirt_12:gladiator armor
 
 MYTHICAL
-shirt_myth_1:archangel_holy_armor
-shirt_myth_2:dragon_god_robe
+shirt_13:archangel holy armor
+shirt_14:dragon god robe
