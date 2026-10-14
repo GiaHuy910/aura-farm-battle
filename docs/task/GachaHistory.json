@@ -3,5 +3,5 @@
   "user_id": "id của user",
   "item_id": "id của item",
   "item_type": "clothe",
-  "createdAt": ISODate("2024-06-20T10:00:00.000Z"),
+  "createdAt": "..."
 }

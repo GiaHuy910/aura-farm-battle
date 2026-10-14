@@ -1,5 +1,5 @@
 {-# LANGUAGE OverloadedStrings #-}
-module Main where
+module Seed.SkillSeed(seedSkills)where
 
 import Data.Text (Text)
 
@@ -79,8 +79,8 @@ seedAll = do
   normal "s1_14" "s1" "kimi no nawa" "mythical" 1
   ult "ult_13" "we are Charlie Kirk" "mythical" 5 "freeze" 2
 
-main :: IO ()
-main = do
+seedSkills :: IO ()
+seedSkills = do
   existing <- countSkills
   if existing > 0
     then putStrLn ("Skills already exist (" ++ show existing ++ "), skip seeding.")
