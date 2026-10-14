@@ -71,3 +71,24 @@
 - gio ong hay tra ra them
 - clothe : clothe_id,clothe_name,rarity,aura_bonus
 - skill : skill_id,skill_name,rarity,energy_consumption,energy_recovery,aura_multiplier,effect
+
+#### task 13
+
+- Thiet lap model GachaHistory, xem kdl ben file json ben kia
+- Ghi chú model : "\_id" la id mac dinh cua monôdb, khong can khai bao, no se tu tao khi minh tao 1 document
+- api gacha-history/
+- method : GET
+- hoan toan khong gui body request, co header cookie, param query co "limit" = Int mac dinh 6 va "cursor" = "" | "\_id"
+- response request xem file json ten la response
+- ghi chu api : input cua api nay se hoi khac ty voi cac api ong da lam, luc truoc minh thuong hay lay input trong request body nen o co the lay dau vao ...Request tuy thich. con bay gio input cua minh se nam trong param query, chua hai thuoc tinh limit va cursor, cursor co 2 trang thai , 1 la "" khi lan dau lay data nen co tinh gui string rong,2 la "\_id " la tra ra \_id cua item cuoi cung trong list ma ong tra ra user
+- ghi chu response : nextCursor la tra ve \_id cua item cuoi cung trong list ma ong tra ve de front end co the lay de gui tiep cho ong trong api tiep theo
+- ghi chu cach hoat dong : Khi gacha ra ket qua thi phai luu vao database GachaHistory, moi 1 item 1 document, x10 thi 10 item do deu se co cung 1 thoi gian createdAt, khi da co trong data. Khi goi api gacha-history/ ong phai lay header kiem tra user co ton tai khong, neu khong tra loi 401 Unauthorized, neu co lay param query trich xuat ra duoc limit va cursor, limit dinh nghia 1 lan lay bao nhieu item, cursor dinh nghia \_id cua item cuoi cung, neu nhu cursor la chuoi rong thi ong coi do la lay cac item dau tien, neu cursor= "\_id cua 1 history nao do" thi dung syntax $lt de lay tiep cac item co \_id nho hon \_id hien tai
+- khi nao database gacha history da xuat hien trong mongodbcompass cua ong roi thi ong vao shell cua no chay cau lenh nay : db.gachahistories.createIndex({ user_id: 1, item_type: 1, \_id: -1 })
+- ghi chu cuoi : ong se query de tim ra document dua tren user id, itemtype va \_id va cursor( nho neu cursor trong thi khong can phai cho vao)
+- db.gacha_histories.find({
+  user_id: "b3b1c2d3-e4f5-5678-abcd-ef1234567890",
+  item_type: "clothe",
+  \_id: { $lt: ObjectId(cursor) }
+  })
+  .sort({ \_id: -1 })
+  .limit(20)
