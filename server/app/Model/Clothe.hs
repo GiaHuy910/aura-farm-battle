@@ -65,14 +65,14 @@ countClothes :: IO Int
 countClothes = runDB $ count (select [] "clothes")
 
 createClothe :: Text -> Text -> Text -> Text -> Bool -> IO ()
-createClothe clotheId clotheType clotheName rarity inPool = do
-    let calculatedAuraBonus = clotheFlatBase userBaseAura (textToRarity rarity)
+createClothe clotheId clotheType clotheName clotheRarity inPool = do
+    let calculatedAuraBonus = clotheFlatBase userBaseAura (textToRarity clotheRarity)
     let newClothe = Clothe{
         clothe_id = clotheId,
         clothe_type = clotheType,
         clothe_name = clotheName,
         aura_bonus = calculatedAuraBonus,
-        rarity = rarity,
+        rarity = clotheRarity,
         in_pool = inPool
     }
     runDB $ insert_ "clothes" (clotheToDoc newClothe)

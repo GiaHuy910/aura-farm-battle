@@ -138,36 +138,51 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                     liftIO $ updateEquippedItem uid dbField targetItem
                     return $ EquipResponse "success" "Trang bị thành công!" targetItem
 
-getWeight :: Text -> Int
-getWeight "Mythical"  = 1     --pity 0
-getWeight "Legendary" = 4     --pity 50s
-getWeight "Epic"      = 10
-getWeight "Rare"      = 20
-getWeight "Uncommon"  = 30
-getWeight _           = 50
-
-pickItem :: Int -> [a] -> (a -> Text) -> [Int] -> a
-pickItem _ [item] _ _ = item
-pickItem randVal (item:restItems) getRarity (w:ws)
-    | randVal <= w = item
-    | otherwise    = pickItem (randVal - w) restItems getRarity ws
-pickItem _ _ _ _ = error "Pool empty"
-
+-- 1. Định nghĩa bảng trọng số CỐ ĐỊNH cho từng độ hiếm
+rarityWeights :: [(Text, Double)]
+rarityWeights = 
+    [ ("mythical", 0.5)   -- 0.5%
+    , ("legendary", 1.5)  -- 1.5%
+    , ("epic", 8.0)      -- 8.0%
+    , ("rare", 15.0)      -- 15.0%
+    , ("uncommon", 30.0)  -- 30.0%
+    , ("common", 45.0)    -- 45.0%
+    ]
+-- 2. Hàm random độ hiếm dựa trên bảng trọng số
+pickRarity :: Double -> [(Text, Double)] -> Text
+pickRarity _ [(r, _)] = r
+pickRarity randVal ((r, w):rest)
+    | randVal <= w = r
+    | otherwise    = pickRarity (randVal - w) rest
+pickRarity _ [] = "common"
+-- 3. Cập nhật lại logic rollSingle
 rollSingle :: Int -> [a] -> (a -> Text) -> (a -> Text) -> IO (Text, Int)
 rollSingle currentPity pool getId getRarity = do
-    if currentPity >= 100
+    if currentPity >= 25
         then do
-            let legPool = filter (\x -> getRarity x == "Legendary") pool
+            -- Nổ Pity (Bảo hiểm 25 nháy): Chắc chắn ra Legendary
+            let legPool = filter (\x -> getRarity x == "legendary") pool
             idx <- randomRIO (0, length legPool - 1)
             let item = legPool !! idx
             return (getId item, 0)
         else do
-            let weights = map (getWeight . getRarity) pool
-            let totalWeight = sum weights
-            randVal <- randomRIO (1, totalWeight)
-            let item = pickItem randVal pool getRarity weights
+            -- Random hệ số phần trăm từ 0.0 đến 100.0 (hoặc thay bằng tổng tỉ lệ nếu ông không set tròn 100)
+            let totalWeight = sum (map snd rarityWeights)
+            randVal <- randomRIO (0.0 :: Double, totalWeight)
+            let selectedRarity = pickRarity randVal rarityWeights
             
-            if getRarity item == "Legendary"
+            -- Lọc các item trong Pool thuộc độ hiếm vừa random ra
+            let filteredPool = filter (\x -> getRarity x == selectedRarity) pool
+            
+            -- Fallback an toàn nếu pool trống
+            let actualPool = if null filteredPool then pool else filteredPool
+            
+            -- Random đều 1 món bất kỳ trong nhóm
+            idx <- randomRIO (0, length actualPool - 1)
+            let item = actualPool !! idx
+            
+            -- Cập nhật Pity
+            if getRarity item == "legendary"
                 then return (getId item, 0)
                 else return (getId item, currentPity + 1)
 
