@@ -14,7 +14,7 @@ shirt_7:taoist robe
 
 EPIC
 shirt_8:viking armor
-shirt_9:police uniform
+shirt_9:tactical police uniform
 shirt_10:wizard robe
 
 LEGENDARY
