@@ -1,0 +1,36 @@
+{
+  "gacha_history_list": [
+    {
+      "_id": "id gốc mongodb của item",
+      "user_id": "id của user",
+      "item_id": "id của item",
+      "item_type": "clothe",
+      "createdAt": "..."
+    },
+    {
+      "_id": "id gốc mongodb của item",
+      "user_id": "id của user",
+      "item_id": "id của item",
+      "item_type": "clothe",
+      "createdAt": "..."
+    },
+    {
+      "_id": "id gốc mongodb của item",
+      "user_id": "id của user",
+      "item_id": "id của item",
+      "item_type": "clothe",
+      "createdAt": "..."
+    },
+    {
+      "_id": "id gốc mongodb của item",
+      "user_id": "id của user",
+      "item_id": "id của item",
+      "item_type": "clothe",
+      "createdAt": "..."
+    }
+  ],
+  "pagination": {
+    "limit": 6,
+    "nextCursor": ""
+  }
+}
