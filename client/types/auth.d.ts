@@ -19,4 +19,7 @@ type UserInfo = {
   equipped_clothes: string[];
   pity_skill_leg: number;
   pity_clothe_leg: number;
+  base_aura: number;
+  bonus_aura: number;
+  final_aura: number;
 };
