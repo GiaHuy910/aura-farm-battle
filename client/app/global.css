@@ -88,6 +88,11 @@ body {
   animation: popInEffect 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
 }
 
+.popInItem {
+  opacity: 0;
+  animation: popInEffect 0.35s cubic-bezier(0.34, 1.4, 0.64, 1) forwards;
+}
+
 @keyframes popInEffect {
   0% {
     transform: scale(0.7);
@@ -97,4 +102,23 @@ body {
     transform: scale(1);
     opacity: 1;
   }
+}
+
+@keyframes flashGlow {
+  0% {
+    box-shadow: 0 0 0px #faf9f6;
+    border-color: #faf9f6;
+  }
+  50% {
+    box-shadow: 0 0 50px #faf9f6;
+    border-color: #faf9f6;
+  }
+  100% {
+    box-shadow: 0 0 0px #faf9f6;
+    border-color: #faf9f6;
+  }
+}
+
+.glow-active {
+  animation: flashGlow 1s ease;
 }

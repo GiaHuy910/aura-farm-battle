@@ -162,11 +162,11 @@ export default function GachaPage() {
           onClick={toggleResult}
         >
           <div
-            className="bg-dark text-white border border-warning rounded-3 p-4 text-center"
-            style={{ maxWidth: "600px", width: "90%" }}
+            className="bg-dark text-white border border-warning rounded-0 p-4 text-center"
+            style={{ maxWidth: "650px", width: "90%" }}
           >
             <h3 className="text-warning fw-bold mb-4">Reward</h3>
-            <div className="d-flex flex-wrap justify-content-center gap-3 my-3">
+            <div className="d-flex flex-wrap justify-content-center gap-2 my-3">
               {gachaResultItems.map((item, index) => {
                 const folder =
                   selectedBanner === banner_1_name ? "clothes" : "skills";
@@ -191,8 +191,9 @@ export default function GachaPage() {
                 return (
                   <div
                     key={index}
-                    className="d-flex flex-column align-items-center bg-secondary p-2 rounded"
+                    className="d-flex flex-column align-items-center p-2 rounded popInItem"
                     style={{
+                      animationDelay: `${index * 0.1}s`,
                       border: getBorderColor(itemRarity),
                       boxShadow:
                         itemRarity !== "common"
@@ -206,7 +207,7 @@ export default function GachaPage() {
                       alt={item}
                       width={80}
                       height={80}
-                      className="border rounded bg-light"
+                      className="bg-light"
                     />
                   </div>
                 );

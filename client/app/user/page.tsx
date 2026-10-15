@@ -42,6 +42,8 @@ export default function UserPage() {
   const router = useRouter();
   const { poolData } = usePool();
   const { user, loading, fetchMe } = useAuth();
+  // I had to calculate it myself cuz he forot to return it to me
+  const final_aura = Number(user?.base_aura) + Number(user?.bonus_aura);
 
   useEffect(() => {
     if (!loading && user) {
@@ -240,45 +242,53 @@ export default function UserPage() {
           className="col-md-6 d-flex flex-column align-items-center justify-content-center"
         >
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-            <div className="component-item popIn">
-              <BackgroundButton
-                imageUrl={skill_1_equipped}
-                buttonName={skill_1_name}
-                onOpen={handleShowSkills}
-                isDisabled={false}
-                isEquipped={false}
-                itemRarity={skill_1_rarity}
-              />
+            <div className="component-item popIn" key={skill_1_equipped}>
+              <div className="glow-active">
+                <BackgroundButton
+                  imageUrl={skill_1_equipped}
+                  buttonName={skill_1_name}
+                  onOpen={handleShowSkills}
+                  isDisabled={false}
+                  isEquipped={false}
+                  itemRarity={skill_1_rarity}
+                />
+              </div>
             </div>
-            <div className="component-item popIn">
-              <BackgroundButton
-                imageUrl={skill_2_equipped}
-                buttonName={skill_2_name}
-                onOpen={handleShowSkills}
-                isDisabled={false}
-                isEquipped={false}
-                itemRarity={skill_2_rarity}
-              />
+            <div className="component-item popIn" key={skill_2_equipped}>
+              <div className="glow-active">
+                <BackgroundButton
+                  imageUrl={skill_2_equipped}
+                  buttonName={skill_2_name}
+                  onOpen={handleShowSkills}
+                  isDisabled={false}
+                  isEquipped={false}
+                  itemRarity={skill_2_rarity}
+                />
+              </div>
             </div>
-            <div className="component-item popIn">
-              <BackgroundButton
-                imageUrl={skill_3_equipped}
-                buttonName={skill_3_name}
-                onOpen={handleShowSkills}
-                isDisabled={false}
-                isEquipped={false}
-                itemRarity={skill_3_rarity}
-              />
+            <div className="component-item popIn" key={skill_3_equipped}>
+              <div className="glow-active">
+                <BackgroundButton
+                  imageUrl={skill_3_equipped}
+                  buttonName={skill_3_name}
+                  onOpen={handleShowSkills}
+                  isDisabled={false}
+                  isEquipped={false}
+                  itemRarity={skill_3_rarity}
+                />
+              </div>
             </div>
-            <div className="component-item popIn">
-              <BackgroundButton
-                imageUrl={skill_4_equipped}
-                buttonName={skill_4_name}
-                onOpen={handleShowSkills}
-                isDisabled={false}
-                isEquipped={false}
-                itemRarity={skill_4_rarity}
-              />
+            <div className="component-item popIn" key={skill_4_equipped}>
+              <div className="glow-active">
+                <BackgroundButton
+                  imageUrl={skill_4_equipped}
+                  buttonName={skill_4_name}
+                  onOpen={handleShowSkills}
+                  isDisabled={false}
+                  isEquipped={false}
+                  itemRarity={skill_4_rarity}
+                />
+              </div>
             </div>
           </div>
         </div>
@@ -288,6 +298,12 @@ export default function UserPage() {
           className="col-md-6 d-flex flex-column align-items-center justify-content-center"
         >
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
+            <div className="component-item d-flex ">
+              <p className="text-dark">AURA : </p>
+              <span className="text-primary">
+                {user?.final_aura}(+{user?.bonus_aura})
+              </span>
+            </div>
             <div className="component-item">
               <UserCharacter
                 base_user_url={clothes_0_equipped}

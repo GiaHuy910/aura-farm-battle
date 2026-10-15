@@ -6,8 +6,9 @@ build-type:         Simple
 -- 1. LIBRARY: Nơi chứa toàn bộ code logic để cả file App và file Test dùng chung
 library
     hs-source-dirs:   app
-    exposed-modules:  
-                      Config.Database
+    exposed-modules:  Seed.SkillSeed
+                    , Seed.ClotheSeed
+                    , Config.Database
                     , Config.GameConfig
                     , Controllers.AuthController
                     , Controllers.RoomController
@@ -45,7 +46,9 @@ executable server-app
     main-is:          Server.hs
     hs-source-dirs:   app
     other-modules:  
-        Config.Database
+          Seed.SkillSeed
+        , Seed.ClotheSeed
+        , Config.Database
         , Config.GameConfig
         , Controllers.AuthController
         , Controllers.RoomController

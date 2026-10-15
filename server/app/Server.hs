@@ -9,6 +9,8 @@ import Network.Wai.Handler.Warp (run)
 import Network.Wai.Middleware.Cors
 import Servant
 
+import Seed.SkillSeed  (seedSkills)
+import Seed.ClotheSeed (seedClothes)
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
 import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
 import Controllers.UserController( getEquippedSkillsHandler, getEquippedClothesHandler, getTicketsHandler, getOwnedItemsHandler, getGachaHandler, getEquipItemHandler)
@@ -78,6 +80,8 @@ app = cors (const $ Just corsPolicy) (serve api server)
 
 main :: IO ()
 main = do
+  seedSkills   
+  seedClothes
   putStrLn "======================================"
   putStrLn "Aura Farm Battle Server"
   putStrLn "======================================"

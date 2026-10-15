@@ -26,10 +26,10 @@ const BackgroundButton: React.FC<Props> = ({
     width: buttonName === "ULT" ? "250px" : "150px",
     height: buttonName === "ULT" ? "80px" : "60px",
     border: getBorderColor(itemRarity),
-    boxShadow:
-      itemRarity !== "common"
-        ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
-        : "none",
+    // boxShadow:
+    //   itemRarity !== "common"
+    //     ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
+    //     : "none",
   };
 
   const handleClick = () => {
