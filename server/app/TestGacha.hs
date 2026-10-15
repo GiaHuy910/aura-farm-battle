@@ -46,7 +46,7 @@ rollSingle :: Int -> [SkillMock] -> IO (SkillMock, Int)
 rollSingle currentPity pool = do
     if currentPity >= 25
         then do
-            -- Hard Pity (25 srolls): Guaranteed Legendary
+            -- Hard Pity (25 rolls): Guaranteed Legendary
             let legPool = filter (\x -> T.toLower (rarity x) == "legendary") pool
             idx <- randomRIO (0, length legPool - 1)
             return (legPool !! idx, 0)
