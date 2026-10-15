@@ -21,5 +21,5 @@ type UserInfo = {
   pity_clothe_leg: number;
   base_aura: number;
   bonus_aura: number;
-  final_aura: number;
+  total_aura: number;
 };
