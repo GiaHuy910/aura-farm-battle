@@ -16,7 +16,6 @@ module Model.User
         mapEquippedClothes,
         updatePity,
         updateEquippedItem,
-        updateUserAura,
         RegisterStatus(..),
         LoginStatus(..),
         ItemType(..)
@@ -220,22 +219,26 @@ mapEquippedSkills na s1 s2 ult = [na, s1, s2, ult]
 mapEquippedClothes :: Text -> Text -> Text -> [Text]
 mapEquippedClothes acc shirt shoes = [acc, shirt, shoes]
 
-updateEquippedItem :: Text -> Text -> Text -> IO ()
-updateEquippedItem uid dbField itemId = runDB $ do
-    modify (select ["user_id" =: uid] "user")
-           ["$set" =: [dbField =: itemId]]
-
-updateUserAura :: Text -> IO()
-updateUserAura uid = do
-    mUser <- getUserById uid
-    case mUser of
-        Nothing -> return ()
-        Just u -> do
-            let accId   = equipped_acc u
-                shirtId = equipped_shirt u
-                shoesId = equipped_shoes u
-            clothes <- getClothesByIds [accId, shirtId, shoesId]
+updateEquippedItem :: Text -> Text -> Text -> ItemType -> Int -> Text -> Text -> Text -> IO ()
+updateEquippedItem uid dbField itemId category bAura accId shirtId shoesId = do
+    case category of
+        SkillType -> 
+            -- Nếu là skill, không cần update aura
+            runDB $ modify (select ["user_id" =: uid] "user") 
+                           ["$set" =: [dbField =: itemId]]
+        ClotheType -> do
+            -- Lấy 2 cái clothe còn lại với cái clothe mới[cite: 6]
+            let newAcc   = if dbField == "equipped_acc"   then itemId else accId
+                newShirt = if dbField == "equipped_shirt" then itemId else shirtId
+                newShoes = if dbField == "equipped_shoes" then itemId else shoesId
+            
+            -- Tính ra aura[cite: 6]
+            clothes <- getClothesByIds [newAcc, newShirt, newShoes]
             let bonus = sum (map aura_bonus clothes)
-                total = base_aura u + bonus
+                total = bAura + bonus
+            
+            -- Modify user 1 lượt luôn[cite: 6]
             runDB $ modify (select ["user_id" =: uid] "user")
-                           ["$set" =: ["bonus_aura" =: bonus, "total_aura" =: total]]
+                           ["$set" =: [ dbField      =: itemId
+                                      , "bonus_aura" =: bonus
+                                      , "total_aura" =: total ]]
