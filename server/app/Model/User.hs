@@ -16,6 +16,7 @@ module Model.User
         mapEquippedClothes,
         updatePity,
         updateEquippedItem,
+        updateUserAura,
         RegisterStatus(..),
         LoginStatus(..),
         ItemType(..)
@@ -33,6 +34,7 @@ import Data.Text (Text, pack)
 import Config.Database (runDB)
 import Config.GameConfig (userBaseAura, userTotalAura, userBonusAura)
 import Model.Skill (textToRarity)
+import Model.Clothe (getClothesByIds, Clothe(..))
 --Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
@@ -222,3 +224,18 @@ updateEquippedItem :: Text -> Text -> Text -> IO ()
 updateEquippedItem uid dbField itemId = runDB $ do
     modify (select ["user_id" =: uid] "user")
            ["$set" =: [dbField =: itemId]]
+
+updateUserAura :: Text -> IO()
+updateUserAura uid = do
+    mUser <- getUserById uid
+    case mUser of
+        Nothing -> return ()
+        Just u -> do
+            let accId   = equipped_acc u
+                shirtId = equipped_shirt u
+                shoesId = equipped_shoes u
+            clothes <- getClothesByIds [accId, shirtId, shoesId]
+            let bonus = sum (map aura_bonus clothes)
+                total = base_aura u + bonus
+            runDB $ modify (select ["user_id" =: uid] "user")
+                           ["$set" =: ["bonus_aura" =: bonus, "total_aura" =: total]]

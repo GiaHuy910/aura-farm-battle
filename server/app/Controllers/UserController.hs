@@ -34,7 +34,7 @@ import GHC.Generics
 import Servant
 import System.Random (randomRIO)
 
-import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity, updateEquippedItem)
+import Model.User ( User(..), ItemType(..), deductTickets, addGachaItems, updatePity, updateEquippedItem, updateUserAura)
 import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), getSkillsPool)
 import qualified Model.Clothe as Clothe
@@ -113,6 +113,7 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                 then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
                 else do
                     liftIO $ updateEquippedItem uid dbField targetItem
+                    liftIO $ updateUserAura uid
                     return $ EquipResponse "success" "Trang bị thành công!" targetItem
 
 
