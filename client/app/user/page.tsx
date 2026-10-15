@@ -42,8 +42,6 @@ export default function UserPage() {
   const router = useRouter();
   const { poolData } = usePool();
   const { user, loading, fetchMe } = useAuth();
-  // I had to calculate it myself cuz he forot to return it to me
-  const final_aura = Number(user?.base_aura) + Number(user?.bonus_aura);
 
   useEffect(() => {
     if (!loading && user) {
@@ -301,7 +299,7 @@ export default function UserPage() {
             <div className="component-item d-flex ">
               <p className="text-dark">AURA : </p>
               <span className="text-primary">
-                {user?.final_aura}(+{user?.bonus_aura})
+                {user?.total_aura}(+{user?.bonus_aura})
               </span>
             </div>
             <div className="component-item">
