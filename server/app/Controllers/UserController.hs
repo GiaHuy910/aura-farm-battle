@@ -45,41 +45,23 @@ import Controllers.AuthController (withAuthenticatedUser)
 -- GET user/tickets -> {"tickets": 100}
 data TicketsResponse = TicketsResponse { tickets :: Int } deriving (Show, Generic)
 instance ToJSON TicketsResponse
-
--- GET user/tickets
 getTicketsHandler :: Maybe String -> Handler TicketsResponse
 getTicketsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ TicketsResponse u.tickets
 
 
--- GET user/equipped_skills -> {"equipped_skills": ["na_1", "s1_1", "s2_1", "ult_1"]}
-data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
-instance ToJSON EquippedSkillsResponse
--- GET user/equipped_skills
-getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
-getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> 
-    return $ EquippedSkillsResponse [u.equipped_s1, u.equipped_s2, u.equipped_s3, u.equipped_ult]
-
 -- GET user/owned_skills -> {"owned_skills": ["na_1", "s1_1", ...]}
 data OwnedSkillsResponse = OwnedSkillsResponse { owned_skills :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedSkillsResponse
--- GET user/owned_skills
 getOwnedSkillsHandler :: Maybe String -> Handler OwnedSkillsResponse
 getOwnedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedSkillsResponse u.owned_skills
 
--- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
-data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
-instance ToJSON EquippedClothesResponse
--- GET user/owned_clothes
-getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
-getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
 
 -- GET user/owned_clothes -> {"owned_clothes": ["acc_1", "shirt_1", ...]}
 data OwnedClothesResponse = OwnedClothesResponse { owned_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedClothesResponse
--- GET user/equipped_clothes
-getEquippedClothesHandler :: Maybe String -> Handler EquippedClothesResponse
-getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> 
-    return $ EquippedClothesResponse [u.equipped_acc, u.equipped_shirt, u.equipped_shoes]
+getOwnedClothesHandler :: Maybe String -> Handler OwnedClothesResponse
+getOwnedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> return $ OwnedClothesResponse u.owned_clothes
+
 
 data OwnedItemsResponse = OwnedItemsResponse{ owned_skills :: [Text], owned_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON OwnedItemsResponse
@@ -87,6 +69,55 @@ getOwnedItemsHandler :: Maybe String -> Handler OwnedItemsResponse
 getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
     return $ OwnedItemsResponse { owned_skills = u.owned_skills, owned_clothes = u.owned_clothes }
 
+
+
+-- KHU VỰC XỬ LÝ TRANG BỊ HIỆN CÓ CỦA NHÂN VẬT
+
+-- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
+data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
+instance ToJSON EquippedClothesResponse
+getEquippedClothesHandler :: Maybe String -> Handler EquippedClothesResponse
+getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> 
+    return $ EquippedClothesResponse [u.equipped_acc, u.equipped_shirt, u.equipped_shoes]
+
+
+-- GET user/equipped_skills -> {"equipped_skills": ["na_1", "s1_1", "s2_1", "ult_1"]}
+data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
+instance ToJSON EquippedSkillsResponse
+getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
+getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> 
+    return $ EquippedSkillsResponse [u.equipped_s1, u.equipped_s2, u.equipped_s3, u.equipped_ult]
+
+
+
+data EquipRequest = EquipRequest{equip_item :: Text} deriving (Show, Generic)
+instance FromJSON EquipRequest
+data EquipResponse = EquipResponse{status :: Text,message :: Text,equipped_item :: Text} deriving (Show, Generic)
+instance ToJSON EquipResponse
+getEquipItemHandler :: Maybe String -> EquipRequest -> Handler EquipResponse
+getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
+    let targetItem = req.equip_item
+        uid = u.user_id
+
+    case categorizeItem targetItem of
+        Nothing ->
+            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
+
+        Just (category, dbField) -> do
+            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
+            let isOwned = case category of
+                    SkillType  -> targetItem `elem` u.owned_skills
+                    ClotheType -> targetItem `elem` u.owned_clothes
+
+            if not isOwned
+                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
+                else do
+                    liftIO $ updateEquippedItem uid dbField targetItem
+                    return $ EquipResponse "success" "Trang bị thành công!" targetItem
+
+
+
+-- KHU VỰC XỬ LÝ GACHA VÀ LOGIC GACHA
 data GachaRequest = GachaRequest{wish :: Text, wish_type :: Text } deriving (Show, Generic)
 instance FromJSON GachaRequest
 data GachaResponse = GachaResponse{ status :: Text, message :: Text, added_items  :: Maybe [Text], remaining_tickets :: Maybe Int} deriving (Show, Generic)
@@ -113,31 +144,9 @@ getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                         "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u remaining
                         "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u remaining
                         _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing Nothing
-data EquipRequest = EquipRequest{equip_item :: Text} deriving (Show, Generic)
-instance FromJSON EquipRequest
-data EquipResponse = EquipResponse{status :: Text,message :: Text,equipped_item :: Text} deriving (Show, Generic)
-instance ToJSON EquipResponse
-getEquipItemHandler :: Maybe String -> EquipRequest -> Handler EquipResponse
-getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
-    let targetItem = req.equip_item
-        uid = u.user_id
 
-    case categorizeItem targetItem of
-        Nothing ->
-            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
 
-        Just (category, dbField) -> do
-            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
-            let isOwned = case category of
-                    SkillType  -> targetItem `elem` u.owned_skills
-                    ClotheType -> targetItem `elem` u.owned_clothes
-
-            if not isOwned
-                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
-                else do
-                    liftIO $ updateEquippedItem uid dbField targetItem
-                    return $ EquipResponse "success" "Trang bị thành công!" targetItem
-
+-- CÁC HÀM LOGIC GACHA Ở DƯỚI
 -- 1. Định nghĩa bảng trọng số CỐ ĐỊNH cho từng độ hiếm
 rarityWeights :: [(Text, Double)]
 rarityWeights = 
