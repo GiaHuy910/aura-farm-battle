@@ -1,47 +1,68 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DeriveGeneric #-}
+{-# LANGUAGE DuplicateRecordFields #-}
+{-# LANGUAGE OverloadedRecordDot #-}
 
 module Controllers.GachaHistoryController
   ( GachaHistoryAPI
+  , GachaHistoryResponse(..)
+  , Pagination(..)
   , getGachaHistoryHandler
   ) where
 
 import Control.Monad.IO.Class (liftIO)
-import Data.Maybe (fromMaybe)
+import Data.Aeson
 import Data.Text (Text)
+import GHC.Generics
 import Servant
 
 import Controllers.AuthController (withAuthenticatedUser)
 import Model.User (User(..))
 import Model.GachaHistory
-    ( GachaHistoryResponse(..)
-    , Pagination(..)
-    , GachaHistory(history_id)
+    ( GachaHistory(..)
     , getGachaHistory
     )
 
--- 1. Định nghĩa Endpoint API
+-- 1. Response DTOs
+data Pagination = Pagination
+    { limit      :: Int
+    , nextCursor :: Text
+    } deriving (Show, Generic)
+
+instance ToJSON Pagination
+
+data GachaHistoryResponse = GachaHistoryResponse
+    { gacha_history_list :: [GachaHistory]
+    , pagination         :: Pagination
+    } deriving (Show, Generic)
+
+instance ToJSON GachaHistoryResponse
+
+-- 2. Definition dùng Required param
 type GachaHistoryAPI = "gacha-history"
     :> Header "Cookie" String
-    :> QueryParam "limit" Int
-    :> QueryParam "cursor" Text
-    :> QueryParam "item_type" Text
+    :> QueryParam' '[Required, Strict] "limit" Int
+    :> QueryParam' '[Required, Strict] "cursor" Text
+    :> QueryParam' '[Required, Strict] "item_type" Text
     :> Get '[JSON] GachaHistoryResponse
 
--- 2. Logic xử lý Request
-getGachaHistoryHandler :: Maybe String -> Maybe Int -> Maybe Text -> Maybe Text -> Handler GachaHistoryResponse
-getGachaHistoryHandler cookie mLimit mCursor mItemType = withAuthenticatedUser cookie $ \u -> do
-    let limitVal = fromMaybe 6 mLimit
-        cursorVal = fromMaybe "" mCursor
-        itemTypeVal = fromMaybe "clothe" mItemType
-        uid = user_id u
+-- 3. Handler gọn đẹp: Dùng u.user_id để tránh trùng tên field
+getGachaHistoryHandler
+    :: Maybe String
+    -> Int
+    -> Text
+    -> Text
+    -> Handler GachaHistoryResponse
+getGachaHistoryHandler cookie limitVal cursorVal itemTypeVal = withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id
 
     histories <- liftIO $ getGachaHistory uid itemTypeVal limitVal cursorVal
 
     let nextCursorVal = if null histories
                             then ""
-                            else history_id (last histories)
+                            else _id (last histories)
 
     return $ GachaHistoryResponse
         { gacha_history_list = histories
