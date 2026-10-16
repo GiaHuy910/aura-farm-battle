@@ -40,6 +40,7 @@ import Model.Skill (Skill(..), getSkillsPool)
 import qualified Model.Clothe as Clothe
 import qualified Model.Skill as Skill
 import Controllers.AuthController (withAuthenticatedUser)
+import Model.GachaHistory (saveGachaHistory)
 
 
 -- GET user/tickets -> {"tickets": 100}
@@ -77,7 +78,7 @@ getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
 data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON EquippedClothesResponse
 getEquippedClothesHandler :: Maybe String -> Handler EquippedClothesResponse
-getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u -> 
+getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u ->
     return $ EquippedClothesResponse [u.equipped_acc, u.equipped_shirt, u.equipped_shoes]
 
 
@@ -85,7 +86,7 @@ getEquippedClothesHandler cookie = withAuthenticatedUser cookie $ \u ->
 data EquippedSkillsResponse = EquippedSkillsResponse { equipped_skills :: [Text] } deriving (Show, Generic)
 instance ToJSON EquippedSkillsResponse
 getEquippedSkillsHandler :: Maybe String -> Handler EquippedSkillsResponse
-getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u -> 
+getEquippedSkillsHandler cookie = withAuthenticatedUser cookie $ \u ->
     return $ EquippedSkillsResponse [u.equipped_s1, u.equipped_s2, u.equipped_s3, u.equipped_ult]
 
 
@@ -112,14 +113,14 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
             if not isOwned
                 then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
                 else do
-                    liftIO $ updateEquippedItem 
-                                uid 
-                                dbField 
-                                targetItem 
-                                category 
-                                (base_aura u) 
-                                (equipped_acc u) 
-                                (equipped_shirt u) 
+                    liftIO $ updateEquippedItem
+                                uid
+                                dbField
+                                targetItem
+                                category
+                                (base_aura u)
+                                (equipped_acc u)
+                                (equipped_shirt u)
                                 (equipped_shoes u)
                     return $ EquipResponse "success" "Trang bị thành công!" targetItem
 
@@ -144,7 +145,7 @@ getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
         else do
             mRemaining <- liftIO $ deductTickets uid count
             case mRemaining of
-                Nothing -> 
+                Nothing ->
                     return $ GachaResponse "failure" "Too Poor huhu" Nothing (Just u.tickets)
                 Just remaining -> do
                     -- Trừ vé thành công, truyền `remaining` trực tiếp vào processGacha
@@ -157,7 +158,7 @@ getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
 -- CÁC HÀM LOGIC GACHA Ở DƯỚI
 -- 1. Định nghĩa bảng trọng số CỐ ĐỊNH cho từng độ hiếm
 rarityWeights :: [(Text, Double)]
-rarityWeights = 
+rarityWeights =
     [ ("mythical", 0.5)   -- 0.5%
     , ("legendary", 1.5)  -- 1.5%
     , ("epic", 8.0)      -- 8.0%
@@ -187,17 +188,17 @@ rollSingle currentPity pool getId getRarity = do
             let totalWeight = sum (map snd rarityWeights)
             randVal <- randomRIO (0.0 :: Double, totalWeight)
             let selectedRarity = pickRarity randVal rarityWeights
-            
+
             -- Lọc các item trong Pool thuộc độ hiếm vừa random ra
             let filteredPool = filter (\x -> getRarity x == selectedRarity) pool
-            
+
             -- Fallback an toàn nếu pool trống
             let actualPool = if null filteredPool then pool else filteredPool
-            
+
             -- Random đều 1 món bất kỳ trong nhóm
             idx <- randomRIO (0, length actualPool - 1)
             let item = actualPool !! idx
-            
+
             -- Cập nhật Pity
             if getRarity item == "legendary"
                 then return (getId item, 0)
@@ -218,9 +219,15 @@ processGacha count category getPool getId getRarity getPityFunc pityField uid u 
         else do
             let currentPity = getPityFunc u
             (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
-            
+
             liftIO $ addGachaItems uid category rolledIDs
             liftIO $ updatePity uid pityField finalPity
+
+            -- LƯU LỊCH SỬ GACHA:
+            let itemTypeStr = case category of
+                                ClotheType -> "clothe"
+                                SkillType  -> "skill"
+            liftIO $ saveGachaHistory uid itemTypeStr rolledIDs
 
             return $ GachaResponse "success" "Success" (Just rolledIDs) (Just remainingTickets)
 
