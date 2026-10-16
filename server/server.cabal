@@ -14,16 +14,19 @@ library
                     , Controllers.RoomController
                     , Controllers.UserController
                     , Controllers.PoolController
+                    , Controllers.GachaHistoryController
                     , Model.Clothe
                     , Model.Rooms
                     , Model.Session
                     , Model.Skill
                     , Model.User
+                    , Model.GachaHistory
                     , Route.AuthRouter
                     , Route.Index
                     , Route.RoomRouter
                     , Route.UserRouter
                     , Route.PoolRouter
+                    , Route.GachaHistoryRouter
     build-depends:
         base ^>=4.19.1.0 && <4.21,
         aeson,
@@ -54,16 +57,19 @@ executable server-app
         , Controllers.RoomController
         , Controllers.UserController
         , Controllers.PoolController
+        , Controllers.GachaHistoryController
         , Model.Clothe
         , Model.Rooms
         , Model.Session
         , Model.Skill
         , Model.User
+        , Model.GachaHistory
         , Route.AuthRouter
         , Route.Index
         , Route.RoomRouter
         , Route.UserRouter
         , Route.PoolRouter
+        , Route.GachaHistoryRouter
     build-depends:
         base ^>=4.19.1.0,
         server,

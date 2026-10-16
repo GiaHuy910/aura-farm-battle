@@ -15,10 +15,12 @@ import Controllers.AuthController( registerHandler, loginHandler, logoutHandler,
 import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
 import Controllers.UserController( getEquippedSkillsHandler, getEquippedClothesHandler, getTicketsHandler, getOwnedItemsHandler, getGachaHandler, getEquipItemHandler)
 import Controllers.PoolController( getPoolHandler )
+import Controllers.GachaHistoryController( getGachaHistoryHandler)
 import Route.AuthRouter( AuthRouter)
 import Route.RoomRouter( RoomRouter)
 import Route.UserRouter( UserRouter)
 import Route.PoolRouter( PoolRouter)
+import Route.GachaHistoryRouter( GachaHistoryRouter)
 import Route.Index(Router)
 
 authServer :: Server AuthRouter
@@ -47,6 +49,9 @@ userServer =
 poolServer :: Server PoolRouter
 poolServer =
         getPoolHandler
+gachaHistoryServer :: Server GachaHistoryRouter
+gachaHistoryServer = getGachaHistoryHandler
+
 
 server :: Server Router
 server =
@@ -54,6 +59,7 @@ server =
   :<|> roomServer
   :<|> userServer
   :<|> poolServer
+  :<|> gachaHistoryServer
 
 api :: Proxy Router
 api = Proxy
