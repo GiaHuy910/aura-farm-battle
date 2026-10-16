@@ -1,13 +1,11 @@
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DeriveGeneric #-}
 {-# LANGUAGE DuplicateRecordFields #-}
 {-# LANGUAGE OverloadedRecordDot #-}
 
 module Controllers.GachaHistoryController
-  ( GachaHistoryAPI
-  , GachaHistoryResponse(..)
+  ( GachaHistoryResponse(..)
   , Pagination(..)
   , getGachaHistoryHandler
   ) where
@@ -40,15 +38,7 @@ data GachaHistoryResponse = GachaHistoryResponse
 
 instance ToJSON GachaHistoryResponse
 
--- 2. Definition dùng Required param
-type GachaHistoryAPI = "gacha-history"
-    :> Header "Cookie" String
-    :> QueryParam' '[Required, Strict] "limit" Int
-    :> QueryParam' '[Required, Strict] "cursor" Text
-    :> QueryParam' '[Required, Strict] "item_type" Text
-    :> Get '[JSON] GachaHistoryResponse
-
--- 3. Handler gọn đẹp: Dùng u.user_id để tránh trùng tên field
+-- 2. Handler xử lý
 getGachaHistoryHandler
     :: Maybe String
     -> Int
