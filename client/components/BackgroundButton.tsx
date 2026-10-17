@@ -1,6 +1,6 @@
 import React from "react";
 
-import { getBorderColor } from "@/helpers/getBorderColor";
+import { getBorderColor } from "@/helpers/getTypeColors";
 
 type Props = {
   imageUrl: string;
@@ -8,7 +8,7 @@ type Props = {
   onOpen: () => void;
   isDisabled: boolean;
   isEquipped: boolean;
-  itemRarity: string | "common";
+  itemRarity?: string | "common";
 };
 
 const BackgroundButton: React.FC<Props> = ({
@@ -25,7 +25,7 @@ const BackgroundButton: React.FC<Props> = ({
     backgroundPosition: "center",
     width: buttonName === "ULT" ? "250px" : "150px",
     height: buttonName === "ULT" ? "80px" : "60px",
-    border: getBorderColor(itemRarity),
+    border: getBorderColor(itemRarity ?? "common"),
     // boxShadow:
     //   itemRarity !== "common"
     //     ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
