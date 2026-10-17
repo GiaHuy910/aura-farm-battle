@@ -122,3 +122,33 @@ body {
 .glow-active {
   animation: flashGlow 1s ease;
 }
+
+.custom-table th,
+.custom-table td {
+  border-color: rgba(178, 140, 15, 0.69);
+  border-width: 3px;
+}
+
+.backgroundGachaContainer {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+.backgroundGachaContainer::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+
+  background-image: url("/gacha/background-gacha-3.jpg");
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+
+  filter: blur(8px);
+  transform: scale(1.1);
+  z-index: -1;
+}

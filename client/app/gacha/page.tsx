@@ -6,23 +6,23 @@ import { useRouter } from "next/navigation";
 
 import page from "@/styles/page.module.css";
 import home from "@/styles/home.module.css";
-import { getBorderColor } from "@/helpers/getBorderColor";
+import { getBorderColor } from "@/helpers/getTypeColors";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { usePool } from "@/api/pool";
 import { sendGachaRequest } from "@/api/user";
+import { GachaTicket } from "@/components/GachaTicket";
 
-const banner_1 = "/gacha/background-gacha-1.jpg";
+const banner_1 = "/gacha/background-gacha-3.jpg";
 const banner_2 = "/gacha/background-gacha-2.jpg";
 const banner_1_name = "Clothes" as const;
 const banner_2_name = "Skills" as const;
-const gameTicket = "/game-ticket.ico";
 
 const gacha_1_button = "1";
 const gacha_2_button = "10";
 
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
-export default function GachaPage() {
+export default function GachaBannerPage() {
   const { user, fetchMe } = useAuth();
   const { poolData } = usePool();
   const router = useRouter();
@@ -87,14 +87,16 @@ export default function GachaPage() {
   const handleReturn = () => {
     router.push("/");
   };
+  const handleRedirectGachaHistory = () => {
+    router.push("/gacha/history");
+  };
 
   return (
     <div
-      className={`${page.roomsPage} position-relative my-5 d-flex justify-content-center align-items-center flex-column gap-3 container w-100 h-100`}
+      className={`${page.roomsPage} backgroundGachaContainer position-relative my-5 d-flex justify-content-center align-items-center flex-column gap-3 container w-100 h-100`}
       style={{
         border: "10px solid rgba(178, 140, 15, 0.69)",
-        backgroundColor: "rgba(255, 255, 255, 0.23)",
-        backdropFilter: "blur(5px)",
+        // backgroundColor: "rgba(255, 255, 255, 0.23)",
         padding: "10px",
       }}
     >
@@ -122,13 +124,7 @@ export default function GachaPage() {
           }}
           className="btn rounded-5 d-flex justify-content-center align-items-center gap-4"
         >
-          <Image
-            src={gameTicket}
-            width={40}
-            height={35}
-            alt="game-ticket"
-            priority
-          />
+          <GachaTicket />
           {user?.tickets ?? 0}
           <button className="btn btn-light rounded-5" onClick={handlePayment}>
             +
@@ -262,7 +258,10 @@ export default function GachaPage() {
         <Image
           src={banner_1}
           alt={banner_1_name}
-          className={`popIn border border-light`}
+          className={`popIn`}
+          style={{
+            border: "5px solid white",
+          }}
           width={700}
           height={380}
           priority
@@ -278,10 +277,10 @@ export default function GachaPage() {
           priority
         />
       )}
-      <div className="footer w-100 d-flex justify-content-between">
-        <div className="d-flex justify-content-start">
+      <div className="footer w-100 d-flex justify-content-between flex-wrap gap-3">
+        <div className="d-flex justify-content-start align-items-center gap-1">
           <button
-            className={`${home.optionBtn}`}
+            className={`${home.optionBtn} me-5`}
             style={{
               padding: "10px 10px",
               color: "white",
@@ -291,6 +290,12 @@ export default function GachaPage() {
           >
             RETURN
           </button>
+          <button
+            onClick={handleRedirectGachaHistory}
+            className="btn btn-warning rounded-5"
+          >
+            History
+          </button>
         </div>
         <div className="d-flex justify-content-end gap-3">
           <button
@@ -299,7 +304,9 @@ export default function GachaPage() {
             value={gacha_1_button}
             onClick={handleGacha}
           >
-            x{gacha_1_button}
+            <div className="d-flex justify-content-center align-items-center">
+              <GachaTicket />x{gacha_1_button}
+            </div>
           </button>
           <button
             className="btn btn-light btn-lg rounded-5"
@@ -307,7 +314,9 @@ export default function GachaPage() {
             value={gacha_2_button}
             onClick={handleGacha}
           >
-            x{gacha_2_button}
+            <div className="d-flex justify-content-center align-items-center">
+              <GachaTicket />x{gacha_2_button}
+            </div>
           </button>
         </div>
       </div>

@@ -1,6 +1,6 @@
 type PoolResponse = {
-  clothe: string[Clothe];
-  skill: string[Skill];
+  clothe: Clothe[];
+  skill: Skill[];
 };
 type Clothe = {
   clothe_id: string;

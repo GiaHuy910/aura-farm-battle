@@ -1,4 +1,4 @@
-import gameLogoSmallMini from "../public/game-logo-mini.png";
+import gameLogoSmallMini from "@/public/game-logo-mini.png";
 import Image from "next/image";
 
 const Navbar = () => {
