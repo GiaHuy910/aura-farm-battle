@@ -15,6 +15,7 @@ module Controllers.RoomController
     CreateRoomResponse(..),
     RoomSummary(..),
     JoinRoomRequest(..),
+    JoinRoomResponse(..),
     LeaveRoomRequest(..),
     StatusResponse(..),
   ) where
@@ -22,16 +23,16 @@ module Controllers.RoomController
 import Control.Monad.IO.Class (liftIO)
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Text (Text, pack)
+import qualified Data.Text as T
 import GHC.Generics (Generic)
 import Model.User (User(..))
 import Servant
 
-import Model.Rooms (Room(..), getRooms, createRoom, deleteRoom, joinRoom)
+import Model.Rooms (Room(..),ValidationError(..),validateRoomName, getRooms, createRoom, getRoomById, joinRoomById, JoinResult(..))
 import Controllers.AuthController (withAuthenticatedUser)
+import Service.WsService (notifyPlayerJoined, handleLeave)
+import Ws.Env (Env)
 
--- ___________________________________________________________________________________________
--- OK bây giờ tui sẽ làm cho nó theo thứ tự là request -> response -> handler cho dễ nhìn nha
--- ___________________________________________________________________________________________
 -- POST /room/create
 data CreateRoomRequest = CreateRoomRequest
   { room_name  :: Text
@@ -57,33 +58,41 @@ instance ToJSON CreateRoomResponse
 -- POST /room/create
 createRoomHandler :: Maybe String -> CreateRoomRequest -> Handler CreateRoomResponse
 createRoomHandler cookie req = do
-  -- Gọi withAuthenticatedUser và đẩy toàn bộ logic xuống dưới
   withAuthenticatedUser cookie $ \u -> do
-    let uid = u.user_id -- Lấy trực tiếp user_id từ object u
-    let newRoom = Room
-          { room_id       = "" 
-          , room_name     = req.room_name
-          , room_password = req.password
-          , owner_id      = uid    -- Gán uid lấy từ cookie
-          , user_ids      = [uid]  -- Gán uid lấy từ cookie
-          , occupancy     = 1
-          , is_private    = req.is_private
-          , status        = "waiting"
-          }
-    created <- liftIO $ createRoom newRoom
-    let rDetail = CreatedRoomDetail
-          { room_id   = created.room_id
-          , room_name = created.room_name
-          , owner_id  = created.owner_id
-          , status    = created.status
-          }
-    return $ CreateRoomResponse "success" rDetail
+    case validateRoomName (T.unpack req.room_name) of
+      Left RoomNameEmpty 
+        -> throwError err400
+          { errBody = "Room name cannot be empty" }
+      Left RoomNameTooLong 
+        -> throwError err400
+          { errBody = "Room name is too long" }
+      Right () -> do
+        let uid = u.user_id
+        let newRoom = Room
+              { room_id       = ""
+              , room_name     = req.room_name
+              , room_password = req.password
+              , owner_id      = uid
+              , user_ids      = [uid]
+              , occupancy     = 1
+              , is_private    = req.is_private
+              , status        = "waiting"
+              }
+        created <- liftIO $ createRoom newRoom
+        let rDetail = CreatedRoomDetail
+              { room_id   = created.room_id
+              , room_name = created.room_name
+              , owner_id  = created.owner_id
+              , status    = created.status
+              }
+        return $ CreateRoomResponse "success" rDetail
 
 -- GET /room/getRooms
 data RoomSummary = RoomSummary
   { room_name  :: Text
   , room_id    :: Text
-  , occupation :: Text  -- Định dạng chuỗi "1/2" theo đúng spec
+  , occupation :: Text  
+  , is_private :: Bool
   , status     :: Text
   } deriving (Show, Generic)
 instance ToJSON RoomSummary
@@ -94,45 +103,56 @@ getRoomsHandler = do
   rooms <- liftIO getRooms
   return $ map toSummary rooms
   where
-    toSummary (Room rid rname _ _ _ occ _ rstatus) = RoomSummary
-      { room_name  = rname 
+    toSummary (Room rid rname _ _ _ occ private rstatus) = RoomSummary
+      { room_name  = rname
       , room_id    = rid
-      , occupation = pack (show occ ++ "/2") -- Chuyển occupancy Int -> "1/2"
+      , occupation = pack (show occ ++ "/2")
+      , is_private = private
       , status     = rstatus
       }
 
--- POST /room/joinRoom
+-- POST /room/engagement 
 data JoinRoomRequest = JoinRoomRequest
-  { room_id  :: Text
+  { room_id  :: Text      
   , password :: Text
   } deriving (Show, Generic)
 instance FromJSON JoinRoomRequest
--- POST /room/joinRoom
-joinRoomHandler :: Maybe String -> JoinRoomRequest -> Handler StatusResponse
-joinRoomHandler cookie req = do
-  withAuthenticatedUser cookie $ \u -> do
-    let uid = u.user_id -- Lấy trực tiếp user_id từ object u
-    -- Gọi hàm joinRoom từ Model.Rooms
-    success <- liftIO $ joinRoom req.room_id req.password uid
-    if success
-      then return $ StatusResponse "success"
-      else return $ StatusResponse "failure"
 
--- DELETE /room/leave
+data JoinRoomResponse= JoinRoomResponse
+  {
+    status::Text,
+    room_id::Text
+  }deriving (Show, Generic)
+instance ToJSON JoinRoomResponse 
+joinRoomHandler :: Env -> Maybe String -> JoinRoomRequest -> Handler JoinRoomResponse
+joinRoomHandler env cookie req = do
+  withAuthenticatedUser cookie $ \u -> do
+    let uid = u.user_id
+    result <- liftIO $ joinRoomById req.room_id req.password uid
+    case result of
+      JoinOk -> do
+        liftIO $ notifyPlayerJoined env req.room_id uid
+        return $ JoinRoomResponse "success" req.room_id
+      _ -> return $ JoinRoomResponse "failure" ""
+
+-- POST /room/leave
 data LeaveRoomRequest = LeaveRoomRequest
   { room_id :: Text
   } deriving (Show, Generic)
 instance FromJSON LeaveRoomRequest
--- DELETE /room/leave
-leaveRoomHandler :: Maybe String -> LeaveRoomRequest -> Handler StatusResponse
-leaveRoomHandler cookie req = do
-  -- Thực hiện xóa/rời phòng theo room_id và userId
+
+leaveRoomHandler :: Env -> Maybe String -> LeaveRoomRequest -> Handler StatusResponse
+leaveRoomHandler env cookie req =
   withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
-    liftIO $ deleteRoom req.room_id uid
-    return $ StatusResponse "success" 
+        rid = req.room_id
+    mRoom <- liftIO $ getRoomById rid
+    case mRoom of
+      Just r | uid `elem` r.user_ids -> do
+        liftIO $ handleLeave env rid uid   
+        return $ StatusResponse "success"
+      _ -> return $ StatusResponse "failure"
 
--- Common Status Response {"status": "success" | "failure"}
 data StatusResponse = StatusResponse
   { status :: Text
   } deriving (Show, Generic)

@@ -5,7 +5,7 @@ import { Slide, ToastContainer } from "react-toastify";
 import "bootstrap/dist/css/bootstrap.min.css";
 import BootstrapClient from "@/components/BootstrapClient";
 import BackgroundMusicProvider from "@/contexts/music/BackgroundMusicProvider";
-import "./global.css";
+import "@/app/(authenticated)/global.css";
 import { AuthProvider } from "@/contexts/auth/AuthProvider";
 
 export const metadata: Metadata = {
@@ -24,23 +24,21 @@ export default async function RootLayout({ children }: LayoutProps<"/">) {
       </head>
       <body className={`backgroundContainer`}>
         <BackgroundMusicProvider>
-          <AuthProvider>
-            {children}
-            <BootstrapClient />
-            <ToastContainer
-              position="bottom-right"
-              autoClose={3000}
-              hideProgressBar={false}
-              newestOnTop={false}
-              closeOnClick
-              rtl={false}
-              pauseOnFocusLoss={false}
-              draggable
-              pauseOnHover
-              theme="light"
-              transition={Slide}
-            />
-          </AuthProvider>
+          {children}
+          <BootstrapClient />
+          <ToastContainer
+            position="bottom-right"
+            autoClose={3000}
+            hideProgressBar={false}
+            newestOnTop={false}
+            closeOnClick
+            rtl={false}
+            pauseOnFocusLoss={false}
+            draggable
+            pauseOnHover
+            theme="light"
+            transition={Slide}
+          />
         </BackgroundMusicProvider>
       </body>
     </html>

@@ -7,7 +7,7 @@ module Route.RoomRouter
      RoomRouter
     )where 
 
-import Controllers.RoomController( RoomSummary(..), CreateRoomRequest(..), CreateRoomResponse(..), LeaveRoomRequest(..), StatusResponse(..), JoinRoomRequest(..))
+import Controllers.RoomController( RoomSummary(..), CreateRoomRequest(..), CreateRoomResponse(..), LeaveRoomRequest(..), StatusResponse(..), JoinRoomRequest(..),JoinRoomResponse(..))
 import Servant
 
 type RoomRouter =
@@ -22,7 +22,7 @@ type RoomRouter =
     :<|> "room" :> "engagement"
                 :> Header "Cookie" String
                 :> ReqBody '[JSON] JoinRoomRequest
-                :> Post '[JSON] StatusResponse
+                :> Post '[JSON] JoinRoomResponse
 
     :<|> "room" :> "leave"
             :> Header "Cookie" String

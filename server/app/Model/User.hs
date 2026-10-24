@@ -34,7 +34,6 @@ import Config.Database (runDB)
 import Config.GameConfig (userBaseAura, userTotalAura, userBonusAura)
 import Model.Skill (textToRarity)
 import Model.Clothe (getClothesByIds, Clothe(..))
---Xóa 2 cái import Clothe với Skill tại thấy nó vô dụn quá
 
 data User = User
   { user_id       :: Text
@@ -71,7 +70,6 @@ getUser uname = runDB $ do
 
 getUserById :: Text -> IO (Maybe User)
 getUserById uid = runDB $ do
-    -- Sử dụng record update { project = ... }
     maybeDoc <- findOne ((select ["user_id" =: uid] "user") { project = ["password" =: (0 :: Int)] })
     case maybeDoc of
         Nothing -> return Nothing
@@ -170,8 +168,8 @@ loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
     existingDocs <- runDB $ find ((select ["username" =: uname] "user") {project = ["user_id" =: (1 :: Int), "password" =: (1 :: Int)]}) >>= rest   --Làm biến giải thích quá, nếu bạn có trình bạn sẽ tự hiểu ha
     case existingDocs of
-        [] -> return LoginFailed -- Nếu danh sách rỗng (không tìm thấy)
-        (userDoc:_) -> do        -- Lấy an toàn phần tử đầu tiên bằng Pattern Matching
+        [] -> return LoginFailed 
+        (userDoc:_) -> do        
             let storedHashedPass = fromMaybe "" (userDoc !? "password")
             let checkresult = checkPassword (mkPassword pass) (PasswordHash storedHashedPass)
             case checkresult of
@@ -182,11 +180,11 @@ loginUser uname pass = do
 
 deductTickets :: Text -> Int -> IO (Maybe Int)
 deductTickets uid amount = runDB $ do
-    mDoc <- findOne ((select ["user_id" =: uid] "user") {project = ["tickets" =: (1 :: Int)]}) --Tìm user qua user_id
+    mDoc <- findOne ((select ["user_id" =: uid] "user") {project = ["tickets" =: (1 :: Int)]}) 
     case mDoc of
-        Nothing -> return Nothing   --Nếu k có user nào
+        Nothing -> return Nothing  
         Just doc -> do
-            let currentTickets = fromMaybe 0 (doc !? "tickets")  --Lấy tickets và tính
+            let currentTickets = fromMaybe 0 (doc !? "tickets")  
             if currentTickets >= amount
                 then do
                     let remaining = currentTickets - amount
@@ -202,19 +200,18 @@ updatePity uid pityField newPity = runDB $ do
 
 data ItemType = ClotheType | SkillType deriving (Show, Eq)
 
---Tối ưu hàm cho nó ngắn vầy chạy cho lẹ
 addGachaItems :: Text -> ItemType -> [Text] -> IO ()
 addGachaItems uid itemType newIDs = do
     case itemType of
       ClotheType -> do
         runDB $ modify (select ["user_id" =: uid] "user")
-                        ["$addToSet" =: ["owned_clothes" =: ["$each" =: newIDs]]] --addToSet đã xử lý việc trùng lấp rồi ko cần phải viết hàm thêm, còn each là để xử lý việc thêm nhiều item
+                        ["$addToSet" =: ["owned_clothes" =: ["$each" =: newIDs]]] 
       SkillType -> do
         runDB $ modify (select ["user_id" =: uid] "user")
                         ["$addToSet" =: ["owned_skills" =: ["$each" =: newIDs]]]
 
 mapEquippedSkills :: Text -> Text -> Text -> Text -> [Text]
-mapEquippedSkills na s1 s2 ult = [na, s1, s2, ult]
+mapEquippedSkills s1 s2 s3 ult = [s1, s2, s3, ult]
 
 mapEquippedClothes :: Text -> Text -> Text -> [Text]
 mapEquippedClothes acc shirt shoes = [acc, shirt, shoes]
@@ -223,21 +220,17 @@ updateEquippedItem :: Text -> Text -> Text -> ItemType -> Int -> Text -> Text ->
 updateEquippedItem uid dbField itemId category bAura accId shirtId shoesId = do
     case category of
         SkillType -> 
-            -- Nếu là skill, không cần update aura
             runDB $ modify (select ["user_id" =: uid] "user") 
                            ["$set" =: [dbField =: itemId]]
         ClotheType -> do
-            -- Lấy 2 cái clothe còn lại với cái clothe mới[cite: 6]
             let newAcc   = if dbField == "equipped_acc"   then itemId else accId
                 newShirt = if dbField == "equipped_shirt" then itemId else shirtId
                 newShoes = if dbField == "equipped_shoes" then itemId else shoesId
             
-            -- Tính ra aura[cite: 6]
             clothes <- getClothesByIds [newAcc, newShirt, newShoes]
             let bonus = sum (map aura_bonus clothes)
                 total = bAura + bonus
             
-            -- Modify user 1 lượt luôn[cite: 6]
             runDB $ modify (select ["user_id" =: uid] "user")
                            ["$set" =: [ dbField      =: itemId
                                       , "bonus_aura" =: bonus

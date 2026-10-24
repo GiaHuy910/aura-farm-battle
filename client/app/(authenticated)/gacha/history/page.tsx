@@ -5,7 +5,7 @@ import { useState, useEffect } from "react";
 import home from "@/styles/home.module.css";
 import page from "@/styles/page.module.css";
 import { getGachaHistory } from "@/api/gachaHistory";
-import {capitalizeFirstLetter} from "@/helpers/capitalizeFirstLetter";
+import { capitalizeFirstLetter } from "@/helpers/capitalizeFirstLetter";
 import { usePool } from "@/api/pool";
 import { getTextColor } from "@/helpers/getTypeColors";
 
@@ -28,10 +28,10 @@ export default function GachaHistoryPage() {
   const [currentBanner, setCurrentBanner] =
     useState<BannerType>(bannerDefaultType);
   const [pageIndex, setPageIndex] = useState<number>(0);
-  const [pageField, setPageField] = useState<GachaHistoryRequest>({
+  const buildRequest = (cursor = ""): GachaHistoryRequest => ({
     limit: baseLimit,
-    cursor: "",
-    item_type: bannerDefaultType,
+    cursor,
+    item_type: currentBanner,
   });
   const [historyData, setHistoryData] = useState<GachaHistoryResponse[]>([]);
 
@@ -53,21 +53,17 @@ export default function GachaHistoryPage() {
     }
     return { name: "Undefined", rarity: "-" };
   };
-  const handleSetBanner = async (value: BannerType) => {
-    const previousTheme = currentBanner;
-    try {
-      setCurrentBanner(value);
-    } catch (error) {
-      setCurrentBanner(previousTheme);
-      console.error("Failed to update theme:", error);
-    }
+  const handleSetBanner = (value: BannerType) => {
+    setCurrentBanner(value);
   };
 
   useEffect(() => {
     const fetchFirstPage = async () => {
-      const res = await getGachaHistory(pageField);
-      setHistoryData([res]);
       setPageIndex(0);
+      setHasData(false);
+      setHistoryData([]);
+      const res = await getGachaHistory(buildRequest());
+      setHistoryData([res]);
       setHasData(true);
     };
     fetchFirstPage();
@@ -81,8 +77,8 @@ export default function GachaHistoryPage() {
 
     const currentNextCursor = historyData[pageIndex]?.pagination.nextCursor;
     if (!currentNextCursor) return;
-    const sendHistoryField = { ...pageField, cursor: currentNextCursor };
-    const res = await getGachaHistory(sendHistoryField);
+    const payload = buildRequest(currentNextCursor);
+    const res = await getGachaHistory(payload);
 
     setHistoryData((prev) => [...prev, res]);
     setPageIndex((prev) => prev + 1);

@@ -12,6 +12,26 @@ import { usePathname } from "next/navigation";
 
 import { BackgroundMusicContext } from "@/contexts/music/BackgroundMusicContext";
 const defaultAudio = "/game-background-music-dynamic.mp4";
+const defaultVolume = 1;
+const lobbyVolume = 0.3;
+
+const ROUTE_FACTORS: Record<string, number> = {
+  "/": defaultVolume,
+  "/rooms": lobbyVolume,
+  "/gacha/history": lobbyVolume,
+  "/gacha": lobbyVolume,
+  "/user": lobbyVolume,
+};
+
+const getFactorFromObject = (pathname: string): number => {
+  if (ROUTE_FACTORS[pathname] !== undefined) {
+    return ROUTE_FACTORS[pathname];
+  }
+  const segments = pathname.split("/").filter(Boolean);
+  const basePath = segments.length > 0 ? `/${segments[0]}` : "/";
+
+  return ROUTE_FACTORS[basePath] !== undefined ? ROUTE_FACTORS[basePath] : 1;
+};
 
 export default function BackgroundMusic({ children }: { children: ReactNode }) {
   const audioRef = useRef<HTMLAudioElement | null>(null);
@@ -25,13 +45,8 @@ export default function BackgroundMusic({ children }: { children: ReactNode }) {
 
   const pathname = usePathname();
   const [masterVolume, setMasterVolume] = useState(1);
-  const ROUTE_FACTORS: Record<string, number> = {
-    "/": 1,
-    "/rooms": 0.3,
-    "/gacha": 0.3,
-    "/user": 0.3,
-  };
-  const routeFactor = ROUTE_FACTORS[pathname] ?? 1;
+
+  const routeFactor = getFactorFromObject(pathname);
   const volume = masterVolume * routeFactor;
   useEffect(() => {
     if (audioRef.current) {

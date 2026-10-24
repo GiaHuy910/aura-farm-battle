@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import styles from "../styles/home.module.css";
+import styles from "@/styles/home.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
 
 type Props = {

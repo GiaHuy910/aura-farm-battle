@@ -10,6 +10,8 @@ module Model.Clothe
     , docToClothe
     , clotheToDoc
     , createClothe
+    , createClotheBatch
+    , insertClothes
     , countClothes
     ) where
 
@@ -76,6 +78,20 @@ createClothe clotheId clotheType clotheName clotheRarity inPool = do
         in_pool = inPool
     }
     runDB $ insert_ "clothes" (clotheToDoc newClothe)
+
+createClotheBatch :: Text -> Text -> Text -> Text -> Bool -> Clothe
+createClotheBatch clotheId clotheType clotheName clotheRarity inPool = 
+    Clothe{
+        clothe_id = clotheId,
+        clothe_type = clotheType,
+        clothe_name = clotheName,
+        aura_bonus = clotheFlatBase userBaseAura (textToRarity clotheRarity),
+        rarity = clotheRarity,
+        in_pool = inPool
+    }
+
+insertClothes :: [Clothe] -> IO ()
+insertClothes cs = runDB $ insertMany_ "clothes" (map clotheToDoc cs)
 
 getClothesPool :: IO [Clothe]
 getClothesPool = runDB $ do

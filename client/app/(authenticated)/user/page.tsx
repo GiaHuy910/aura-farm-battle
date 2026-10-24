@@ -4,12 +4,13 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 import home from "@/styles/home.module.css";
-import page from "../../styles/page.module.css";
+import page from "@/styles/page.module.css";
 import UserCharacter from "@/components/UserCharacter";
 import BackgroundButton from "@/components/BackgroundButton";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { usePool } from "@/api/pool";
 import { equipUserItem, getUserOwnedItems } from "@/api/user";
+import { getPlayerClothesAssets } from "@/helpers/getPlayerClothesAssets";
 
 const baseSkillsUrl = `/skills`;
 const baseClothesUrl = `/clothes`;
@@ -127,11 +128,8 @@ export default function UserPage() {
       </div>
     );
   }
-
-  const clothes_0_equipped = "/clothes/base-character.png";
-  const clothes_1_equipped = `/clothes/ACC/${user?.equipped_clothes?.[0]}.png`;
-  const clothes_2_equipped = `/clothes/SHIRT/${user?.equipped_clothes?.[1]}.png`;
-  const clothes_3_equipped = `/clothes/SHOES/${user?.equipped_clothes?.[2]}.png`;
+  const { base_user_url, acc_user_url, shirt_user_url, shoes_user_url } =
+    getPlayerClothesAssets(user?.equipped_clothes);
 
   const skill_1_equipped = `/skills/S1/${user?.equipped_skills?.[0]}.png`;
   const skill_2_equipped = `/skills/S2/${user?.equipped_skills?.[1]}.png`;
@@ -304,13 +302,13 @@ export default function UserPage() {
             </div>
             <div className="component-item">
               <UserCharacter
-                base_user_url={clothes_0_equipped}
-                acc_user_url={clothes_1_equipped}
-                shirt_user_url={clothes_2_equipped}
-                shoes_user_url={clothes_3_equipped}
+                base_user_url={base_user_url}
+                acc_user_url={acc_user_url}
+                shirt_user_url={shirt_user_url}
+                shoes_user_url={shoes_user_url}
               />
             </div>
-            <div className="component-item">
+            <div className="component-item mt-5">
               <button
                 className={`${page.optionBtn}`}
                 onClick={handleShowClothes}

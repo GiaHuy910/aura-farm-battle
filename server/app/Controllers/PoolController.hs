@@ -12,7 +12,6 @@ import Model.Clothe (Clothe(..), getClothesPool)
 import Model.Skill (Skill(..), Effect(..), getSkillsPool)
 import Control.Monad.IO.Class (liftIO)
 
--- DTO cho từng món Clothe trong Pool
 data ClothePoolItem = ClothePoolItem
   { clothe_id   :: Text
   , clothe_name :: Text
@@ -21,7 +20,6 @@ data ClothePoolItem = ClothePoolItem
   } deriving (Show, Generic)
 instance ToJSON ClothePoolItem
 
--- DTO cho từng món Skill trong Pool
 data SkillPoolItem = SkillPoolItem
   { skill_id            :: Text
   , skill_name          :: Text
@@ -33,14 +31,12 @@ data SkillPoolItem = SkillPoolItem
   } deriving (Show, Generic)
 instance ToJSON SkillPoolItem
 
--- Struct Response chính cho API GET /pool
 data PoolResponse = PoolResponse
   { clothe :: [ClothePoolItem]
   , skill  :: [SkillPoolItem]
   } deriving (Show, Generic)
 instance ToJSON PoolResponse
 
--- Mapper cho Clothe
 clotheToItem :: Clothe -> ClothePoolItem
 clotheToItem c = ClothePoolItem
   { clothe_id   = c.clothe_id
@@ -49,7 +45,6 @@ clotheToItem c = ClothePoolItem
   , aura_bonus  = c.aura_bonus
   }
 
--- Mapper cho Skill
 skillToItem :: Skill -> SkillPoolItem
 skillToItem s = SkillPoolItem
   { skill_id            = s.skill_id
@@ -61,7 +56,6 @@ skillToItem s = SkillPoolItem
   , effect              = s.effect
   }
 
--- Handler xử lý
 getPoolHandler :: Handler PoolResponse
 getPoolHandler = do
     rawClothes <- liftIO getClothesPool

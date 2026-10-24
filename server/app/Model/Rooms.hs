@@ -1,12 +1,21 @@
 {-# LANGUAGE OverloadedStrings #-}
 {-# LANGUAGE DuplicateRecordFields #-}
+
 module Model.Rooms
     (
     Room(..)
     , getRooms
+    , getRoomById
     , createRoom
     , deleteRoom
-    , joinRoom
+    , deleteRoomById
+    , JoinResult(..)
+    , joinRoomById
+    , addMember
+    , removeMember
+    , setRoomStatus
+    , validateRoomName
+    , ValidationError(..)
     ) where
 
 import Database.MongoDB
@@ -15,9 +24,10 @@ import Data.UUID.V4 (nextRandom)
 import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
-import Config.Database (runDB)
 
--- 1. Định nghĩa cấu trúc dữ liệu
+import Config.Database (runDB)
+import Config.GameConfig(maxRoomName)
+
 data Room = Room
   {room_id :: Text
   ,room_name  :: Text
@@ -29,16 +39,16 @@ data Room = Room
   , status :: Text
   } deriving (Show)
 
--- 3. Hàm lấy danh sách phòng (Rất ngắn gọn khi dùng runDB)
 getRooms :: IO [Room]
 getRooms = runDB $ do
-    -- Sử dụng record update { project = ... }
     docs <- find ((select [] "room") { project = ["room_password" =: (0 :: Int)] }) >>= rest
     return (map docToRoom docs)
 
--- 4. Chuyển đổi BSON Document sang Room
--- Dùng toán tử (!?) để tự động ép kiểu BSON sang String/Bool
--- Dùng fromMaybe để gán giá trị mặc định nếu database không có trường đó
+getRoomById :: Text -> IO (Maybe Room)
+getRoomById rid = runDB $ do
+    mDoc <- findOne (select ["room_id" =: rid] "room")
+    return (fmap docToRoom mDoc)
+
 docToRoom :: Document -> Room
 docToRoom doc = Room
   { room_id = fromMaybe "" (doc !? "room_id")
@@ -51,11 +61,6 @@ docToRoom doc = Room
   , status = fromMaybe "waiting" (doc !? "status")
   }
 
--- ==========================================
--- CÁC HÀM THAO TÁC VỚI PHÒNG (CRUD)
--- ==========================================
-
--- Hàm phụ trợ: Chuyển cấu trúc Room trong Haskell thành Document để lưu vào MongoDB
 roomToDoc :: Room -> Document
 roomToDoc r =
   [ "room_id" =: room_id r
@@ -68,7 +73,14 @@ roomToDoc r =
   , "status" =: status r
   ]
 
--- 1. Hàm tạo phòng mới
+data ValidationError=RoomNameEmpty | RoomNameTooLong deriving (Show, Eq)
+
+validateRoomName :: String -> Either ValidationError ()
+validateRoomName name
+  | null name = Left RoomNameEmpty
+  | length name > maxRoomName = Left RoomNameTooLong
+  | otherwise = Right ()
+
 createRoom :: Room -> IO Room
 createRoom newRoom = runDB $ do
     uuid <- liftIO nextRandom
@@ -79,37 +91,49 @@ createRoom newRoom = runDB $ do
         let realOccupancy = length (user_ids newRoom)
         let valiatedRoom = newRoom { room_id = pack (toString uuid), occupancy = realOccupancy }
         insert_ "room" (roomToDoc valiatedRoom)
-                    -- insert_ (có dấu gạch dưới) dùng khi ta không cần lấy lại ID do MongoDB tự sinh ra.
         return valiatedRoom
 
--- 5. Hàm xóa phòng khi chủ phòng rời đi
--- Tham số: ID phòng -> ID người vừa rời (phải là Owner thì mới xóa được)
 deleteRoom :: Text -> Text -> IO ()
 deleteRoom rId reqOwnerID = runDB $ do
     deleteOne (select ["room_id" =: rId, "owner_id" =: reqOwnerID] "room")
 
--- Hàm cho phép người chơi tham gia phòng (Trả về True nếu thành công, False nếu thất bại)
-joinRoom :: Text -> Text -> Text -> IO Bool
-joinRoom rName rPass newUserID = runDB $ do
-    maybeDoc <- findOne ((select ["room_name" =: rName] "room") { project = ["user_ids" =: (1 :: Int), "occupancy" =: (1 :: Int), "is_private" =: (1 :: Int), "room_password" =: (1 :: Int)] })
-    case maybeDoc of
-        Nothing -> return False --K tìm thấy phòng
-        Just doc -> do
-            let room = docToRoom doc
-            if occupancy room >= 2 --Check số ng trong phòng
-                then return False
-                else if is_private room  --Check private
-                    then if rPass == room_password room
-                        then do
-                            let updatedUsers = user_ids room ++ [newUserID]
-                                newOccupancy = length updatedUsers
-                            modify (select ["room_name" =: rName] "room") --Chỉnh sửa lại data của room
-                                ["$set" =: ["user_ids" =: updatedUsers, "occupancy" =: newOccupancy]]
-                            return True
-                        else return False
-                    else do
-                        let updatedUsers = user_ids room ++ [newUserID]
-                            newOccupancy = length updatedUsers
-                        modify (select ["room_name" =: rName] "room")
-                            ["$set" =: ["user_ids" =: updatedUsers, "occupancy" =: newOccupancy]]
-                        return True
+deleteRoomById :: Text -> IO ()
+deleteRoomById rid = runDB $ deleteOne (select ["room_id" =: rid] "room")
+
+setRoomStatus :: Text -> Text -> IO ()
+setRoomStatus rid st = runDB $
+    modify (select ["room_id" =: rid] "room") ["$set" =: ["status" =: st]]
+
+data JoinResult = JoinOk | RoomNotFound | WrongPassword | RoomUnavailable
+  deriving (Show, Eq)
+
+addMember :: Text -> Text -> IO Bool
+addMember rid uid = runDB $ do
+    res <- findAndModify
+        (select [ "room_id"   =: rid
+                , "status"    =: ("waiting" :: Text)
+                , "occupancy" =: ["$lt" =: (2 :: Int)]
+                , "user_ids"  =: ["$ne" =: uid]
+                ] "room")
+        [ "$push" =: ["user_ids" =: uid]
+        , "$inc"  =: ["occupancy" =: (1 :: Int)]
+        ]
+    return (either (const False) (const True) res)
+
+removeMember :: Text -> Text -> IO ()
+removeMember rid uid = runDB $
+    modify (select ["room_id" =: rid, "user_ids" =: uid] "room")
+        [ "$pull" =: ["user_ids" =: uid]
+        , "$inc"  =: ["occupancy" =: (-1 :: Int)]
+        ]
+
+joinRoomById :: Text -> Text -> Text -> IO JoinResult
+joinRoomById rid pass uid = do
+    mRoom <- getRoomById rid
+    case mRoom of
+        Nothing -> return RoomNotFound
+        Just room
+            | is_private room && room_password room /= pass -> return WrongPassword
+            | otherwise -> do
+                ok <- addMember rid uid
+                return (if ok then JoinOk else RoomUnavailable)

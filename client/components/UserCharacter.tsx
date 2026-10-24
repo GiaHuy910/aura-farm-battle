@@ -12,6 +12,12 @@ const UserCharacter = ({
   shirt_user_url,
   shoes_user_url,
 }: Props) => {
+  const layers = [
+    { src: base_user_url, alt: "base_char" },
+    { src: shoes_user_url, alt: "shoes_char" },
+    { src: shirt_user_url, alt: "shirt_char" },
+    { src: acc_user_url, alt: "acc_char" },
+  ];
   return (
     <div
       className="position-relative"
@@ -21,38 +27,17 @@ const UserCharacter = ({
         filter: "drop-shadow(0px 0px 30px red)",
       }}
     >
-      <Image
-        className="position-absolute"
-        width={256}
-        height={256}
-        src={base_user_url}
-        alt="base_char"
-        priority
-      />
-      <Image
-        className="position-absolute "
-        width={256}
-        height={256}
-        src={shoes_user_url}
-        alt="shoes_char"
-        priority
-      />
-      <Image
-        className="position-absolute"
-        width={256}
-        height={256}
-        src={shirt_user_url}
-        alt="shirt_char"
-        priority
-      />
-      <Image
-        className="position-absolute"
-        width={256}
-        height={256}
-        src={acc_user_url}
-        alt="shoes_char"
-        priority
-      />
+      {layers.map(({ src, alt }) => (
+        <Image
+          key={alt}
+          className="position-absolute top-0 start-0"
+          width={256}
+          height={256}
+          src={src}
+          alt={alt}
+          priority
+        />
+      ))}
     </div>
   );
 };

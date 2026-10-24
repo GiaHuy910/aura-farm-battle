@@ -1,15 +1,16 @@
+"use client";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { createRoom } from "@/api/rooms";
 import styles from "../styles/home.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
 
-type Props = {
-  onSuccess: () => void;
-};
+const MAX_LENGTH = 12;
 
-export default function CreateRoomForm({ onSuccess }: Props) {
+export default function CreateRoomForm() {
   const { user } = useAuth();
+  const router = useRouter();
   const [errors, setErrors] = useState({
     roomName: "",
     password: "",
@@ -23,6 +24,9 @@ export default function CreateRoomForm({ onSuccess }: Props) {
   const validateRoomName = (value: string) => {
     if (!value.trim()) {
       return "Room name is required";
+    }
+    if (value.length > 12) {
+      return "Room name must be lower than 12";
     }
     return "";
   };
@@ -69,19 +73,22 @@ export default function CreateRoomForm({ onSuccess }: Props) {
             is_private: fields.isPrivate,
           };
           const response = await createRoom(createRoomSend);
-          onSuccess();
+          handleCreateRoomSuccess(response.room.room_id);
         }
       } catch (error) {
-        console.error("Error Fetching rooms:", error);
+        router.push("/");
       }
     }
+  };
+  const handleCreateRoomSuccess = (id: string) => {
+    router.push(`/rooms/${id}`);
   };
   return (
     <div className="d-flex justify-content-center align-items-center h-100">
       <div
         className="w-100"
         style={{
-          border: "5px solid brown",
+          border: "5px solid black",
           background: "#f7dacefa",
         }}
       >
@@ -93,6 +100,7 @@ export default function CreateRoomForm({ onSuccess }: Props) {
             <input
               type="text"
               name="roomName"
+              maxLength={MAX_LENGTH}
               value={fields.roomName}
               className="form-control"
               onChange={handleChange}

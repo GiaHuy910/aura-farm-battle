@@ -1,12 +1,17 @@
 "use client";
 
+import { useEffect } from "react";
+
 import useSWR from "swr";
 
 import { fetcher } from "./customFetcher";
+import { config } from "@/config/config";
+import { useRouter } from "next/navigation";
 
-const baseApi = `http://localhost:3001/auth`;
+const baseApi = `${config.server.apiUrl}/auth`;
 
 export const useAuthMeSWR = () => {
+  const router = useRouter();
   const { data, error, isLoading, mutate } = useSWR<AuthMeResponse | null>(
     `${baseApi}/me`,
     fetcher,
@@ -16,6 +21,12 @@ export const useAuthMeSWR = () => {
       revalidateOnReconnect: false,
     },
   );
+  useEffect(() => {
+    if (error) {
+      router.push("/");
+    }
+  }, [error, router]);
+
   return { data: data || null, error, isLoading, mutate };
 };
 

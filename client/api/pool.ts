@@ -2,8 +2,9 @@
 import useSWR from "swr";
 
 import { fetcher } from "./customFetcher";
+import { config } from "@/config/config";
 
-const baseApi = `http://localhost:3001/pool`;
+const baseApi = `${config.server.apiUrl}/pool`;
 
 export const usePool = () => {
   const { data, error, isLoading } = useSWR<PoolResponse | undefined>(
