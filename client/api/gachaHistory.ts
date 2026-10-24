@@ -1,4 +1,6 @@
-const baseApi = "http://localhost:3001/gacha-history";
+import { config } from "@/config/config";
+
+const baseApi = `${config.server.apiUrl}/gacha-history`;
 
 export const getGachaHistory = async (request: GachaHistoryRequest) => {
   const { limit, cursor, item_type } = request;

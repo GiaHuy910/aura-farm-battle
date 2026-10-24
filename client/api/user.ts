@@ -1,4 +1,6 @@
-const baseApi = `http://localhost:3001/user`;
+import { config } from "@/config/config";
+
+const baseApi = `${config.server.apiUrl}/user`;
 
 export const sendGachaRequest = async (body: GachaRequest) => {
   const response = await fetch(`${baseApi}/gacha`, {

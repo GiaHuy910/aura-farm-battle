@@ -70,10 +70,6 @@ getOwnedItemsHandler :: Maybe String -> Handler OwnedItemsResponse
 getOwnedItemsHandler cookie = withAuthenticatedUser cookie $ \u -> do
     return $ OwnedItemsResponse { owned_skills = u.owned_skills, owned_clothes = u.owned_clothes }
 
-
-
--- KHU VỰC XỬ LÝ TRANG BỊ HIỆN CÓ CỦA NHÂN VẬT
-
 -- GET user/equipped_clothes -> {"equipped_clothes": ["acc_1", "shirt_1", "shoes_1"]}
 data EquippedClothesResponse = EquippedClothesResponse { equipped_clothes :: [Text] } deriving (Show, Generic)
 instance ToJSON EquippedClothesResponse
@@ -105,7 +101,6 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
             return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
 
         Just (category, dbField) -> do
-            -- Kiểm tra bảo mật 2 tầng: Xác thực user có thực sự sở hữu vật phẩm này không
             let isOwned = case category of
                     SkillType  -> targetItem `elem` u.owned_skills
                     ClotheType -> targetItem `elem` u.owned_clothes
@@ -124,9 +119,6 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                                 (equipped_shoes u)
                     return $ EquipResponse "success" "Trang bị thành công!" targetItem
 
-
-
--- KHU VỰC XỬ LÝ GACHA VÀ LOGIC GACHA
 data GachaRequest = GachaRequest{wish :: Text, wish_type :: Text } deriving (Show, Generic)
 instance FromJSON GachaRequest
 data GachaResponse = GachaResponse{ status :: Text, message :: Text, added_items  :: Maybe [Text], remaining_tickets :: Maybe Int} deriving (Show, Generic)
@@ -148,15 +140,11 @@ getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                 Nothing ->
                     return $ GachaResponse "failure" "Too Poor huhu" Nothing (Just u.tickets)
                 Just remaining -> do
-                    -- Trừ vé thành công, truyền `remaining` trực tiếp vào processGacha
                     case req.wish_type of
                         "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u remaining
                         "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u remaining
                         _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing Nothing
 
-
--- CÁC HÀM LOGIC GACHA Ở DƯỚI
--- 1. Định nghĩa bảng trọng số CỐ ĐỊNH cho từng độ hiếm
 rarityWeights :: [(Text, Double)]
 rarityWeights =
     [ ("mythical", 0.5)   -- 0.5%
@@ -166,40 +154,34 @@ rarityWeights =
     , ("uncommon", 30.0)  -- 30.0%
     , ("common", 45.0)    -- 45.0%
     ]
--- 2. Hàm random độ hiếm dựa trên bảng trọng số
+
 pickRarity :: Double -> [(Text, Double)] -> Text
 pickRarity _ [(r, _)] = r
 pickRarity randVal ((r, w):rest)
     | randVal <= w = r
     | otherwise    = pickRarity (randVal - w) rest
 pickRarity _ [] = "common"
--- 3. Cập nhật lại logic rollSingle
+
 rollSingle :: Int -> [a] -> (a -> Text) -> (a -> Text) -> IO (Text, Int)
 rollSingle currentPity pool getId getRarity = do
     if currentPity >= 25
         then do
-            -- Nổ Pity (Bảo hiểm 25 nháy): Chắc chắn ra Legendary
             let legPool = filter (\x -> getRarity x == "legendary") pool
             idx <- randomRIO (0, length legPool - 1)
             let item = legPool !! idx
             return (getId item, 0)
         else do
-            -- Random hệ số phần trăm từ 0.0 đến 100.0 (hoặc thay bằng tổng tỉ lệ nếu ông không set tròn 100)
             let totalWeight = sum (map snd rarityWeights)
             randVal <- randomRIO (0.0 :: Double, totalWeight)
             let selectedRarity = pickRarity randVal rarityWeights
 
-            -- Lọc các item trong Pool thuộc độ hiếm vừa random ra
             let filteredPool = filter (\x -> getRarity x == selectedRarity) pool
 
-            -- Fallback an toàn nếu pool trống
             let actualPool = if null filteredPool then pool else filteredPool
 
-            -- Random đều 1 món bất kỳ trong nhóm
             idx <- randomRIO (0, length actualPool - 1)
             let item = actualPool !! idx
 
-            -- Cập nhật Pity
             if getRarity item == "legendary"
                 then return (getId item, 0)
                 else return (getId item, currentPity + 1)
@@ -210,7 +192,7 @@ rollMultiple n currentPity pool getId getRarity = do
     (itemId, nextPity) <- rollSingle currentPity pool getId getRarity
     (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
     return (itemId : restIds, finalPity)
--- Hàm con chạy logic random và cập nhật Data
+
 processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Int -> Handler GachaResponse
 processGacha count category getPool getId getRarity getPityFunc pityField uid u remainingTickets = do
     pool <- liftIO getPool
@@ -223,7 +205,6 @@ processGacha count category getPool getId getRarity getPityFunc pityField uid u 
             liftIO $ addGachaItems uid category rolledIDs
             liftIO $ updatePity uid pityField finalPity
 
-            -- LƯU LỊCH SỬ GACHA:
             let itemTypeStr = case category of
                                 ClotheType -> "clothe"
                                 SkillType  -> "skill"
@@ -231,7 +212,6 @@ processGacha count category getPool getId getRarity getPityFunc pityField uid u 
 
             return $ GachaResponse "success" "Success" (Just rolledIDs) (Just remainingTickets)
 
--- Hàm helper phân loại item dựa trên prefix và xác định field DB tương ứng:
 categorizeItem :: Text -> Maybe (ItemType, Text)
 categorizeItem item
   | "s1_"    `T.isPrefixOf` item = Just (SkillType, "equipped_s1")

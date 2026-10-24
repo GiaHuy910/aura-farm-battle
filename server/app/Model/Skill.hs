@@ -10,6 +10,8 @@ module Model.Skill
     , docToSkill
     , skillToDoc
     , createSkill
+    , createSkillBatch
+    , insertSkills
     , countSkills
     , Effect(..)
     , textToRarity
@@ -91,14 +93,21 @@ countSkills :: IO Int
 countSkills = runDB $ count (select [] "skills")
 
 getSkillBaseValue :: Text -> Rarity -> Double
-getSkillBaseValue "ult" rarity = ultBase rarity     
-getSkillBaseValue _     rarity = skillBase rarity
+getSkillBaseValue "ult" rar = ultBase rar     
+getSkillBaseValue _     rar = skillBase rar
 
 createSkill :: Text -> Text -> Text -> Int -> Int -> Text -> Effect -> Bool -> IO ()
-createSkill skillId skillName skillType energyConsumption energyRecovery rarity effect inPool = do
-    let calculatedMultiplier = getSkillBaseValue skillType (textToRarity rarity)
-    let newSkill = Skill{skill_id = skillId, skill_name = skillName, skill_type = skillType, energy_consumption = energyConsumption, energy_recovery = energyRecovery, aura_multiplier = calculatedMultiplier, rarity = rarity, effect = effect, in_pool = inPool}
+createSkill skillId skillName skillType energyConsumption energyRecovery rar eft inPool = do
+    let calculatedMultiplier = getSkillBaseValue skillType (textToRarity rar)
+    let newSkill = Skill{skill_id = skillId, skill_name = skillName, skill_type = skillType, energy_consumption = energyConsumption, energy_recovery = energyRecovery, aura_multiplier = calculatedMultiplier, rarity = rar, effect = eft, in_pool = inPool}
     runDB $ insert_ "skills" (skillToDoc newSkill)
+
+createSkillBatch :: Text -> Text -> Text -> Int -> Int -> Text -> Effect -> Bool -> Skill
+createSkillBatch skillId skillName skillType energyConsumption energyRecovery rar eft inPool =
+    Skill{skill_id = skillId, skill_name = skillName, skill_type = skillType, energy_consumption = energyConsumption, energy_recovery = energyRecovery, aura_multiplier = getSkillBaseValue skillType (textToRarity rar), rarity = rar, effect = eft, in_pool = inPool}
+
+insertSkills :: [Skill] -> IO ()
+insertSkills ss = runDB $ insertMany_ "skills" (map skillToDoc ss)
 
 effectToDoc :: Effect -> Document
 effectToDoc e =

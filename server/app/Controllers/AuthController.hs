@@ -27,11 +27,6 @@ import Servant
 import Model.User ( registerUser, loginUser, getUserById, User(..), RegisterStatus(..), LoginStatus(..), mapEquippedSkills, mapEquippedClothes )
 import Model.Session (createSession, getUserBySession, deleteSession)
 
--- ___________________________________________________________________________________________
-
--- OK bây giờ tui sẽ làm cho nó theo thứ tự là request -> response -> handler cho dễ nhìn nha
-
--- ___________________________________________________________________________________________
 data RegisterRequest = RegisterRequest
   { regUsername :: Text
   , regPassword :: Text

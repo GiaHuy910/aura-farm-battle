@@ -43,12 +43,14 @@ const BackgroundButton: React.FC<Props> = ({
       onClick={handleClick}
       disabled={isDisabled}
     >
-      <div
-        style={{ maxWidth: "150px" }}
-        className="py-1 px-2 rounded-5 bg-info text-light fw-bold"
-      >
-        {isEquipped ? "Equipped" : buttonName}
-      </div>
+      {isEquipped && (
+        <div
+          style={{ maxWidth: "150px" }}
+          className="py-1 px-2 rounded-5 bg-info text-light fw-bold"
+        >
+          Equipped
+        </div>
+      )}
     </button>
   );
 };

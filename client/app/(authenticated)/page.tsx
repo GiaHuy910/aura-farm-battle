@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 
 import { toast } from "react-toastify";
-
 import home from "@/styles/home.module.css";
 import gameLogo from "@/public/game-logo-small.png";
 import LogInPage from "@/components/LogIn";

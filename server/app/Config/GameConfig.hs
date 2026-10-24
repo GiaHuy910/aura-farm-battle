@@ -9,8 +9,11 @@ module Config.GameConfig
   , userTotalAura 
   , userBonusAura
   , ultBase
+  , maxRoomName
   ) where
 
+maxRoomName :: Int
+maxRoomName = 12
 
 userBaseAura :: Int
 userBaseAura = 100
@@ -28,7 +31,7 @@ allRarities :: [Rarity]
 allRarities = [minBound .. maxBound]
 
 rarityBase :: Rarity -> Double
-rarityBase CommonBase    = 0.3
+rarityBase CommonBase    = 0.3 
 rarityBase UncommonBase  = 0.6
 rarityBase RareBase      = 1.2
 rarityBase EpicBase      = 2.2

@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 import home from "@/styles/home.module.css";
-import LogOutManager from "./LogOutManager";
-import MusicControls from "./MusicControls";
+import LogOutManager from "@/components/LogOutManager";
+import MusicControls from "@/components/MusicControls";
 import { useAuth } from "@/contexts/auth/useAuth";
 
 export default function Setting() {

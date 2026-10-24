@@ -23,7 +23,6 @@ import Model.GachaHistory
     , getGachaHistory
     )
 
--- 1. Response DTOs
 data Pagination = Pagination
     { limit      :: Int
     , nextCursor :: Text
@@ -38,7 +37,6 @@ data GachaHistoryResponse = GachaHistoryResponse
 
 instance ToJSON GachaHistoryResponse
 
--- 2. Handler xử lý
 getGachaHistoryHandler
     :: Maybe String
     -> Int

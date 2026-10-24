@@ -1,1 +1,2 @@
 tests: True
+constraints: data-default-class == 0.2.0.0

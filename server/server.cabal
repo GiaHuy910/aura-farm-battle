@@ -6,15 +6,18 @@ build-type:         Simple
 -- 1. LIBRARY: Nơi chứa toàn bộ code logic để cả file App và file Test dùng chung
 library
     hs-source-dirs:   app
-    exposed-modules:  Seed.SkillSeed
+    exposed-modules:  App
+                    , Seed.SkillSeed
                     , Seed.ClotheSeed
                     , Config.Database
                     , Config.GameConfig
+                    , Config.ServerConfig
                     , Controllers.AuthController
                     , Controllers.RoomController
                     , Controllers.UserController
                     , Controllers.PoolController
                     , Controllers.GachaHistoryController
+                    , Controllers.WsController
                     , Model.Clothe
                     , Model.Rooms
                     , Model.Session
@@ -27,10 +30,19 @@ library
                     , Route.UserRouter
                     , Route.PoolRouter
                     , Route.GachaHistoryRouter
+                    , Route.WsRouter
+                    , Service.WsService
+                    , Ws.Env
+                    , Ws.Hub
+                    , Ws.MongoStore
+                    , Ws.Message
+                    , Ws.Types
     build-depends:
         base ^>=4.19.1.0 && <4.21,
         aeson,
         servant-server,
+        servant-websockets,
+        websockets,
         warp,
         wai,
         wai-cors,
@@ -40,53 +52,26 @@ library
         text,
         bson,
         time,
-        random
+        random,
+        stm,
+        bytestring,
+        containers,
+        cookie,
+        dotenv
     default-language: Haskell2010
     ghc-options: -Wall
+    
 
 -- 2. EXECUTABLE: Chạy API Server chính
 executable server-app
     main-is:          Server.hs
-    hs-source-dirs:   app
-    other-modules:  
-          Seed.SkillSeed
-        , Seed.ClotheSeed
-        , Config.Database
-        , Config.GameConfig
-        , Controllers.AuthController
-        , Controllers.RoomController
-        , Controllers.UserController
-        , Controllers.PoolController
-        , Controllers.GachaHistoryController
-        , Model.Clothe
-        , Model.Rooms
-        , Model.Session
-        , Model.Skill
-        , Model.User
-        , Model.GachaHistory
-        , Route.AuthRouter
-        , Route.Index
-        , Route.RoomRouter
-        , Route.UserRouter
-        , Route.PoolRouter
-        , Route.GachaHistoryRouter
+    hs-source-dirs:   src
+    other-modules:
     build-depends:
         base ^>=4.19.1.0,
         server,
-        aeson,
-        servant-server,
-        warp,
-        wai,
-        wai-cors,
-        mongoDB,
-        uuid,
-        password,
-        text,
-        bson,
-        time,
-        random
     default-language: Haskell2010
-    ghc-options: -Wall
+    ghc-options: -Wall -threaded
 -- -- 3. TEST-SUITE: Chạy kịch bản kiểm thử
 -- test-suite server-test
 --     type:             exitcode-stdio-1.0
