@@ -151,8 +151,8 @@ export default function UserPage() {
 
   return (
     <div
-      className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-5`}
-      style={{ border: "5px solid darkgoldenrod", background: "transparent" }}
+      className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-2`}
+      style={{ border: "5px solid darkgoldenrod", backgroundColor: "#eae2c7" }}
     >
       <button
         className={`${home.optionBtn} position-absolute mt-3`}
@@ -223,6 +223,9 @@ export default function UserPage() {
                         isDisabled={isEquipped ?? false}
                         isEquipped={isEquipped ?? false}
                         itemRarity={itemRarity}
+                        Width="150px"
+                        Height="150px"
+                        bgSize="150%"
                       />
                     </div>
                   )
@@ -237,8 +240,8 @@ export default function UserPage() {
           style={{ border: "5px solid darkgoldenrod" }}
           className="col-md-6 d-flex flex-column align-items-center justify-content-center"
         >
-          <div className="w-100 d-flex flex-column align-items-center justify-content-center">
-            <div className="component-item popIn" key={skill_1_equipped}>
+          <div className="w-100 mt-5 d-flex flex-row flex-wrap align-items-center justify-content-center">
+            <div className="component-item" key={skill_1_equipped}>
               <div className="glow-active">
                 <BackgroundButton
                   imageUrl={skill_1_equipped}
@@ -247,6 +250,9 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_1_rarity}
+                  Width="120px"
+                  Height="120px"
+                  bgSize="150%"
                 />
               </div>
             </div>
@@ -259,6 +265,9 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_2_rarity}
+                  Width="120px"
+                  Height="120px"
+                  bgSize="150%"
                 />
               </div>
             </div>
@@ -271,6 +280,9 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_3_rarity}
+                  Width="120px"
+                  Height="120px"
+                  bgSize="150%"
                 />
               </div>
             </div>
@@ -283,6 +295,9 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_4_rarity}
+                  Width="200px"
+                  Height="120px"
+                  bgSize="150%"
                 />
               </div>
             </div>
@@ -384,6 +399,9 @@ export default function UserPage() {
                         isDisabled={isEquipped ?? false}
                         isEquipped={isEquipped ?? false}
                         itemRarity={itemRarity}
+                        Width="150px"
+                        Height="150px"
+                        bgSize="100%"
                       />
                     </div>
                   )

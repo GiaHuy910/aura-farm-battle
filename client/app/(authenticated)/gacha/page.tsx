@@ -11,7 +11,7 @@ import { useAuth } from "@/contexts/auth/useAuth";
 import { usePool } from "@/api/pool";
 import { sendGachaRequest } from "@/api/user";
 import { GachaTicket } from "@/components/GachaTicket";
-
+import BackgroundButton from "@/components/BackgroundButton";
 const banner_1 = "/gacha/background-gacha-3.jpg";
 const banner_2 = "/gacha/background-gacha-2.jpg";
 const banner_1_name = "Clothes" as const;
@@ -179,7 +179,6 @@ export default function GachaBannerPage() {
                   item.startsWith(p.prefix),
                 );
                 const typeFolder = matched ? matched.folder : "";
-
                 const detailedItem =
                   poolData?.clothe.find((c: Clothe) => c.clothe_id === item) ||
                   poolData?.skill.find((s: Skill) => s.skill_id === item);
@@ -187,23 +186,22 @@ export default function GachaBannerPage() {
                 return (
                   <div
                     key={index}
-                    className="d-flex flex-column align-items-center p-2 rounded popInItem"
+                    className="d-flex flex-column align-items-center rounded popInItem"
                     style={{
                       animationDelay: `${index * 0.1}s`,
-                      border: getBorderColor(itemRarity),
-                      boxShadow:
-                        itemRarity !== "common"
-                          ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
-                          : "none",
                       transition: "transform 0.2s",
                     }}
                   >
-                    <Image
-                      src={`/${folder}/${typeFolder}/${item}.png`}
-                      alt={item}
-                      width={80}
-                      height={80}
-                      className="bg-light"
+                    <BackgroundButton
+                      imageUrl={`/${folder}/${typeFolder}/${item}.png`}
+                      buttonName={typeFolder}
+                      isDisabled={true}
+                      isEquipped={false}
+                      onOpen={() => {}}
+                      itemRarity={itemRarity}
+                      Width="80px"
+                      Height="80px"
+                      bgSize="150%"
                     />
                   </div>
                 );

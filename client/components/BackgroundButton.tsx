@@ -9,6 +9,9 @@ type Props = {
   isDisabled: boolean;
   isEquipped: boolean;
   itemRarity?: string | "common";
+  Width: string;
+  Height: string;
+  bgSize: string;
 };
 
 const BackgroundButton: React.FC<Props> = ({
@@ -18,18 +21,31 @@ const BackgroundButton: React.FC<Props> = ({
   isDisabled,
   isEquipped,
   itemRarity,
+  Width,
+  Height,
+  bgSize,
 }) => {
+  const getBackgroundPosition = (btnName: string) => {
+    const lowerName = btnName.toLowerCase();
+    if (lowerName.includes("acc")) {
+      return "top center";
+    }
+    if (lowerName.includes("shoes")) {
+      return "bottom center";
+    }
+    if (lowerName.includes("shirt")) {
+      return "bottom center";
+    }
+    return "center";
+  };
   const buttonStyle: React.CSSProperties = {
     backgroundImage: `url('${imageUrl}')`,
-    backgroundSize: "cover",
-    backgroundPosition: "center",
-    width: buttonName === "ULT" ? "250px" : "150px",
-    height: buttonName === "ULT" ? "80px" : "60px",
+    backgroundSize: bgSize,
+    backgroundRepeat: "no-repeat",
+    backgroundPosition: getBackgroundPosition(buttonName),
+    width: Width,
+    height: Height,
     border: getBorderColor(itemRarity ?? "common"),
-    // boxShadow:
-    //   itemRarity !== "common"
-    //     ? `0 0 15px ${getBorderColor(itemRarity).split(" ")[2]}`
-    //     : "none",
   };
 
   const handleClick = () => {
@@ -38,7 +54,7 @@ const BackgroundButton: React.FC<Props> = ({
   return (
     <button
       type="button"
-      className={`${buttonName === "ULT" ? "rounded-5" : "rounded-0"} ${isDisabled} d-flex justify-content-center align-items-center btn overflow-hidden position-relative`}
+      className={`bg-warning-subtle ${buttonName === "ULT" ? "rounded-5" : "rounded-0"} ${isDisabled} d-flex justify-content-center align-items-center btn overflow-hidden position-relative`}
       style={buttonStyle}
       onClick={handleClick}
       disabled={isDisabled}
