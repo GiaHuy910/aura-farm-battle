@@ -6,7 +6,6 @@ import { useRouter } from "next/navigation";
 
 import page from "@/styles/page.module.css";
 import home from "@/styles/home.module.css";
-import { getBorderColor } from "@/helpers/getTypeColors";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { usePool } from "@/api/pool";
 import { sendGachaRequest } from "@/api/user";
@@ -67,18 +66,16 @@ export default function GachaBannerPage() {
       wish_type: selectedBanner.toLowerCase(),
     };
 
-    const resultItem: GachaResposne = await sendGachaRequest(sendGachaForm);
+    try {
+      const resultItem: GachaResposne = await sendGachaRequest(sendGachaForm);
 
-    if (resultItem && resultItem.added_items) {
-      setGachaResultItems(resultItem.added_items);
-      toggleAnimating();
-
-      fetchMe();
-
-      setTimeout(() => {
+      if (resultItem && resultItem.added_items) {
+        setGachaResultItems(resultItem.added_items);
         toggleAnimating();
-        toggleResult();
-      }, 3000);
+        fetchMe();
+      }
+    } catch (error) {
+      console.error("Gacha error occurred", error);
     }
   };
   const handlePayment = () => {
@@ -131,19 +128,25 @@ export default function GachaBannerPage() {
           </button>
         </div>
       </div>
-      {/* Animation part */}
       {isAnimating && (
         <div
-          className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
+          className="position-fixed top-0 start-0 vh-100 vw-100 d-flex align-items-center justify-content-center"
           style={{
-            zIndex: 3,
-            background: "rgba(0, 0, 0, 0.8)",
+            zIndex: 40,
+            background: "#000000",
           }}
         >
-          {/* thay class hoac lottie vao day */}
-          <div className="text-warning fw-bold fs-1 dynamic-pulse-effect">
-            Bảng gacha tạm thời thôi nha
-          </div>
+          <video
+            src="/animation/game-gacha-animation-common.mp4"
+            autoPlay
+            playsInline
+            className="w-100 h-100"
+            style={{ objectFit: "cover", pointerEvents: "none" }}
+            onEnded={() => {
+              toggleAnimating();
+              toggleResult();
+            }}
+          />
         </div>
       )}
       {/* AddedItem Part */}

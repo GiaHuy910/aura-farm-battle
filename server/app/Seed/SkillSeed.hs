@@ -24,18 +24,18 @@ allSkills =
   ,normal "s2_1" "s2" "asian squat" "common" 1
   ,normal "s3_1" "s3" "hit the griddy" "common" 1
   ,normal "s1_2" "s1" "hit the nae nae" "common" 1
-  ,ult "ult_1" "happy dog" "common" 5 "" 0
+  ,ult "ult_1" "happy dog" "common" 3 "" 0
   ,normal "s2_2" "s2" "rainbow n sunshine" "common" 1
   ,normal "s3_2" "s3" "wise monk rage lion" "common" 1
   ,normal "s1_3" "s1" "dabing" "common" 1
 
   ,normal "s2_3" "s2" "flossing" "uncommon" 1
   ,normal "s3_3" "s3" "orange justice" "uncommon" 1
-  ,ult "ult_2" "chill guy" "uncommon" 5 "" 0
+  ,ult "ult_2" "chill guy" "uncommon" 4 "" 0
   ,normal "s1_4" "s1" "scuba" "uncommon" 1
   ,normal "s2_4" "s2" "piccolo" "uncommon" 1
   ,normal "s3_4" "s3" "sonion" "uncommon" 1
-  ,ult "ult_3" "degloving" "uncommon" 5 "" 0
+  ,ult "ult_3" "degloving" "uncommon" 4 "" 0
   ,normal "s1_5" "s1" "emo kid" "uncommon" 1
 
   ,normal "s2_5" "s2" "city boy" "rare" 1
@@ -59,25 +59,29 @@ allSkills =
   ,ult "ult_6" "rick roll" "epic" 5 "" 0
   ,normal "s2_10" "s2" "nae nae" "epic" 1
   ,ult "ult_7" "manipulator" "epic" 5 "" 0
-
-  ,ult "ult_8" "la peace" "legendary" 5 "freeze" 2
+  -- this purify cleanse any current neg debuf both the opponent and urself and make it so nobody can debuff anybody
+  ,ult "ult_8" "la peace" "legendary" 4 "purify" 3
   ,normal "s3_10" "s3" "diamond diamond" "legendary" 1
-  ,ult "ult_9" "sean o'pry" "legendary" 5 "freeze" 2
+  -- boost boosts user's gaining aura in N turns by x1.5
+  ,ult "ult_9" "sean o'pry" "legendary" 6 "boost" 2
   ,normal "s1_11" "s1" "lone wolf" "legendary" 1
   ,normal "s2_11" "s2" "sharp chin boy" "legendary" 1
   ,normal "s3_11" "s3" "mogging" "legendary" 1
   ,normal "s1_12" "s1" "sunshine man" "legendary" 1
+  -- this freeze freezes the opponent in 2 turns
   ,ult "ult_10" "36" "legendary" 5 "freeze" 2
   ,normal "s2_12" "s2" "job application" "legendary" 1
   ,normal "s3_12" "s3" "jak does snacks" "legendary" 1
   ,normal "s1_13" "s1" "mewing" "legendary" 1
-  ,ult "ult_11" "broken man" "legendary" 5 "freeze" 2
-
-  ,ult "ult_12" "67" "mythical" 5 "freeze" 2
+  -- guard protect user from any opponent's debuff skills in N turns
+  ,ult "ult_11" "broken man" "legendary" 5 "guard" 2
+  -- brainrotify makes that whatever skill opponent choose to use always randomized 1 in 4 of their current one in N turns
+  ,ult "ult_12" "67" "mythical" 7 "brainrotify" 2
   ,normal "s2_13" "s2" "super chad" "mythical" 1
   ,normal "s3_13" "s3" "verity" "mythical" 1
   ,normal "s1_14" "s1" "kimi no nawa" "mythical" 1
-  ,ult "ult_13" "we are Charlie Kirk" "mythical" 5 "freeze" 2
+  -- curse the opponent and lower their gaining aura by x0.75 times in N turns
+  ,ult "ult_13" "we are Charlie Kirk" "mythical" 7 "curse" 3
   ]
 
 seedSkills :: IO ()

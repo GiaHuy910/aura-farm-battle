@@ -29,7 +29,9 @@ import Route.Index(Router)
 import Config.ServerConfig(loadServerConfig)
 import Ws.Env (Env(..))
 import Ws.Hub (newHub)
-import Ws.MongoStore (mongoStore)         
+import Ws.MongoStore (mongoStore)     
+import Game.Registry (newRegistry)
+import Service.RewardService (recoverRewards)    
 
 authServer :: Server AuthRouter
 authServer =
@@ -96,12 +98,15 @@ runApp = do
   putStrLn "Sucesssfully checked!"
 
   hub   <- newHub
+  registry <- newRegistry  
   let env = Env
         { envHub            = hub
         , envStore          = mongoStore
+        , envRegistry       = registry  
         , envGraceSecs      = 20
         , envAllowedOrigins = allowedOrigins
         }
+  recoverRewards env         
   
   putStrLn "======================================"
   putStrLn "Aura Farm Battle Server"
