@@ -1,42 +1,65 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import page from "@/styles/page.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { useRoomSocket } from "@/websocket/useRoomSocket";
-import { useRooms } from "@/api/rooms";
+import { useRooms, leaveRoom } from "@/api/rooms";
 
 import PlayerSlot from "@/components/PlayerSlot";
-import { leaveRoom } from "@/api/rooms";
+import BattleScreen from "@/components/battle/BattleScreen";
 
 export default function RoomIdPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
-  const { user } = useAuth();
-  const { mutate } = useRooms();
+  const { user, fetchMe } = useAuth();
+  // const { mutate } = useRooms();
 
-  const { room, connection, closedReason, send } = useRoomSocket(id);
+  const { room, game, connection, closedReason, error, send } =
+    useRoomSocket(id);
   const [leaving, setLeaving] = useState(false);
 
-  const isOwner = !!user && room?.owner.id === user.user_id;
+  const refreshedMatch = useRef<string | null>(null);
+  const settledMatchId = game?.result?.matchId ?? null;
+  useEffect(() => {
+    if (settledMatchId && refreshedMatch.current !== settledMatchId) {
+      refreshedMatch.current = settledMatchId;
+      fetchMe();
+    }
+  }, [settledMatchId, fetchMe]);
+
+  const meId = user?.user_id;
+  const isOwner = !!meId && room?.owner.id === meId;
   const canStart =
     isOwner && room?.status === "waiting" && !!room.guest?.online;
+  const inBattle = !!room && room.status !== "waiting" && !!game;
 
-  const handlePressFight = () => {
-    send("room.start");
-  };
-  const handleLeave = async () => {
-    setLeaving(true);
-    const leaveSend: leaveRoomRequest = { room_id: id };
-    const data = await leaveRoom(leaveSend);
-    if (data.status === "success") handleLobby();
-  };
+  const handlePressFight = () => send("room.start");
+
   const handleLobby = () => {
-    mutate();
+    fetchMe();
     router.push("/rooms");
   };
+
+  const handleLeave = async () => {
+    if (
+      game?.phase === "battle" &&
+      !window.confirm("Leaving now makes you lose the match. Leave?")
+    )
+      return;
+    setLeaving(true);
+    try {
+      const leaveSend: leaveRoomRequest = { room_id: id };
+      const data = await leaveRoom(leaveSend);
+      if (data.status === "success") handleLobby();
+      else setLeaving(false);
+    } catch {
+      setLeaving(false);
+    }
+  };
+
   return (
     <div
       className={`${page.roomsPage} position-relative mb-3 mt-1 px-lg-5 py-3 d-flex justify-content-center align-items-center flex-column container w-100 h-100`}
@@ -66,68 +89,77 @@ export default function RoomIdPage() {
             </div>
           )}
 
-          <div className="row w-100 align-items-center justify-content-center">
-            <div className="col-12 col-md-5">
-              <PlayerSlot
-                player={room.owner}
-                label="Owner"
-                meId={user?.user_id}
+          {inBattle && meId ? (
+            <>
+              <BattleScreen
+                room={room}
+                game={game}
+                meId={meId}
+                send={send}
+                error={error}
+                onLeave={handleLeave}
+                leaving={leaving}
               />
-            </div>
-            <div className="col-12 col-md-2 text-center fs-1 fw-bold my-3">
-              VS
-            </div>
-            <div className="col-12 col-md-5">
-              <PlayerSlot
-                player={room.guest}
-                label="Guest"
-                meId={user?.user_id}
-              />
-            </div>
-          </div>
-
-          {room.status === "waiting" && !isOwner ? (
-            <p className="mt-4 text-muted">Waiting For Owner To Start</p>
+              {game.phase === "battle" && (
+                <button
+                  className="btn btn-outline-danger mt-3"
+                  onClick={handleLeave}
+                  disabled={leaving}
+                >
+                  LEAVE
+                </button>
+              )}
+            </>
           ) : (
-            <p className="mt-4 text-muted">Press FIGHT to engage</p>
-          )}
-          {room.status === "playing" && (
-            <div className="alert alert-success mt-4">
-              Fight started !!! the fight awaited
-            </div>
-          )}
-          {room.status === "finished" && (
-            <div className="alert alert-info mt-4">
-              {room.winnerId === user?.user_id ? (
-                <p>
-                  YOU <span className="fs-5 text-success">WON</span> !!
+            <>
+              <div className="row w-100 align-items-center justify-content-center">
+                <div className="col-12 col-md-5">
+                  <PlayerSlot player={room.owner} label="Owner" meId={meId} />
+                </div>
+                <div
+                  className="col-12 col-md-2 text-center fw-bold my-1 my-md-0"
+                  style={{ fontSize: "clamp(1.25rem, 5vw, 2.5rem)" }}
+                >
+                  VS
+                </div>
+                <div className="col-12 col-md-5">
+                  <PlayerSlot player={room.guest} label="Guest" meId={meId} />
+                </div>
+              </div>
+
+              {room.status === "waiting" && !isOwner ? (
+                <p className="mt-2 mt-md-4 mb-1 text-muted text-center">
+                  Waiting For Owner To Start
                 </p>
               ) : (
-                <p>
-                  YOU <span className="fs-5 text-danger">WON</span> !!
+                <p className="mt-2 mt-md-4 mb-1 text-muted text-center">
+                  Press FIGHT to engage
                 </p>
               )}
-            </div>
-          )}
 
-          <div className="d-flex gap-3 mt-4">
-            {isOwner && room.status === "waiting" && (
-              <button
-                className="btn btn-success btn-lg"
-                disabled={!canStart}
-                onClick={handlePressFight}
+              <div
+                className="d-flex justify-content-center gap-3 mt-2 mt-md-4 py-2 w-100 sticky-bottom"
+                style={{ background: "#eae2c7" }}
               >
-                FIGHT
-              </button>
-            )}
-            <button
-              className="btn btn-outline-danger btn-lg"
-              onClick={handleLeave}
-              disabled={leaving}
-            >
-              LEAVE
-            </button>
-          </div>
+                {isOwner && room.status === "waiting" && (
+                  <button
+                    className="btn btn-success btn-lg"
+                    disabled={!canStart}
+                    onClick={handlePressFight}
+                  >
+                    FIGHT
+                  </button>
+                )}
+                <button
+                  className="btn btn-outline-danger btn-lg"
+                  onClick={handleLeave}
+                  disabled={leaving}
+                >
+                  LEAVE
+                </button>
+              </div>
+            </>
+          )}
         </>
       )}
     </div>

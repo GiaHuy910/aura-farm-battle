@@ -6,7 +6,6 @@ import "bootstrap/dist/css/bootstrap.min.css";
 import BootstrapClient from "@/components/BootstrapClient";
 import BackgroundMusicProvider from "@/contexts/music/BackgroundMusicProvider";
 import "@/app/(authenticated)/global.css";
-import { AuthProvider } from "@/contexts/auth/AuthProvider";
 
 export const metadata: Metadata = {
   title: "aurafarmbattle",

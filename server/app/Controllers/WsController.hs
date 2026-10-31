@@ -6,7 +6,10 @@ module Controllers.WsController (wsHandler) where
 import           Control.Exception (catch, finally)
 import           Control.Monad (forM_)
 import           Control.Monad.IO.Class (liftIO)
-import           Data.Aeson (decode, object, (.=))
+import           Data.Aeson (FromJSON, Value, decode, object, withObject, (.:), (.=))
+import qualified Data.Aeson.Key as K
+import           Data.Aeson.Types (parseMaybe)
+import           Data.Text (Text)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text.Encoding as TE
@@ -14,6 +17,10 @@ import qualified Data.Text.Encoding.Error as TEE
 import           Data.Unique (hashUnique, newUnique)
 import qualified Network.WebSockets as WS
 import           Servant (Handler)
+import           Service.BattleService (submitChoice)
+import           Service.RematchService (playAgain)
+import           Service.RewardService (confirmReward, pickReward, unpickReward)
+import           Service.RoomView (roomStateFor)
 import           Service.WsService
 import           Web.Cookie (parseCookies)
 import           Ws.Env
@@ -47,7 +54,7 @@ runSession env rid uid pending = do
     Hub.sendTo c (msg "room.kicked" (object []))
     Hub.closeConn c
 
-  sendSnapshot env rid me                           
+  sendSnapshot env rid uid me                           
   Hub.broadcast hub rid (msg "room.player_online" (object ["userId" .= uid]))
 
   (WS.withPingThread conn 20 (pure ())
@@ -56,21 +63,10 @@ runSession env rid uid pending = do
   where
     hub = envHub env
 
-sendSnapshot :: Env -> RoomId -> Hub.Conn -> IO ()
-sendSnapshot env rid conn = do
-  mRoom <- rsGetRoom st rid
-  forM_ mRoom $ \room -> do
-    online <- Hub.onlineUsers (envHub env) rid
-    let isOn u = u `elem` online
-    owner <- playerValue st (riOwner room) (isOn (riOwner room))
-    guest <- traverse (\g -> playerValue st g (isOn g)) (riGuest room)
-    Hub.sendTo conn $ msg "room.state" $ object
-      [ "status" .= statusText (riStatus room)
-      , "owner"  .= owner
-      , "guest"  .= guest                     
-      ]
-  where
-    st = envStore env
+sendSnapshot :: Env -> RoomId -> UserId -> Hub.Conn -> IO ()
+sendSnapshot env rid uid conn = do
+  mv <- roomStateFor env rid uid
+  forM_ mv $ \v -> Hub.sendTo conn (msg "room.state" v)
 
 receiveLoop :: Env -> RoomId -> UserId -> WS.Connection -> IO ()
 receiveLoop env rid uid conn = loop
@@ -83,12 +79,17 @@ receiveLoop env rid uid conn = loop
         Nothing -> loop                                            
 
 dispatch :: Env -> RoomId -> UserId -> ClientMsg -> IO ()
-dispatch env rid uid (ClientMsg t _) = do
-  mRoom <- rsGetRoom (envStore env) rid
-  forM_ mRoom $ \room -> case (riStatus room, t) of
-    (Waiting, "room.start")  -> startGame env rid uid
-    (Playing, "game.action") -> putStrLn "TODO: kiểm tra lượt, tính damage ở server, broadcast game.state_update"
-    _                        -> pure ()
+dispatch env rid uid (ClientMsg t d) = case t of
+  "room.start"     -> startGame env rid uid
+  "game.action"    -> forM_ (field "index" d)  (submitChoice env rid uid)
+  "reward.pick"    -> forM_ (field "itemId" d) (pickReward env rid uid)
+  "reward.unpick"  -> forM_ (field "itemId" d) (unpickReward env rid uid)
+  "reward.confirm" -> confirmReward env rid uid
+  "game.playagain" -> playAgain env rid uid
+  _                -> pure ()
+
+field :: FromJSON a => Text -> Maybe Value -> Maybe a
+field k mv = mv >>= parseMaybe (withObject "data" (.: K.fromText k))
 
 originAllowed :: Env -> Maybe BS.ByteString -> Bool
 originAllowed env = maybe False (`elem` envAllowedOrigins env)

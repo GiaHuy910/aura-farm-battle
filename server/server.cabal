@@ -24,6 +24,8 @@ library
                     , Model.Skill
                     , Model.User
                     , Model.GachaHistory
+                    , Model.Match
+                    , Model.Inventory
                     , Route.AuthRouter
                     , Route.Index
                     , Route.RoomRouter
@@ -32,11 +34,22 @@ library
                     , Route.GachaHistoryRouter
                     , Route.WsRouter
                     , Service.WsService
+                    , Service.RoomView
+                    , Service.RematchService
+                    , Service.RewardService
+                    , Service.BattleService
                     , Ws.Env
                     , Ws.Hub
                     , Ws.MongoStore
                     , Ws.Message
                     , Ws.Types
+                    , Game.Config
+                    , Game.Random
+                    , Game.Types
+                    , Game.Strategy
+                    , Game.Rules
+                    , Game.View
+                    , Game.Registry
     build-depends:
         base ^>=4.19.1.0 && <4.21,
         aeson,

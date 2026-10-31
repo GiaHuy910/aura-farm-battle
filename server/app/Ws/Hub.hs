@@ -11,6 +11,7 @@ module Ws.Hub
   , isOnline
   , broadcast
   , sendTo
+  , sendToUser
   , closeConn
   , closeUser
   , closeRoom
@@ -82,6 +83,11 @@ isOnline hub rid uid = elem uid <$> onlineUsers hub rid
 
 broadcast :: Hub -> RoomId -> BL.ByteString -> IO ()
 broadcast hub rid p = roomConns hub rid >>= mapM_ (`sendTo` p)
+
+sendToUser :: Hub -> RoomId -> UserId -> BL.ByteString -> IO ()
+sendToUser hub rid uid p = do
+  m <- readTVarIO (hubConns hub)
+  forM_ (M.lookup rid m >>= M.lookup uid) (`sendTo` p)
 
 closeUser :: Hub -> RoomId -> UserId -> IO ()
 closeUser hub rid uid = do

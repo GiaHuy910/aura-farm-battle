@@ -68,7 +68,6 @@ export default function UserPage() {
     e: React.MouseEvent<HTMLButtonElement>,
   ) => {
     const value = e.currentTarget.value;
-    // reason to force this type cuz typescript would not believe me
     setSelectedSkillType(value as SkillType);
   };
   const handleShowSkills = () => {
