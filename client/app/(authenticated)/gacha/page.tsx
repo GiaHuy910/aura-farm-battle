@@ -11,7 +11,8 @@ import { usePool } from "@/api/pool";
 import { sendGachaRequest } from "@/api/user";
 import { GachaTicket } from "@/components/GachaTicket";
 import BackgroundButton from "@/components/BackgroundButton";
-const banner_1 = "/gacha/background-gacha-3.jpg";
+
+const banner_1 = "/gacha/background-gacha-1.jpg";
 const banner_2 = "/gacha/background-gacha-2.jpg";
 const banner_1_name = "Clothes" as const;
 const banner_2_name = "Skills" as const;
@@ -90,14 +91,11 @@ export default function GachaBannerPage() {
 
   return (
     <div
-      className={`${page.roomsPage} backgroundGachaContainer position-relative my-5 d-flex justify-content-center align-items-center flex-column gap-3 container w-100 h-100`}
-      style={{
-        border: "10px solid rgba(178, 140, 15, 0.69)",
-        // backgroundColor: "rgba(255, 255, 255, 0.23)",
-        padding: "10px",
-      }}
+      className={`${page.gachaFrame} backgroundGachaContainer ${
+        selectedBanner === banner_2_name ? "bannerSkills" : ""
+      }`}
     >
-      <div className="header w-100 d-flex">
+      <div className={`${page.gachaTabs} header w-100 d-flex`}>
         <button
           className={`btn btn-warning btn-lg ${selectedBanner === banner_1_name ? "disabled" : ""} flex-fill rounded-0 border border-light`}
           value={banner_1_name}
@@ -113,7 +111,9 @@ export default function GachaBannerPage() {
           {banner_2_name}
         </button>
       </div>
-      <div className="w-100 d-flex justify-content-end align-items-center">
+      <div
+        className={`${page.gachaTicketRow} w-100 d-flex justify-content-end align-items-center`}
+      >
         <div
           style={{
             backgroundColor: "rgba(117, 112, 112, 0.82)",
@@ -149,10 +149,9 @@ export default function GachaBannerPage() {
           />
         </div>
       )}
-      {/* AddedItem Part */}
       {showResult && (
         <div
-          className="position-absolute vh-100 vw-100 d-flex align-items-center justify-content-center"
+          className="position-fixed top-0 start-0 vh-100 vw-100 d-flex align-items-center justify-content-center p-2"
           style={{
             zIndex: 4,
             background: "rgba(0, 0, 0, 0.85)",
@@ -161,8 +160,8 @@ export default function GachaBannerPage() {
           onClick={toggleResult}
         >
           <div
-            className="bg-dark text-white border border-warning rounded-0 p-4 text-center"
-            style={{ maxWidth: "650px", width: "90%" }}
+            className="bg-dark text-white border border-warning rounded-0 p-3 p-md-4 text-center"
+            style={{ maxWidth: "650px", width: "100%", maxHeight: "90dvh" }}
           >
             <h3 className="text-warning fw-bold mb-4">Reward</h3>
             <div className="d-flex flex-wrap justify-content-center gap-2 my-3">
@@ -214,20 +213,21 @@ export default function GachaBannerPage() {
           </div>
         </div>
       )}
-      {/* PaymentBoard Part */}
       {showPaymentBoard && (
         <div
-          className="position-absolute vh-100 vw-100"
+          className="position-fixed top-0 start-0 vh-100 vw-100"
           style={{
             zIndex: 1,
+            background: "rgba(0, 0, 0, 0.5)",
           }}
         ></div>
       )}
       {showPaymentBoard && (
         <div
-          className="position-absolute bg-white border rounded-3 shadow p-3 w-100 d-flex align-items-center justify-content-center flex-column gap-3 text-center"
+          className="position-fixed bg-white border rounded-3 shadow p-3 d-flex align-items-center justify-content-center flex-column gap-3 text-center"
           style={{
             maxWidth: "400px",
+            width: "calc(100% - 24px)",
             height: "auto",
             minHeight: "150px",
             top: "50%",
@@ -254,31 +254,20 @@ export default function GachaBannerPage() {
           </div>
         </div>
       )}
-      {/* Banner Part */}
-      {selectedBanner === banner_1_name && (
+
+      <div className={page.gachaBannerFrame}>
         <Image
-          src={banner_1}
-          alt={banner_1_name}
-          className={`popIn`}
-          style={{
-            border: "5px solid white",
-          }}
-          width={700}
-          height={380}
+          src={selectedBanner === banner_1_name ? banner_1 : banner_2}
+          alt={selectedBanner}
+          className={`${page.gachaBanner} popIn`}
+          fill
+          sizes="(max-width: 768px) 100vw, 1100px"
           priority
         />
-      )}
-      {selectedBanner === banner_2_name && (
-        <Image
-          src={banner_2}
-          alt={banner_2_name}
-          className={`popIn border border-light`}
-          width={700}
-          height={380}
-          priority
-        />
-      )}
-      <div className="footer w-100 d-flex justify-content-between flex-wrap gap-3">
+      </div>
+      <div
+        className={`${page.gachaFooter} w-100 d-flex justify-content-between flex-wrap gap-3`}
+      >
         <div className="d-flex justify-content-start align-items-center gap-1">
           <button
             className={`${home.optionBtn} me-5`}

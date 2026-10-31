@@ -13,8 +13,10 @@ import qualified Data.ByteString as BS
 
 import Seed.SkillSeed  (seedSkills)
 import Seed.ClotheSeed (seedClothes)
+import Seed.GiftcodeSeed (seedGiftcodes)
 import Controllers.AuthController( registerHandler, loginHandler, logoutHandler, meHandler )
-import Controllers.RoomController( getRoomsHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler ) 
+import Controllers.GiftcodeController (redeemGiftcodeHandler)
+import Controllers.RoomController( getRoomsHandler, getRoomsByNameHandler, createRoomHandler, leaveRoomHandler, joinRoomHandler )
 import Controllers.UserController( getEquippedSkillsHandler, getEquippedClothesHandler, getTicketsHandler, getOwnedItemsHandler, getGachaHandler, getEquipItemHandler)
 import Controllers.PoolController( getPoolHandler )
 import Controllers.GachaHistoryController( getGachaHistoryHandler)
@@ -24,6 +26,7 @@ import Route.RoomRouter( RoomRouter)
 import Route.UserRouter( UserRouter)
 import Route.PoolRouter( PoolRouter)
 import Route.GachaHistoryRouter( GachaHistoryRouter)
+import Route.GiftcodeRouter( GiftcodeRouter)
 import Route.WsRouter(WsRouter)
 import Route.Index(Router)
 import Config.ServerConfig(loadServerConfig)
@@ -43,6 +46,7 @@ authServer =
 roomServer :: Env -> Server RoomRouter
 roomServer env =
        getRoomsHandler
+  :<|> getRoomsByNameHandler
   :<|> createRoomHandler
   :<|> joinRoomHandler env
   :<|> leaveRoomHandler env
@@ -63,6 +67,9 @@ poolServer =
 gachaHistoryServer :: Server GachaHistoryRouter
 gachaHistoryServer = getGachaHistoryHandler
 
+giftcodeServer :: Server GiftcodeRouter
+giftcodeServer = redeemGiftcodeHandler
+
 wsServer :: Env -> Server WsRouter
 wsServer env = wsHandler env
 
@@ -73,6 +80,7 @@ server env =
   :<|> userServer
   :<|> poolServer
   :<|> gachaHistoryServer
+  :<|> giftcodeServer
   :<|> wsServer env
 
 api :: Proxy Router
@@ -95,6 +103,7 @@ runApp = do
   putStrLn "Checking db.."
   seedSkills
   seedClothes
+  seedGiftcodes
   putStrLn "Sucesssfully checked!"
 
   hub   <- newHub

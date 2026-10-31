@@ -24,6 +24,9 @@ type RoomsRequest = {
   limit: number;
   cursor: string;
 };
+type RoomsByNameRequest = RoomsRequest & {
+  name: string;
+};
 type RoomsResponse = {
   rooms: Room[];
   pagination: {

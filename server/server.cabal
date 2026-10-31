@@ -9,6 +9,7 @@ library
     exposed-modules:  App
                     , Seed.SkillSeed
                     , Seed.ClotheSeed
+                    , Seed.GiftcodeSeed
                     , Config.Database
                     , Config.GameConfig
                     , Config.ServerConfig
@@ -17,6 +18,7 @@ library
                     , Controllers.UserController
                     , Controllers.PoolController
                     , Controllers.GachaHistoryController
+                    , Controllers.GiftcodeController
                     , Controllers.WsController
                     , Model.Clothe
                     , Model.Rooms
@@ -26,17 +28,20 @@ library
                     , Model.GachaHistory
                     , Model.Match
                     , Model.Inventory
+                    , Model.Giftcode
                     , Route.AuthRouter
                     , Route.Index
                     , Route.RoomRouter
                     , Route.UserRouter
                     , Route.PoolRouter
                     , Route.GachaHistoryRouter
+                    , Route.GiftcodeRouter
                     , Route.WsRouter
                     , Service.WsService
                     , Service.RoomView
                     , Service.RematchService
                     , Service.RewardService
+                    , Service.GiftcodeService
                     , Service.BattleService
                     , Ws.Env
                     , Ws.Hub

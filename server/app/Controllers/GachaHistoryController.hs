@@ -21,6 +21,7 @@ import Model.User (User(..))
 import Model.GachaHistory
     ( GachaHistory(..)
     , getGachaHistory
+    , validHistoryCursor
     )
 
 data Pagination = Pagination
@@ -44,8 +45,17 @@ getGachaHistoryHandler
     -> Text
     -> Handler GachaHistoryResponse
 getGachaHistoryHandler cookie limitVal cursorVal itemTypeVal = withAuthenticatedUser cookie $ \u -> do
-    let uid = u.user_id
+    if limitVal < 1 || limitVal > 100
+        then throwError err400 { errBody = "invalid_limit" }
+        else pure ()
+    if itemTypeVal /= "skill" && itemTypeVal /= "clothe"
+        then throwError err400 { errBody = "invalid_item_type" }
+        else pure ()
+    if not (validHistoryCursor cursorVal)
+        then throwError err400 { errBody = "invalid_cursor" }
+        else pure ()
 
+    let uid = u.user_id
     histories <- liftIO $ getGachaHistory uid itemTypeVal limitVal cursorVal
 
     let nextCursorVal = if null histories

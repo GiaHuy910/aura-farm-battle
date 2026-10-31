@@ -25,6 +25,12 @@ type RoomRouter =
            :> QueryParam' '[Required, Strict] "cursor" Text
            :> Get '[JSON] RoomsResponse
 
+    :<|> "room" :> "search"
+           :> QueryParam' '[Required, Strict] "name" Text
+           :> QueryParam' '[Required, Strict] "limit" Int
+           :> QueryParam' '[Required, Strict] "cursor" Text
+           :> Get '[JSON] RoomsResponse
+
     :<|> "room"
            :> Header "Cookie" String
            :> ReqBody '[JSON] CreateRoomRequest

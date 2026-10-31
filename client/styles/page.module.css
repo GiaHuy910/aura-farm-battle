@@ -19,3 +19,395 @@
   min-height: 0;
   overflow: hidden;
 }
+.roomsPage {
+  width: calc(100% - 1.5rem);
+  height: calc(100dvh - 100px);
+
+  min-height: 350px;
+  min-width: 0;
+
+  box-sizing: border-box;
+  border: 5px solid rgba(178, 140, 15, 0.69);
+  background-color: #eae2c7;
+
+  overflow: hidden;
+}
+
+.roomsLayout {
+  display: grid;
+  grid-template-columns: minmax(150px, 20%) minmax(0, 1fr);
+
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.roomsSidebar {
+  min-width: 0;
+  min-height: 0;
+
+  border: 5px solid rgba(178, 140, 15, 0.69);
+  color: white;
+}
+
+.sidebarActions {
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  height: 100%;
+}
+
+.roomsContent {
+  min-width: 0;
+  min-height: 0;
+
+  border: 5px solid rgba(178, 140, 15, 0.69);
+  padding: clamp(8px, 2vw, 20px);
+
+  overflow: hidden;
+}
+
+.roomsContentInner {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.gachaFrame {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.5vh, 16px);
+  width: min(1200px, calc(100% - 24px));
+  height: calc(100dvh - 24px);
+  max-height: 1000px;
+  min-height: 0;
+  margin: 12px auto;
+  padding: clamp(10px, 2vw, 24px);
+  border: clamp(4px, 0.7vw, 10px) solid rgba(178, 140, 15, 0.69);
+  box-sizing: border-box;
+  overflow: hidden;
+}
+
+.gachaBannerFrame {
+  position: relative;
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  max-width: 1100px;
+  max-height: 100%;
+}
+
+.gachaBanner {
+  object-fit: contain;
+}
+
+.gachaTabs,
+.gachaTicketRow {
+  flex: 0 0 auto;
+}
+
+.gachaFooter {
+  flex: 0 0 auto;
+  margin-top: auto;
+}
+
+.gachaHistoryFrame {
+  display: flex;
+  width: min(1200px, calc(100% - 24px));
+  height: calc(100dvh - 24px);
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  gap: clamp(8px, 1.5vh, 16px);
+  margin: 12px auto;
+  padding: clamp(10px, 2vw, 24px);
+  border: clamp(4px, 0.7vw, 10px) solid rgba(178, 140, 15, 0.69);
+  background: #eae2c7;
+  overflow: hidden;
+}
+
+.gachaHistoryFilter {
+  display: flex;
+  flex: 0 0 auto;
+  width: 100%;
+  justify-content: center;
+}
+
+.gachaHistoryContent {
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  align-items: center;
+}
+
+.gachaHistoryTableWrap {
+  width: 100%;
+  min-height: 0;
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+.gachaHistoryTableWrap table {
+  margin-bottom: 0;
+}
+
+.gachaHistoryPagination {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(16px, 5vw, 48px);
+  width: 100%;
+  padding: 10px 0;
+}
+
+.gachaHistoryPagination button,
+.gachaHistoryPagination span {
+  flex-shrink: 0;
+}
+
+@media (min-width: 768px) {
+  .gachaHistoryTableWrap table {
+    table-layout: fixed;
+  }
+
+  .gachaHistoryTableWrap th,
+  .gachaHistoryTableWrap td {
+    padding: 0.4rem 0.55rem;
+    font-size: clamp(0.7rem, 0.9vw, 0.9rem);
+    line-height: 1.2;
+    vertical-align: middle;
+  }
+
+  .gachaHistoryTableWrap td {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.userFrame {
+  position: relative;
+  flex: 1 1 auto;
+  width: min(1200px, calc(100% - 24px));
+  height: calc(100dvh - 84px);
+  min-height: 0;
+  margin: 4px auto 8px;
+  border: 5px solid darkgoldenrod;
+  background-color: #eae2c7;
+  overflow: hidden;
+}
+
+.userMainGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.userPanel {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(8px, 2vw, 20px);
+  border: 5px solid darkgoldenrod;
+  overflow: auto;
+}
+
+.userEquipment {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  align-items: center;
+  justify-items: center;
+  justify-content: center;
+  gap: clamp(6px, 1.2vw, 16px);
+  width: 100%;
+  margin-top: 40px;
+}
+
+.userInventoryPanel {
+  position: absolute;
+  z-index: 20;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  width: min(50%, 640px);
+  flex-direction: column;
+  padding: clamp(12px, 2vw, 24px);
+  color: white;
+  background: rgba(20, 20, 20, 0.96);
+  transition: transform 0.4s ease-in-out;
+  overflow: hidden;
+}
+
+.userInventoryClothes {
+  left: 0;
+  transform: translateX(-100%);
+  border-right: 3px solid darkgoldenrod;
+}
+
+.userInventorySkills {
+  right: 0;
+  transform: translateX(100%);
+  border-left: 3px solid darkgoldenrod;
+}
+
+.inventoryOpen {
+  transform: translateX(0);
+}
+
+.inventoryList {
+  display: flex;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 8px;
+  width: 100%;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.inventoryBody {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+  padding-top: 8px;
+}
+
+.userReturn {
+  z-index: 1;
+  top: 8px;
+  left: 8px;
+}
+
+@media (max-width: 767.98px) {
+  .roomsPage {
+    height: calc(100dvh - 80px);
+    min-height: 400px;
+  }
+
+  .roomsLayout {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto minmax(0, 1fr);
+  }
+
+  .roomsSidebar {
+    min-height: 0;
+    padding: 5px;
+  }
+
+  .sidebarActions {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .roomsContent {
+    padding: 8px;
+  }
+
+  .gachaFrame {
+    width: calc(100% - 12px);
+    height: calc(100dvh - 12px);
+    max-height: calc(100dvh - 12px);
+    margin: 6px auto;
+    padding: 8px;
+  }
+
+  .gachaHistoryFrame {
+    width: calc(100% - 12px);
+    height: calc(100dvh - 12px);
+    margin: 6px auto;
+    padding: 8px;
+  }
+
+  .gachaHistoryFrame h2 {
+    font-size: clamp(1rem, 5vw, 1.5rem);
+  }
+
+  .gachaHistoryPagination {
+    gap: clamp(12px, 6vw, 32px);
+  }
+
+  .gachaHistoryTableWrap {
+    overflow: auto;
+  }
+
+  .gachaBannerFrame {
+    max-width: 100%;
+  }
+
+  .gachaFooter {
+    flex-direction: column;
+    align-items: stretch !important;
+    gap: 8px !important;
+    width: 100%;
+  }
+
+  .gachaFooter > div {
+    justify-content: center !important;
+    flex-wrap: wrap;
+    gap: 8px !important;
+  }
+
+  .gachaFooter button {
+    margin-right: 0 !important;
+  }
+
+  .userFrame {
+    width: calc(100% - 12px);
+    height: calc(100dvh - 76px);
+    margin: 4px auto;
+  }
+
+  .userMainGrid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(240px, auto) minmax(0, 1fr);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .userPanel {
+    min-height: 240px;
+    overflow: auto;
+  }
+
+  .userEquipment {
+    margin-top: 42px;
+  }
+
+  .userInventoryPanel {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .userReturn {
+    top: 4px;
+    left: 4px;
+  }
+}
+
+@media (max-height: 620px) {
+  .gachaFrame {
+    gap: 6px;
+    padding-block: 6px;
+  }
+}

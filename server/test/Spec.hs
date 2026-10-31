@@ -17,14 +17,15 @@ import           Game.Strategy
 import           Game.Types
 import           Game.View
 import qualified Model.Clothe as Clothe
+import qualified Model.GachaHistory as ModelHistory
 import qualified Model.Match as Match
+import qualified Model.Giftcode as Giftcode
 import qualified Model.Skill as Skill
 import qualified Model.User as User
 import           System.Random (mkStdGen)
 import           Test.Hspec
 import           Test.QuickCheck hiding (shuffle)
 
--- Explicit fixtures keep the random-dependent round tests reproducible.
 player1, player2 :: Text
 player1 = "player-1"
 player2 = "player-2"
@@ -84,6 +85,17 @@ errorOf = either Just (const Nothing)
 
 main :: IO ()
 main = hspec $ do
+  describe "Giftcode" $ do
+    it "normalizes codes by trimming whitespace and uppercasing" $ do
+      Giftcode.normalizeGiftcodeCode "  aurafarmtime  " `shouldBe` "AURAFARMTIME"
+      Giftcode.normalizeGiftcodeCode "AURAFARMTIME" `shouldBe` "AURAFARMTIME"
+      Giftcode.normalizeGiftcodeCode "   " `shouldBe` ""
+
+  describe "Gacha history cursor validation" $ do
+    it "accepts the first-page cursor and rejects malformed cursors" $ do
+      ModelHistory.validHistoryCursor "" `shouldBe` True
+      ModelHistory.validHistoryCursor "not-an-object-id" `shouldBe` False
+
   describe "Game.Rules" $ do
     describe "applyMult" $ do
       it "applies the multiplier formula and cap to hand-picked values" $ do

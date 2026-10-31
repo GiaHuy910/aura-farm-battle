@@ -10,7 +10,7 @@ export default function RoomsLayout({
   return (
     <section>
       <div className={`${styles.roomsShell} d-flex flex-column`}>
-        <Navbar />
+        {/* <Navbar /> */}
         {children}
       </div>
     </section>

@@ -1,4 +1,5 @@
 import { config } from "@/config/config";
+import { throwApiError } from "@/api/httpError";
 
 const baseApi = `${config.server.apiUrl}/gacha-history`;
 
@@ -11,13 +12,6 @@ export const getGachaHistory = async (request: GachaHistoryRequest) => {
       credentials: "include",
     },
   );
-  const data: GachaHistoryResponse = await response.json();
-  if (response.status === 403) {
-    throw new Error("Unauthorized");
-  } else {
-    if (response.ok) {
-      return data;
-    }
-    throw new Error("Internal Server Error");
-  }
+  if (!response.ok) await throwApiError(response, "Internal Server Error");
+  return response.json();
 };

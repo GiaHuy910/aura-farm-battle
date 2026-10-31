@@ -8,6 +8,7 @@ import Route.AuthRouter( AuthRouter)
 import Route.UserRouter( UserRouter)
 import Route.PoolRouter( PoolRouter)
 import Route.GachaHistoryRouter( GachaHistoryRouter)
+import Route.GiftcodeRouter( GiftcodeRouter)
 import Route.WsRouter(WsRouter)
 
 type Router =
@@ -16,4 +17,5 @@ type Router =
     :<|> UserRouter
     :<|> PoolRouter
     :<|> GachaHistoryRouter
+    :<|> GiftcodeRouter
     :<|> WsRouter

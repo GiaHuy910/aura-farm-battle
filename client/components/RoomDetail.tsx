@@ -3,24 +3,35 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { getRooms, joinRoom } from "@/api/rooms";
+import { getRooms, getRoomsByName, joinRoom } from "@/api/rooms";
 
-const pageSize = 5;
+const pageSize = 8;
 
-export default function RoomDetail() {
+type Props = {
+  searchOpen: boolean;
+};
+
+export default function RoomDetail({ searchOpen }: Props) {
   const [pages, setPages] = useState<RoomsResponse[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
   const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const [password, setPassword] = useState("");
   const [joining, setJoining] = useState(false);
   const [joinError, setJoinError] = useState<string | null>(null);
   const router = useRouter();
 
+  const fetchRoomPage = (cursor: string, name: string) =>
+    name
+      ? getRoomsByName({ limit: pageSize, cursor, name })
+      : getRooms({ limit: pageSize, cursor });
+
   useEffect(() => {
     let active = true;
-    getRooms({ limit: pageSize, cursor: "" })
+    fetchRoomPage("", "")
       .then((response) => {
         if (active) setPages([response]);
       })
@@ -46,6 +57,31 @@ export default function RoomDetail() {
     setJoinError(null);
   };
 
+  const loadFirstPage = async (name: string) => {
+    setLoading(true);
+    setError(null);
+    setActiveSearch(name);
+    setPageIndex(0);
+    setPages([]);
+    try {
+      const response = await fetchRoomPage("", name);
+      setPages([response]);
+    } catch {
+      setError(
+        name
+          ? "Unable to search rooms. Please try again."
+          : "Unable to load rooms. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void loadFirstPage(searchText.trim());
+  };
+
   const refreshPage = async () => {
     const cursor =
       pageIndex === 0
@@ -54,7 +90,7 @@ export default function RoomDetail() {
     setLoading(true);
     setError(null);
     try {
-      const response = await getRooms({ limit: pageSize, cursor });
+      const response = await fetchRoomPage(cursor, activeSearch);
       setPages((previous) =>
         previous.length === 0
           ? [response]
@@ -81,7 +117,7 @@ export default function RoomDetail() {
     setLoading(true);
     setError(null);
     try {
-      const response = await getRooms({ limit: pageSize, cursor });
+      const response = await fetchRoomPage(cursor, activeSearch);
       setPages((previous) => [...previous, response]);
       setPageIndex((index) => index + 1);
     } catch {
@@ -142,6 +178,39 @@ export default function RoomDetail() {
         </button>
       </header>
 
+      {searchOpen && (
+        <form className="input-group mb-3" onSubmit={handleSearch}>
+          <label className="visually-hidden" htmlFor="room-name-search">
+            Room name
+          </label>
+          <input
+            id="room-name-search"
+            className="form-control"
+            type="search"
+            placeholder="Search rooms by name"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            maxLength={64}
+          />
+          <button className="btn btn-warning" type="submit" disabled={loading}>
+            Search
+          </button>
+          {activeSearch && (
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setSearchText("");
+                void loadFirstPage("");
+              }}
+            >
+              Clear
+            </button>
+          )}
+        </form>
+      )}
+
       {error && (
         <div className="alert alert-warning py-2" role="alert">
           {error}
@@ -200,7 +269,7 @@ export default function RoomDetail() {
                     <span className="small text-nowrap">{room.occupation}</span>
                     <button
                       type="button"
-                      className="btn btn-success"
+                      className="btn btn-warning"
                       disabled={!canJoin || joining}
                       onClick={() => openRoom(room)}
                     >
@@ -221,21 +290,21 @@ export default function RoomDetail() {
         )}
       </div>
 
-      <footer className="d-flex align-items-center justify-content-center gap-3 py-3">
+      <footer className="d-flex align-items-center justify-content-center gap-5 pt-2 flex-shrink-0">
         <button
           type="button"
-          className="btn btn-outline-secondary"
+          className="btn btn-secondary rounded-0"
           onClick={() => setPageIndex((index) => Math.max(0, index - 1))}
           disabled={pageIndex === 0 || loading}
         >
-          Previous
+          Prev
         </button>
         <span className="small" aria-live="polite">
           Page {pageIndex + 1}
         </span>
         <button
           type="button"
-          className="btn btn-outline-secondary"
+          className="btn btn-secondary rounded-0"
           onClick={() => void handleNextPage()}
           disabled={!hasNextPage || loading}
         >
