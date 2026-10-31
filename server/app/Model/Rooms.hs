@@ -24,6 +24,7 @@ import Data.UUID.V4 (nextRandom)
 import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
+import qualified Data.Text as T
 
 import Config.Database (runDB)
 import Config.GameConfig(maxRoomName)
@@ -39,9 +40,18 @@ data Room = Room
   , status :: Text
   } deriving (Show)
 
-getRooms :: IO [Room]
-getRooms = runDB $ do
-    docs <- find ((select [] "room") { project = ["room_password" =: (0 :: Int)] }) >>= rest
+getRooms :: Int -> Text -> IO [Room]
+getRooms limitVal cursor = runDB $ do
+    -- Cursor comparisons use the same key as the ascending sort.
+    let cursorFilter =
+            if T.null cursor
+                then []
+                else ["room_id" =: ["$gt" =: cursor]]
+    docs <- find ((select cursorFilter "room")
+                    { project = ["room_password" =: (0 :: Int)]
+                    , sort = ["room_id" =: (1 :: Int)]
+                    , limit = fromIntegral limitVal
+                    }) >>= rest
     return (map docToRoom docs)
 
 getRoomById :: Text -> IO (Maybe Room)

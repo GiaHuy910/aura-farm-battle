@@ -167,13 +167,20 @@ registerEffect u card b
       in case M.lookup target (bFighters b) of
            Nothing -> (b, [])
            Just tf
-             | isPresent "guard" tf          -> (b, [EvEffectBlocked target eff "guard"])
+             | isPresent "guard" tf          ->
+                 ( consumeGuard target b
+                 , [EvEffectBlocked target eff "guard"]
+                 )
              | any (isPresent "purify") (M.elems (bFighters b)) -> (b, [EvEffectBlocked target eff "purify"])
              | otherwise -> (addEffect target eff dur u b, [EvEffectApplied target eff dur u])
   | otherwise = (addEffect u eff dur u b, [EvEffectApplied u eff dur u])
   where
     eff = cardEffect card
     dur = cardEffectDur card
+    consumeGuard target battle =
+      battle { bFighters = M.adjust removeGuard target (bFighters battle) }
+    removeGuard fighter =
+      fighter { fEffects = filter ((/= "guard") . aeType) (fEffects fighter) }
 
 opponentOf :: Battle -> UserId -> UserId
 opponentOf b u = case filter (/= u) (bOrder b) of

@@ -9,6 +9,8 @@ module Model.Skill
     , getSkillsByIds
     , docToSkill
     , skillToDoc
+    , effectToDoc
+    , getSkillBaseValue
     , createSkill
     , createSkillBatch
     , insertSkills

@@ -3,27 +3,28 @@ module Game.Random
   , pickUniform
   , sampleWeighted
   , shuffle
+  , removeAt
   ) where
 
 import System.Random (StdGen, randomR)
 
 pickWeighted :: StdGen -> [(a, Double)] -> Maybe (a, [(a, Double)], StdGen)
 pickWeighted _ [] = Nothing
-pickWeighted g xs
-  | total <= 0 =  
-      let (i, g') = randomR (0, length xs - 1) g
-      in Just (fst (xs !! i), removeAt i xs, g')
-  | otherwise =
-      let (r, g') = randomR (0, total) g
-          i       = walk r 0 (map snd xs)
-      in Just (fst (xs !! i), removeAt i xs, g')
+pickWeighted g xs = case positiveWeights of
+  [] -> Nothing
+  _  ->
+    let (r, g') = randomR (0, total) g
+    in case walk r positiveWeights of
+         Nothing -> Nothing
+         Just i  -> Just (fst (xs !! i), removeAt i xs, g')
   where
-    total = sum (map (max 0 . snd) xs)
-    walk _ i []       = max 0 (i - 1)
-    walk r i (w : ws)
-      | r <= max 0 w  = i
-      | null ws       = i
-      | otherwise     = walk (r - max 0 w) (i + 1) ws
+    positiveWeights = [(i, w) | (i, (_, w)) <- zip [0 ..] xs, w > 0]
+    total = sum (map snd positiveWeights)
+    walk _ [] = Nothing
+    walk _ [(i, _)] = Just i
+    walk r ((i, w) : rest)
+      | r <= w    = Just i
+      | otherwise = walk (r - w) rest
 
 removeAt :: Int -> [a] -> [a]
 removeAt i xs = take i xs ++ drop (i + 1) xs

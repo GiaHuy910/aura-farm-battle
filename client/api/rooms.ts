@@ -1,17 +1,22 @@
 "use client";
-import useSWR from "swr";
-
-import { fetcher } from "./customFetcher";
 import { config } from "@/config/config";
 
 const baseApi = `${config.server.apiUrl}/room`;
 
-export const useRooms = () => {
-  return useSWR<Room[] | [] | undefined>(`${baseApi}`, fetcher, {
-    revalidateIfStale: false,
-    revalidateOnFocus: false,
-    revalidateOnReconnect: false,
+export const getRooms = async (request: RoomsRequest) => {
+  const query = new URLSearchParams({
+    limit: String(request.limit),
+    cursor: request.cursor,
   });
+  const response = await fetch(`${baseApi}?${query.toString()}`, {
+    method: "GET",
+    credentials: "include",
+  });
+  const data: RoomsResponse = await response.json();
+  if (!response.ok) {
+    throw new Error("Unable to load rooms");
+  }
+  return data;
 };
 
 export const createRoom = async (body: createRoomForm) => {

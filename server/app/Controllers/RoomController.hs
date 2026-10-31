@@ -18,6 +18,8 @@ module Controllers.RoomController
     JoinRoomResponse(..),
     LeaveRoomRequest(..),
     StatusResponse(..),
+    RoomPagination(..),
+    RoomsResponse(..),
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -97,11 +99,35 @@ data RoomSummary = RoomSummary
   } deriving (Show, Generic)
 instance ToJSON RoomSummary
 
+data RoomPagination = RoomPagination
+  { limit      :: Int
+  , nextCursor :: Text
+  } deriving (Show, Generic)
+instance ToJSON RoomPagination
+
+data RoomsResponse = RoomsResponse
+  { rooms      :: [RoomSummary]
+  , pagination :: RoomPagination
+  } deriving (Show, Generic)
+instance ToJSON RoomsResponse
+
 -- GET /room/getRooms
-getRoomsHandler :: Handler [RoomSummary]
-getRoomsHandler = do
-  rooms <- liftIO getRooms
-  return $ map toSummary rooms
+getRoomsHandler :: Int -> Text -> Handler RoomsResponse
+getRoomsHandler requestedLimit cursor = do
+  let pageLimit = max 1 (min 20 requestedLimit)
+  fetchedRooms <- liftIO $ getRooms (pageLimit + 1) cursor
+  let pageRooms = take pageLimit fetchedRooms
+      hasNextPage = length fetchedRooms > pageLimit
+      pageCursor = case reverse pageRooms of
+        Room rid _ _ _ _ _ _ _ : _ | hasNextPage -> rid
+        _ -> ""
+  return RoomsResponse
+    { rooms = map toSummary pageRooms
+    , pagination = RoomPagination
+        { limit = pageLimit
+        , nextCursor = pageCursor
+        }
+    }
   where
     toSummary (Room rid rname _ _ _ occ private rstatus) = RoomSummary
       { room_name  = rname

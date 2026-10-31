@@ -6,7 +6,7 @@ import { useEffect, useRef, useState } from "react";
 import page from "@/styles/page.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
 import { useRoomSocket } from "@/websocket/useRoomSocket";
-import { useRooms, leaveRoom } from "@/api/rooms";
+import { leaveRoom } from "@/api/rooms";
 
 import PlayerSlot from "@/components/PlayerSlot";
 import BattleScreen from "@/components/battle/BattleScreen";
@@ -15,11 +15,13 @@ export default function RoomIdPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, fetchMe } = useAuth();
-  // const { mutate } = useRooms();
 
   const { room, game, connection, closedReason, error, send } =
     useRoomSocket(id);
   const [leaving, setLeaving] = useState(false);
+  const [confirmingLeave, setConfirmingLeave] = useState(false);
+  const [leaveError, setLeaveError] = useState<string | null>(null);
+  const cancelLeaveRef = useRef<HTMLButtonElement>(null);
 
   const refreshedMatch = useRef<string | null>(null);
   const settledMatchId = game?.result?.matchId ?? null;
@@ -29,6 +31,17 @@ export default function RoomIdPage() {
       fetchMe();
     }
   }, [settledMatchId, fetchMe]);
+
+  useEffect(() => {
+    if (!confirmingLeave) return;
+
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setConfirmingLeave(false);
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    cancelLeaveRef.current?.focus();
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [confirmingLeave]);
 
   const meId = user?.user_id;
   const isOwner = !!meId && room?.owner.id === meId;
@@ -43,21 +56,30 @@ export default function RoomIdPage() {
     router.push("/rooms");
   };
 
-  const handleLeave = async () => {
-    if (
-      game?.phase === "battle" &&
-      !window.confirm("Leaving now makes you lose the match. Leave?")
-    )
-      return;
+  const confirmLeaveRoom = async () => {
+    setConfirmingLeave(false);
+    setLeaveError(null);
     setLeaving(true);
     try {
       const leaveSend: leaveRoomRequest = { room_id: id };
       const data = await leaveRoom(leaveSend);
       if (data.status === "success") handleLobby();
-      else setLeaving(false);
+      else setLeaveError("Unable to leave this room. Please try again.");
     } catch {
+      setLeaveError("Unable to leave this room. Please try again.");
+    } finally {
       setLeaving(false);
     }
+  };
+
+  const handleLeave = () => {
+    if (leaving) return;
+    setLeaveError(null);
+    if (game?.phase === "battle") {
+      setConfirmingLeave(true);
+      return;
+    }
+    void confirmLeaveRoom();
   };
 
   return (
@@ -161,6 +183,56 @@ export default function RoomIdPage() {
             </>
           )}
         </>
+      )}
+      {leaveError && (
+        <div className="alert alert-warning mt-3 mb-0" role="alert">
+          {leaveError}
+        </div>
+      )}
+      {confirmingLeave && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+          style={{ zIndex: 1100, background: "rgba(0, 0, 0, 0.72)" }}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) {
+              setConfirmingLeave(false);
+            }
+          }}
+        >
+          <div
+            className="bg-white rounded shadow-lg p-4 w-100"
+            style={{ maxWidth: 460, borderTop: "6px solid #dc3545" }}
+            role="alertdialog"
+            aria-modal="true"
+            aria-labelledby="leave-match-title"
+            aria-describedby="leave-match-description"
+          >
+            <h2 id="leave-match-title" className="h5 mb-2">
+              Leave this match?
+            </h2>
+            <p id="leave-match-description" className="text-muted mb-4">
+              You will lose the battle and some of your items!!
+            </p>
+            <div className="d-flex justify-content-end gap-2">
+              <button
+                ref={cancelLeaveRef}
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={() => setConfirmingLeave(false)}
+              >
+                Stay
+              </button>
+              <button
+                type="button"
+                className="btn btn-danger"
+                onClick={() => void confirmLeaveRoom()}
+                disabled={leaving}
+              >
+                {leaving ? "Leaving..." : "Leave"}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
