@@ -13,7 +13,25 @@
 </div>
 
 <div align="center">
-  <a href="https://pypi.org/project/langchain/#history" target="_blank"><img src="https://img.shields.io/pypi/v/langchain?label=%20" alt="Version"></a>
+
+  <img src="https://img.shields.io/badge/Version-1.0-blue?style=for-the-badge" alt="Version">
+
+  <img src="https://img.shields.io/badge/Next.js-black?style=for-the-badge&logo=next.js&logoColor=white" alt="Next.js">
+  <img src="https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB" alt="React">
+  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript&logoColor=white" alt="TypeScript">
+  <img src="https://img.shields.io/badge/Bootstrap-7952B3?style=for-the-badge&logo=bootstrap&logoColor=white" alt="Bootstrap">
+
+  <br/>
+
+  <img src="https://img.shields.io/badge/Haskell-5D4F85?style=for-the-badge&logo=haskell&logoColor=white" alt="Haskell">
+  <img src="https://img.shields.io/badge/Servant-3776AB?style=for-the-badge" alt="Servant">
+  <img src="https://img.shields.io/badge/Cabal-39457E?style=for-the-badge" alt="Cabal">
+
+  <br/>
+
+  <img src="https://img.shields.io/badge/MongoDB-47A248?style=for-the-badge&logo=mongodb&logoColor=white" alt="MongoDB">
+  <img src="https://img.shields.io/badge/REST_API-005571?style=for-the-badge" alt="REST API">
+
 </div>
 
 ## Web Status
