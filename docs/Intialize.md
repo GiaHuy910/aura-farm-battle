@@ -1,1 +1,3 @@
-npx create-next-app@latest
+- npx create-next-app@latest
+- db.sessions.createIndex({expiresAt:1})
+- db.gachahistories.createIndex({ user_id: 1, item_type: 1, \_id: -1 })

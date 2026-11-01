@@ -1,7 +1,0 @@
-{
-  "_id": "id gốc mongodb của item",
-  "user_id": "id của user",
-  "item_id": "id của item",
-  "item_type": "clothe",
-  "createdAt": "..."
-}
