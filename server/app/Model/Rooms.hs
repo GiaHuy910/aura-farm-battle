@@ -114,7 +114,7 @@ createRoom newRoom = runDB $ do
     uuid <- liftIO nextRandom
     let validUsers = take 2 (user_ids newRoom)
     if null validUsers
-        then error "Phòng phải có ít nhất 1 người (chủ phòng)"
+        then error "A room must have at least one member (the owner)."
     else do
         let realOccupancy = length (user_ids newRoom)
         let valiatedRoom = newRoom { room_id = pack (toString uuid), occupancy = realOccupancy }

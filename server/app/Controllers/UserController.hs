@@ -117,7 +117,7 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                                 (equipped_acc u)
                                 (equipped_shirt u)
                                 (equipped_shoes u)
-                    return $ EquipResponse "success" "Trang bị thành công!" targetItem
+                    return $ EquipResponse "success" "Equipped successfully!" targetItem
 
 data GachaRequest = GachaRequest{wish :: Text, wish_type :: Text } deriving (Show, Generic)
 instance FromJSON GachaRequest
