@@ -1,7 +1,7 @@
 "use client";
 
 import { useParams, useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 import page from "@/styles/page.module.css";
 import { useAuth } from "@/contexts/auth/useAuth";
@@ -10,14 +10,25 @@ import { leaveRoom } from "@/api/rooms";
 
 import PlayerSlot from "@/components/PlayerSlot";
 import BattleScreen from "@/components/battle/BattleScreen";
+import EffectOverlay from "@/components/battle/EffectOverlay";
 
 export default function RoomIdPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const { user, fetchMe } = useAuth();
 
-  const { room, game, connection, closedReason, error, send } =
+  const {
+    room,
+    game,
+    connection,
+    closedReason,
+    error,
+    chatMessage,
+    chatError,
+    send,
+  } =
     useRoomSocket(id);
+  const [effectBlocking, setEffectBlocking] = useState(false);
   const [leaving, setLeaving] = useState(false);
   const [confirmingLeave, setConfirmingLeave] = useState(false);
   const [leaveError, setLeaveError] = useState<string | null>(null);
@@ -44,6 +55,14 @@ export default function RoomIdPage() {
   }, [confirmingLeave]);
 
   const meId = user?.user_id;
+  const handleEffectBlockingChange = useCallback(
+    (blocking: boolean) => setEffectBlocking(blocking),
+    [],
+  );
+  const handleRoundEffectsComplete = useCallback(
+    (round: number) => send("game.effects_done", { round }),
+    [send],
+  );
   const isOwner = !!meId && room?.owner.id === meId;
   const canStart =
     isOwner && room?.status === "waiting" && !!room.guest?.online;
@@ -112,26 +131,52 @@ export default function RoomIdPage() {
           )}
 
           {inBattle && meId ? (
-            <>
-              <BattleScreen
-                room={room}
-                game={game}
-                meId={meId}
-                send={send}
-                error={error}
-                onLeave={handleLeave}
-                leaving={leaving}
-              />
+            <div
+              className="position-relative d-flex flex-column w-100"
+              style={{
+                flex: "1 1 0",
+                minHeight: 0,
+                overflow: "hidden",
+              }}
+            >
+              <div
+                className="d-flex flex-column w-100"
+                inert={effectBlocking}
+                style={{ flex: "1 1 0", minHeight: 0 }}
+              >
+                <BattleScreen
+                  room={room}
+                  game={game}
+                  meId={meId}
+                  send={send}
+                  error={error}
+                  onLeave={handleLeave}
+                  chatMessage={chatMessage}
+                  chatError={chatError}
+                  onChatSend={send}
+                  leaving={leaving}
+                />
+                {game.phase === "battle" && (
+                  <button
+                    className="btn btn-outline-danger mt-3"
+                    onClick={handleLeave}
+                    disabled={leaving}
+                  >
+                    LEAVE
+                  </button>
+                )}
+              </div>
               {game.phase === "battle" && (
-                <button
-                  className="btn btn-outline-danger mt-3"
-                  onClick={handleLeave}
-                  disabled={leaving}
-                >
-                  LEAVE
-                </button>
+                <EffectOverlay
+                  seq={game.lastRound?.seq ?? null}
+                  round={game.lastRound?.round ?? null}
+                  events={game.lastRound?.events ?? []}
+                  meId={meId}
+                  onRoundComplete={handleRoundEffectsComplete}
+                  onBlockingChange={handleEffectBlockingChange}
+                />
               )}
-            </>
+            </div>
           ) : (
             <>
               <div className="row w-100 align-items-center justify-content-center">

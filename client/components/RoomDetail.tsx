@@ -187,7 +187,7 @@ export default function RoomDetail({ searchOpen }: Props) {
             id="room-name-search"
             className="form-control"
             type="search"
-            placeholder="Search rooms by name"
+            placeholder="Search by names"
             value={searchText}
             onChange={(event) => setSearchText(event.target.value)}
             maxLength={64}

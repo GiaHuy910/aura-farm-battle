@@ -38,6 +38,7 @@ data RoomGame = RoomGame
   , rgOffer    :: Maybe (Value, UTCTime) 
   , rgResult   :: Maybe Value         
   , rgAgain    :: [UserId]             
+  , rgEffectsDone :: [UserId]
   }
 
 newtype Registry = Registry (TVar (M.Map RoomId RoomGame))

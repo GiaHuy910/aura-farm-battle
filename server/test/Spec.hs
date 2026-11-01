@@ -25,6 +25,7 @@ import qualified Model.User as User
 import           System.Random (mkStdGen)
 import           Test.Hspec
 import           Test.QuickCheck hiding (shuffle)
+import qualified Ws.Message as WsMessage
 
 player1, player2 :: Text
 player1 = "player-1"
@@ -90,6 +91,17 @@ main = hspec $ do
       Giftcode.normalizeGiftcodeCode "  aurafarmtime  " `shouldBe` "AURAFARMTIME"
       Giftcode.normalizeGiftcodeCode "AURAFARMTIME" `shouldBe` "AURAFARMTIME"
       Giftcode.normalizeGiftcodeCode "   " `shouldBe` ""
+
+  describe "Battle chat validation" $ do
+    it "trims messages and accepts up to 64 characters" $ do
+      WsMessage.normalizeChatText "  hello  " `shouldBe` Right "hello"
+      WsMessage.normalizeChatText (mconcat (replicate 64 "a"))
+        `shouldBe` Right (mconcat (replicate 64 "a"))
+
+    it "rejects empty and overlong messages" $ do
+      WsMessage.normalizeChatText "   " `shouldBe` Left "empty"
+      WsMessage.normalizeChatText (mconcat (replicate 65 "a"))
+        `shouldBe` Left "too_long"
 
   describe "Gacha history cursor validation" $ do
     it "accepts the first-page cursor and rejects malformed cursors" $ do

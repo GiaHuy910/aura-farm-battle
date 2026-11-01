@@ -12,6 +12,7 @@ module Ws.Hub
   , broadcast
   , sendTo
   , sendToUser
+  , claimChatSlot
   , closeConn
   , closeUser
   , closeRoom
@@ -28,6 +29,7 @@ import           Control.Monad (forM_)
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as M
 import           Data.Text (Text)
+import           Data.Time (UTCTime, addUTCTime, diffUTCTime)
 import qualified Network.WebSockets as WS
 import           Ws.Types (RoomId, UserId)
 
@@ -39,10 +41,11 @@ data Conn = Conn
 data Hub = Hub
   { hubConns  :: TVar (M.Map RoomId (M.Map UserId Conn))
   , hubTimers :: TVar (M.Map (RoomId, UserId) ThreadId) 
+  , hubChatTimes :: TVar (M.Map UserId UTCTime)
   }
 
 newHub :: IO Hub
-newHub = Hub <$> newTVarIO M.empty <*> newTVarIO M.empty
+newHub = Hub <$> newTVarIO M.empty <*> newTVarIO M.empty <*> newTVarIO M.empty
 
 quiet :: IO () -> IO ()
 quiet io = io `catch` \(_ :: SomeException) -> pure ()
@@ -88,6 +91,20 @@ sendToUser :: Hub -> RoomId -> UserId -> BL.ByteString -> IO ()
 sendToUser hub rid uid p = do
   m <- readTVarIO (hubConns hub)
   forM_ (M.lookup rid m >>= M.lookup uid) (`sendTo` p)
+
+claimChatSlot :: Hub -> UserId -> UTCTime -> IO (Maybe Int)
+claimChatSlot hub uid now = atomically $ do
+  times <- readTVar (hubChatTimes hub)
+  let activeTimes = M.filter (\sentAt -> diffUTCTime now sentAt < 15) times
+  case M.lookup uid activeTimes of
+    Just sentAt -> do
+      writeTVar (hubChatTimes hub) activeTimes
+      let remainingMs :: Int
+          remainingMs = ceiling (diffUTCTime (addUTCTime 15 sentAt) now * 1000)
+      pure (Just (max 1 remainingMs))
+    Nothing -> do
+      writeTVar (hubChatTimes hub) (M.insert uid now activeTimes)
+      pure Nothing
 
 closeUser :: Hub -> RoomId -> UserId -> IO ()
 closeUser hub rid uid = do

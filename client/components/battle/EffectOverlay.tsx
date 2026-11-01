@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   formatAura,
   rarityColor,
@@ -14,7 +14,7 @@ import type { ActiveEffect, GameEvent } from "@/websocket/battleTypes";
 type SkillUsed = Extract<GameEvent, { kind: "skill_used" }>;
 type EffectApplied = Extract<GameEvent, { kind: "effect_applied" }>;
 
-const SHOW_MS = 2800;
+const FALLBACK_SHOW_MS = 2800;
 
 function SkillFx({ ev, mine }: { ev: SkillUsed; mine: boolean }) {
   const hasEffect = ev.effectType !== "";
@@ -51,50 +51,158 @@ function SkillFx({ ev, mine }: { ev: SkillUsed; mine: boolean }) {
 
 type Props = {
   seq: number | null;
+  round: number | null;
   events: GameEvent[];
   meId: string;
+  onRoundComplete: (round: number) => void;
+  onBlockingChange: (blocking: boolean) => void;
 };
 
-export default function EffectOverlay({ seq, events, meId }: Props) {
-  const [visible, setVisible] = useState(false);
+export default function EffectOverlay({
+  seq,
+  round,
+  events,
+  meId,
+  onRoundComplete,
+  onBlockingChange,
+}: Props) {
+  const [playback, setPlayback] = useState<{
+    seq: number | null;
+    index: number;
+    failed: boolean;
+    playBlocked: boolean;
+  }>({ seq: null, index: 0, failed: false, playBlocked: false });
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const completedKey = useRef<string | null>(null);
 
   useEffect(() => {
     if (seq === null) return;
-    setVisible(true);
-    const t = setTimeout(() => setVisible(false), SHOW_MS);
-    return () => clearTimeout(t);
+    setPlayback({ seq, index: 0, failed: false, playBlocked: false });
   }, [seq]);
 
-  if (!visible) return null;
-  const used = events.filter((e): e is SkillUsed => e.kind === "skill_used");
-  const skipped = events.filter((e) => e.kind === "skipped");
-  if (used.length === 0 && skipped.length === 0) return null;
+  const sequence = useMemo(
+    () => events.filter((event) => event.kind === "skill_used" || event.kind === "skipped"),
+    [events],
+  );
+  const current = playback.seq === seq ? sequence[playback.index] : undefined;
+  const advance = () => {
+    setPlayback((previous) => ({
+      ...previous,
+      index: previous.index + 1,
+      failed: false,
+      playBlocked: false,
+    }));
+  };
+
+  useEffect(() => {
+    if (!current || (current.kind === "skill_used" && !playback.failed)) return;
+    const timer = setTimeout(advance, FALLBACK_SHOW_MS);
+    return () => clearTimeout(timer);
+  }, [seq, playback.index, playback.failed, current]);
+
+  useEffect(() => {
+    onBlockingChange(!!current);
+  }, [current, onBlockingChange]);
+
+  useEffect(() => {
+    if (seq === null || round === null || playback.seq !== seq || current) {
+      return;
+    }
+    const key = `${seq}:${round}`;
+    if (completedKey.current === key) return;
+    completedKey.current = key;
+    onRoundComplete(round);
+  }, [seq, round, playback.seq, current, onRoundComplete]);
+
+  useEffect(
+    () => () => onBlockingChange(false),
+    [onBlockingChange],
+  );
+
+  const playVideo = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    video.volume = 1;
+    void video.play().then(
+      () =>
+        setPlayback((previous) => ({ ...previous, playBlocked: false })),
+      () => setPlayback((previous) => ({ ...previous, playBlocked: true })),
+    );
+  };
+
+  if (seq === null || playback.seq !== seq || !current) return null;
 
   return (
     <div
-      className="d-flex justify-content-center align-items-center gap-3 flex-wrap"
+      className="d-flex justify-content-center align-items-center p-2"
       style={{
         position: "absolute",
         inset: 0,
-        zIndex: 20,
-        background: "rgba(0,0,0,0.25)",
+        zIndex: 30,
+        background: "#000",
+        touchAction: "none",
+        pointerEvents: "auto",
       }}
+      onWheel={(event) => event.preventDefault()}
+      onTouchMove={(event) => event.preventDefault()}
     >
-      {used.map((ev) => (
-        <SkillFx key={ev.userId} ev={ev} mine={ev.userId === meId} />
-      ))}
-      {skipped.map((ev) =>
-        ev.kind === "skipped" ? (
-          <div
-            key={ev.userId}
-            className="p-2 rounded bg-white text-center shadow"
-          >
-            <EffectIcon type="freeze" size={80} />
-            <div className="fw-bold">
-              {ev.userId === meId ? "You are" : "Opponent is"} frozen
+      {current.kind === "skill_used" ? (
+        <div
+          key={`${seq}-${playback.index}`}
+          className="d-flex flex-column align-items-center gap-2"
+          style={{ width: "min(100%, 720px)" }}
+        >
+          {!playback.failed ? (
+            <video
+              ref={videoRef}
+              src={`/effects/skills/${current.skillId.split("_")[0].toUpperCase()}/${current.skillId}-effect.mp4`}
+              autoPlay
+              onCanPlay={playVideo}
+              playsInline
+              onEnded={advance}
+              onError={() =>
+                setPlayback((previous) => ({ ...previous, failed: true }))
+              }
+              aria-label={`${current.skill.name} effect`}
+              style={{
+                display: "block",
+                width: "100%",
+                maxHeight: "48vh",
+                objectFit: "contain",
+                background: "rgba(0,0,0,0.72)",
+                border: `3px solid ${rarityColor(current.skill.rarity)}`,
+              }}
+            />
+          ) : (
+            <SkillFx ev={current} mine={current.userId === meId} />
+          )}
+          {!playback.failed && (
+            <div className="px-3 py-2 rounded bg-dark bg-opacity-75 text-white text-center">
+              <strong>{current.userId === meId ? "You" : "Opponent"}</strong>
+              <span className="mx-2">{current.skill.name}</span>
+              <span className="text-success fw-bold">
+                {formatAura(current.auraBefore)} → {formatAura(current.auraAfter)}
+              </span>
             </div>
+          )}
+          {!playback.failed && playback.playBlocked && (
+            <button
+              type="button"
+              className="btn btn-light"
+              onClick={playVideo}
+            >
+              Play effect with sound
+            </button>
+          )}
+        </div>
+      ) : (
+        <div className="p-2 rounded bg-white text-center shadow">
+          <EffectIcon type="freeze" size={80} />
+          <div className="fw-bold">
+            {current.userId === meId ? "You are" : "Opponent is"} frozen
           </div>
-        ) : null,
+        </div>
       )}
     </div>
   );

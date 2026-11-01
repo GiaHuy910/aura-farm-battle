@@ -1,8 +1,7 @@
 "use client";
 
-import type { RoomState } from "@/websocket/useRoomSocket";
+import type { ChatMessage, RoomState } from "@/websocket/useRoomSocket";
 import type { GameState } from "@/websocket/battleTypes";
-import EffectOverlay from "./EffectOverlay";
 import HandPanel from "./HandPanel";
 import RewardPanel from "./RewardPannel";
 import ResultScreen from "./ResultScreen";
@@ -30,6 +29,9 @@ type Props = {
   meId: string;
   send: (type: string, data?: unknown) => void;
   error: string | null;
+  chatMessage: ChatMessage | null;
+  chatError: { code: string; retryAfterMs: number } | null;
+  onChatSend: (type: string, data?: unknown) => void;
   onLeave: () => void;
   leaving: boolean;
 };
@@ -40,6 +42,9 @@ export default function BattleScreen({
   meId,
   send,
   error,
+  chatMessage,
+  chatError,
+  onChatSend,
   onLeave,
   leaving,
 }: Props) {
@@ -78,7 +83,14 @@ export default function BattleScreen({
   }
 
   return (
-    <div className="w-100 position-relative overflow-auto">
+    <div
+      className="w-100 overflow-auto"
+      style={{
+        flex: "1 1 0",
+        maxHeight: "100%",
+        minHeight: 0,
+      }}
+    >
       <div className="d-flex justify-content-between align-items-center mb-2">
         <h5 className="mb-0">
           Round {b.round} / {b.maxRounds}
@@ -96,6 +108,9 @@ export default function BattleScreen({
         showChosen={b.roundOpen}
         seq={game.lastRound?.seq ?? null}
         events={game.lastRound?.events ?? []}
+        chatMessage={chatMessage}
+        chatError={chatError}
+        onChatSend={onChatSend}
       />
 
       <div className="mt-3">
@@ -118,11 +133,6 @@ export default function BattleScreen({
 
       <RoundLog log={game.log} meId={meId} />
 
-      <EffectOverlay
-        seq={game.lastRound?.seq ?? null}
-        events={game.lastRound?.events ?? []}
-        meId={meId}
-      />
     </div>
   );
 }
