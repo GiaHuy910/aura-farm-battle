@@ -84,6 +84,7 @@
 - ghi chu response : nextCursor la tra ve \_id cua item cuoi cung trong list ma ong tra ve de front end co the lay de gui tiep cho ong trong api tiep theo
 - ghi chu cach hoat dong : Khi gacha ra ket qua thi phai luu vao database GachaHistory, moi 1 item 1 document, x10 thi 10 item do deu se co cung 1 thoi gian createdAt, khi da co trong data. Khi goi api gacha-history/ ong phai lay header kiem tra user co ton tai khong, neu khong tra loi 401 Unauthorized, neu co lay param query trich xuat ra duoc limit va cursor, limit dinh nghia 1 lan lay bao nhieu item, cursor dinh nghia \_id cua item cuoi cung, neu nhu cursor la chuoi rong thi ong coi do la lay cac item dau tien, neu cursor= "\_id cua 1 history nao do" thi dung syntax $lt de lay tiep cac item co \_id nho hon \_id hien tai
 - khi nao database gacha history da xuat hien trong mongodbcompass cua ong roi thi ong vao shell cua no chay cau lenh nay : db.gachahistories.createIndex({ user_id: 1, item_type: 1, \_id: -1 })
+- - db.sessions.createIndex({expiresAt:1})
 - ghi chu cuoi : ong se query de tim ra document dua tren user id, itemtype va \_id va cursor( nho neu cursor trong thi khong can phai cho vao)
 - db.gacha_histories.find({
   user_id: "b3b1c2d3-e4f5-5678-abcd-ef1234567890",
