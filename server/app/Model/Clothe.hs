@@ -9,6 +9,7 @@ module Model.Clothe
     , getClothesByIds
     , docToClothe
     , clotheToDoc
+    , textToRarity
     , createClothe
     , createClotheBatch
     , insertClothes

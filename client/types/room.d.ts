@@ -17,8 +17,22 @@ type Room = {
   room_id: string;
   room_name: string;
   occupation: string;
-  is_private: Boolean;
+  is_private: boolean;
   status: string;
+};
+type RoomsRequest = {
+  limit: number;
+  cursor: string;
+};
+type RoomsByNameRequest = RoomsRequest & {
+  name: string;
+};
+type RoomsResponse = {
+  rooms: Room[];
+  pagination: {
+    limit: number;
+    nextCursor: string;
+  };
 };
 type joinRoomRequest = {
   room_id: string;

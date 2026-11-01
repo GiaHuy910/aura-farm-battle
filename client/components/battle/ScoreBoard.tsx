@@ -7,6 +7,8 @@ import type { FighterPublic } from "@/websocket/battleTypes";
 import EnergyBar from "./EnergyBar";
 import { ActiveEffectIcons, FighterFx } from "./EffectOverlay";
 import type { GameEvent } from "@/websocket/battleTypes";
+import type { ChatMessage } from "@/websocket/useRoomSocket";
+import BattleChat, { ChatBubble } from "./BattleChat";
 
 const CHAR_SCALE = 0.7;
 
@@ -18,6 +20,9 @@ type SlotProps = {
   showChosen: boolean;
   seq: number | null;
   events: GameEvent[];
+  chatMessage: ChatMessage | null;
+  chatError: { code: string; retryAfterMs: number } | null;
+  onChatSend: (type: string, data?: unknown) => void;
 };
 
 function FighterCard({
@@ -28,6 +33,9 @@ function FighterCard({
   showChosen,
   seq,
   events,
+  chatMessage,
+  chatError,
+  onChatSend,
 }: SlotProps) {
   if (!player || !fighter)
     return <div className="text-muted text-center">—</div>;
@@ -36,13 +44,23 @@ function FighterCard({
       className="d-flex flex-column align-items-center text-center gap-1"
       style={{ opacity: player.online ? 1 : 0.5 }}
     >
-      <div className="fw-bold d-flex justify-content-center align-items-center">
+      <div className="fw-bold d-flex justify-content-center align-items-center gap-1">
         {player.name}
         {isMe && <span className="badge bg-primary ms-2">You</span>}
         {first && <span className="badge bg-warning text-dark ms-1">1st</span>}
+        <BattleChat
+          message={chatMessage}
+          meId={isMe ? fighter.id : ""}
+          userId={fighter.id}
+          error={isMe ? chatError : null}
+          onSend={onChatSend}
+        />
       </div>
 
-      <div style={{ width: 256 * CHAR_SCALE, height: 256 * CHAR_SCALE }}>
+      <div style={{ width: 256 * CHAR_SCALE, height: 256 * CHAR_SCALE, position: "relative" }}>
+        {chatMessage?.userId === fighter.id && (
+          <ChatBubble key={chatMessage.sentAt} message={chatMessage} />
+        )}
         <div
           style={{
             transform: `scale(${CHAR_SCALE})`,
@@ -94,6 +112,9 @@ type Props = {
   showChosen: boolean;
   seq: number | null;
   events: GameEvent[];
+  chatMessage: ChatMessage | null;
+  chatError: { code: string; retryAfterMs: number } | null;
+  onChatSend: (type: string, data?: unknown) => void;
 };
 
 export default function ScoreBoard({
@@ -106,6 +127,9 @@ export default function ScoreBoard({
   showChosen,
   seq,
   events,
+  chatMessage,
+  chatError,
+  onChatSend,
 }: Props) {
   const mePlayer = owner.id === meId ? owner : guest;
   const oppPlayer = owner.id === meId ? guest : owner;
@@ -120,6 +144,9 @@ export default function ScoreBoard({
           showChosen={showChosen}
           seq={seq}
           events={events}
+          chatMessage={chatMessage}
+          chatError={chatError}
+          onChatSend={onChatSend}
         />
       </div>
       <div className="col-2 text-center fs-2 fw-bold">VS</div>
@@ -132,6 +159,9 @@ export default function ScoreBoard({
           showChosen={showChosen}
           seq={seq}
           events={events}
+          chatMessage={chatMessage}
+          chatError={chatError}
+          onChatSend={onChatSend}
         />
       </div>
     </div>

@@ -10,14 +10,16 @@ import           Data.Aeson (FromJSON, Value, decode, object, withObject, (.:), 
 import qualified Data.Aeson.Key as K
 import           Data.Aeson.Types (parseMaybe)
 import           Data.Text (Text)
+import           Data.Time (getCurrentTime)
 import qualified Data.ByteString as BS
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text.Encoding as TE
 import qualified Data.Text.Encoding.Error as TEE
 import           Data.Unique (hashUnique, newUnique)
+import           Game.Registry (Phase (..), getGame, rgPhase)
 import qualified Network.WebSockets as WS
 import           Servant (Handler)
-import           Service.BattleService (submitChoice)
+import           Service.BattleService (completeRoundEffects, submitChoice)
 import           Service.RematchService (playAgain)
 import           Service.RewardService (confirmReward, pickReward, unpickReward)
 import           Service.RoomView (roomStateFor)
@@ -82,11 +84,44 @@ dispatch :: Env -> RoomId -> UserId -> ClientMsg -> IO ()
 dispatch env rid uid (ClientMsg t d) = case t of
   "room.start"     -> startGame env rid uid
   "game.action"    -> forM_ (field "index" d)  (submitChoice env rid uid)
+  "game.effects_done" -> forM_ (field "round" d) (completeRoundEffects env rid uid)
   "reward.pick"    -> forM_ (field "itemId" d) (pickReward env rid uid)
   "reward.unpick"  -> forM_ (field "itemId" d) (unpickReward env rid uid)
   "reward.confirm" -> confirmReward env rid uid
   "game.playagain" -> playAgain env rid uid
+  "chat.send"      -> sendChat env rid uid d
   _                -> pure ()
+
+sendChat :: Env -> RoomId -> UserId -> Maybe Value -> IO ()
+sendChat env rid uid payload = do
+  currentGame <- getGame (envRegistry env) rid
+  case currentGame of
+    Just game | rgPhase game == PhaseBattle ->
+      case field "text" payload of
+        Nothing -> sendChatError env rid uid "empty" 0
+        Just raw -> case normalizeChatText raw of
+          Left code -> sendChatError env rid uid code 0
+          Right text -> do
+            now <- getCurrentTime
+            cooldown <- Hub.claimChatSlot (envHub env) uid now
+            case cooldown of
+              Just retryAfterMs ->
+                sendChatError env rid uid "cooldown" retryAfterMs
+              Nothing -> do
+                profile <- rsUserProfile (envStore env) uid
+                Hub.broadcast (envHub env) rid $
+                  msg "chat.message" (object
+                    [ "userId" .= uid
+                    , "name" .= ppName profile
+                    , "text" .= text
+                    , "sentAt" .= now
+                    ])
+    _ -> sendChatError env rid uid "not_in_battle" 0
+
+sendChatError :: Env -> RoomId -> UserId -> Text -> Int -> IO ()
+sendChatError env rid uid code retryAfterMs =
+  Hub.sendToUser (envHub env) rid uid $
+    msg "chat.error" (object ["code" .= code, "retryAfterMs" .= retryAfterMs])
 
 field :: FromJSON a => Text -> Maybe Value -> Maybe a
 field k mv = mv >>= parseMaybe (withObject "data" (.: K.fromText k))

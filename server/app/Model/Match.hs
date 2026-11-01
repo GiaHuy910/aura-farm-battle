@@ -2,6 +2,8 @@
 
 module Model.Match
   ( Match (..)
+  , docToMatch
+  , matchToDoc
   , newMatchId
   , insertMatch
   , getMatch

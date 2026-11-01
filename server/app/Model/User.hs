@@ -5,6 +5,8 @@
 module Model.User
     (
         User(..),
+        docToUser,
+        userToDoc,
         getUsers,
         getUser,
         getUserById,

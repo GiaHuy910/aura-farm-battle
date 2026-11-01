@@ -93,74 +93,31 @@ export default function GachaHistoryPage() {
   };
 
   const currentPageData = historyData[pageIndex]?.gacha_history_list || [];
+  const hasNextPage =
+    pageIndex < historyData.length - 1 ||
+    !!historyData[pageIndex]?.pagination.nextCursor;
   return (
-    <div
-      className={`${page.roomsPage} position-relative my-5 px-lg-5 py-3 d-flex justify-content-center align-items-center flex-column container w-100 h-100`}
-      style={{
-        border: "10px solid rgba(178, 140, 15, 0.69)",
-        background: "#eae2c7",
-        padding: "10px",
-      }}
-    >
-      <div className="header w-100 flex-column d-flex justify-content-start ">
-        <div>
-          <h2 className="text-dark">GACHA HISTORY</h2>
-        </div>
-      </div>
-      <div className="w-100 h-100 d-flex flex-column justify-content-center align-items-center">
-        <div
-          style={{ height: "15%" }}
-          className="w-100 d-flex justify-content-start align-items-center flex-wrap"
-        >
-          <div
-            style={{ border: "3px solid #3a3d3f" }}
-            className="position-relative w-100 h-75 d-flex justify-content-center align-items-center bg-warning rounded-5"
-          >
-            <div
-              style={{ width: "30%" }}
-              className="rounded-5 h-100 bg-warning d-flex justify-content-center align-items-center"
+    <main className={page.gachaHistoryFrame}>
+      <header className="header w-100 flex-shrink-0">
+        <h2 className="text-dark">GACHA HISTORY</h2>
+      </header>
+      <div className={`${page.gachaHistoryFilter} d-flex`}>
+        {banners.map((banner) => {
+          const label = banner.value === "clothe" ? "Clothes" : "Skills";
+          return (
+            <button
+              key={banner.value}
+              type="button"
+              className={`btn btn-warning btn-lg ${currentBanner === banner.value ? "disabled" : ""} flex-fill rounded-0 border border-light`}
+              onClick={() => handleSetBanner(banner.value)}
             >
-              GACHA
-            </div>
-            <div style={{ width: "70%" }} className="h-100 dropdown">
-              <button
-                type="button"
-                data-bs-toggle="dropdown"
-                aria-expanded="false"
-                className="w-100 h-100 dropdown-toggle border-2 border-light btn btn-secondary rounded-5 d-flex justify-content-between align-items-center"
-              >
-                <span
-                  style={{ visibility: "hidden" }}
-                  aria-hidden="true"
-                  className="dropdown-toggle"
-                ></span>
-                <div className="position-absolute w-100">
-                  {capitalizeFirstLetter(currentBanner)}
-                </div>
-              </button>
-              <ul
-                style={{
-                  background: "#eae2c7",
-                  border: "3px solid white",
-                }}
-                className="dropdown-menu rounded-0 dropdown-menu-end w-100 shadow mt-1"
-              >
-                {banners.map((banner) => (
-                  <li key={banner.value}>
-                    <button
-                      type="button"
-                      className={`dropdown-item ${currentBanner === banner.value ? "bg-warning" : ""}`}
-                      onClick={() => handleSetBanner(banner.value)}
-                    >
-                      {banner.value.toUpperCase()}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </div>
-        <div className="position-relative pt-2 w-100 h-100 d-flex flex-column justify-content-start align-items-center">
+              {label}
+            </button>
+          );
+        })}
+      </div>
+      <section className={page.gachaHistoryContent}>
+        <div className={page.gachaHistoryTableWrap}>
           <table className="table table-bordered custom-table">
             <thead className="table-warning">
               <tr>
@@ -204,42 +161,46 @@ export default function GachaHistoryPage() {
               )}
             </tbody>
           </table>
-          <div
-            style={{
-              top: "450px",
-            }}
-            className="position-absolute d-flex gap-5 justify-content-center align-items-center "
-          >
-            <button
-              className="btn btn-secondary rounded-0"
-              onClick={handlePrevPage}
-            >
-              Prev
-            </button>
-            {pageIndex + 1}
-            <button
-              className="btn btn-secondary rounded-0"
-              onClick={handleNextPage}
-            >
-              Next
-            </button>
-          </div>
         </div>
-        <div className="w-100 d-flex justify-content-start align-items-center">
+        <nav
+          className={page.gachaHistoryPagination}
+          aria-label="Gacha history pages"
+        >
           <button
-            onClick={handleReturn}
-            className={`${home.optionBtn} ms-2 mb-1 d-flex justify-content-center align-items-center text-decoration-none`}
-            style={{
-              width: "130px",
-              height: "45px",
-              background: "red",
-            }}
-            role="button"
+            type="button"
+            className="btn btn-secondary rounded-0"
+            onClick={handlePrevPage}
+            disabled={pageIndex === 0}
           >
-            RETURN
+            Prev
           </button>
-        </div>
-      </div>
-    </div>
+          <span className="small" aria-live="polite">
+            Page {pageIndex + 1}
+          </span>
+          <button
+            type="button"
+            className="btn btn-secondary rounded-0"
+            onClick={handleNextPage}
+            disabled={!hasNextPage}
+          >
+            Next
+          </button>
+        </nav>
+      </section>
+      <footer className="w-100 d-flex justify-content-start align-items-center flex-shrink-0">
+        <button
+          onClick={handleReturn}
+          className={`${home.optionBtn} ms-2 mb-1 d-flex justify-content-center align-items-center text-decoration-none`}
+          style={{
+            width: "130px",
+            height: "45px",
+            background: "red",
+          }}
+          role="button"
+        >
+          RETURN
+        </button>
+      </footer>
+    </main>
   );
 }

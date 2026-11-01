@@ -9,6 +9,7 @@ module Controllers.RoomController
   (
     createRoomHandler,
     getRoomsHandler,
+    getRoomsByNameHandler,
     joinRoomHandler,
     leaveRoomHandler,
     CreateRoomRequest(..),
@@ -18,6 +19,8 @@ module Controllers.RoomController
     JoinRoomResponse(..),
     LeaveRoomRequest(..),
     StatusResponse(..),
+    RoomPagination(..),
+    RoomsResponse(..),
   ) where
 
 import Control.Monad.IO.Class (liftIO)
@@ -28,7 +31,7 @@ import GHC.Generics (Generic)
 import Model.User (User(..))
 import Servant
 
-import Model.Rooms (Room(..),ValidationError(..),validateRoomName, getRooms, createRoom, getRoomById, joinRoomById, JoinResult(..))
+import Model.Rooms (Room(..),ValidationError(..),validateRoomName, getRooms, getRoomsByName, createRoom, getRoomById, joinRoomById, JoinResult(..))
 import Controllers.AuthController (withAuthenticatedUser)
 import Service.WsService (notifyPlayerJoined, handleLeave)
 import Ws.Env (Env)
@@ -97,11 +100,46 @@ data RoomSummary = RoomSummary
   } deriving (Show, Generic)
 instance ToJSON RoomSummary
 
+data RoomPagination = RoomPagination
+  { limit      :: Int
+  , nextCursor :: Text
+  } deriving (Show, Generic)
+instance ToJSON RoomPagination
+
+data RoomsResponse = RoomsResponse
+  { rooms      :: [RoomSummary]
+  , pagination :: RoomPagination
+  } deriving (Show, Generic)
+instance ToJSON RoomsResponse
+
 -- GET /room/getRooms
-getRoomsHandler :: Handler [RoomSummary]
-getRoomsHandler = do
-  rooms <- liftIO getRooms
-  return $ map toSummary rooms
+getRoomsHandler :: Int -> Text -> Handler RoomsResponse
+getRoomsHandler requestedLimit cursor =
+  getRoomsPage requestedLimit cursor Nothing
+
+-- Search is a literal, case-insensitive substring match.
+getRoomsByNameHandler :: Text -> Int -> Text -> Handler RoomsResponse
+getRoomsByNameHandler name requestedLimit cursor =
+  getRoomsPage requestedLimit cursor (Just name)
+
+getRoomsPage :: Int -> Text -> Maybe Text -> Handler RoomsResponse
+getRoomsPage requestedLimit cursor roomName = do
+  let pageLimit = max 1 (min 20 requestedLimit)
+  fetchedRooms <- liftIO $ case roomName of
+    Just name -> getRoomsByName (pageLimit + 1) cursor name
+    Nothing -> getRooms (pageLimit + 1) cursor
+  let pageRooms = take pageLimit fetchedRooms
+      hasNextPage = length fetchedRooms > pageLimit
+      pageCursor = case reverse pageRooms of
+        Room rid _ _ _ _ _ _ _ : _ | hasNextPage -> rid
+        _ -> ""
+  return RoomsResponse
+    { rooms = map toSummary pageRooms
+    , pagination = RoomPagination
+        { limit = pageLimit
+        , nextCursor = pageCursor
+        }
+    }
   where
     toSummary (Room rid rname _ _ _ occ private rstatus) = RoomSummary
       { room_name  = rname
@@ -133,7 +171,9 @@ joinRoomHandler env cookie req = do
       JoinOk -> do
         liftIO $ notifyPlayerJoined env req.room_id uid
         return $ JoinRoomResponse "success" req.room_id
-      _ -> return $ JoinRoomResponse "failure" ""
+      RoomNotFound -> throwError err404 { errBody = "room_not_found" }
+      WrongPassword -> throwError err403 { errBody = "wrong_password" }
+      RoomUnavailable -> throwError err409 { errBody = "room_unavailable" }
 
 -- POST /room/leave
 data LeaveRoomRequest = LeaveRoomRequest
@@ -151,7 +191,8 @@ leaveRoomHandler env cookie req =
       Just r | uid `elem` r.user_ids -> do
         liftIO $ handleLeave env rid uid   
         return $ StatusResponse "success"
-      _ -> return $ StatusResponse "failure"
+      Nothing -> throwError err404 { errBody = "room_not_found" }
+      Just _ -> throwError err403 { errBody = "not_room_member" }
 
 data StatusResponse = StatusResponse
   { status :: Text

@@ -4,11 +4,12 @@
 module Service.BattleService
   ( startBattle
   , submitChoice
+  , completeRoundEffects
   , forfeitMatch
   ) where
 
 import           Control.Concurrent (forkIO, threadDelay)
-import           Control.Monad (forM_, join, void, when)
+import           Control.Monad (forM_, join, when)
 import           Data.Aeson (object, (.=))
 import           Data.List (find, nub)
 import qualified Data.Map.Strict as M
@@ -48,7 +49,8 @@ startBattle env rid owner guest = do
       putGame (envRegistry env) rid RoomGame
         { rgPhase = PhaseBattle, rgBattle = battle0, rgOpen = False
         , rgMatchId = Nothing, rgWinner = Nothing, rgLoser = Nothing
-        , rgFinished = Nothing, rgOffer = Nothing, rgResult = Nothing, rgAgain = [] }
+        , rgFinished = Nothing, rgOffer = Nothing, rgResult = Nothing, rgAgain = []
+        , rgEffectsDone = [] }
       rsSetStatus (envStore env) rid Playing
       Hub.broadcast (envHub env) rid (msg "game.start" (startPayload battle0))
       beginNextRound env rid
@@ -79,7 +81,7 @@ beginNextRound env rid = do
       else
         let (b1, _) = beginRound g (rgBattle rg)
             b2      = b1 { bDeadline = Just deadline }
-        in (rg { rgBattle = b2, rgOpen = True }, Just b2)
+        in (rg { rgBattle = b2, rgOpen = True, rgEffectsDone = [] }, Just b2)
   forM_ (join r) $ \b -> do
     forM_ (bOrder b) $ \u ->
       Hub.sendToUser (envHub env) rid u
@@ -119,11 +121,26 @@ resolveCurrentRound env rid n = do
       else (rg, Nothing)
   forM_ (join r) $ \(b, evs) -> do
     Hub.broadcast (envHub env) rid (msg "game.round_result" (roundResultPayload b evs))
-    if bRound b >= bMaxRounds b
-      then finishBattle env rid "completed" (winnerOf b)
-      else void $ forkIO $ do
-        threadDelay (interRoundSecs * 1000000)  
-        beginNextRound env rid
+
+completeRoundEffects :: Env -> RoomId -> UserId -> Int -> IO ()
+completeRoundEffects env rid uid roundNumber = do
+  ready <- modifyGame (envRegistry env) rid $ \rg ->
+    let order = bOrder (rgBattle rg)
+    in if rgPhase rg /= PhaseBattle
+          || rgOpen rg
+          || bRound (rgBattle rg) /= roundNumber
+          || uid `notElem` order
+          || uid `elem` rgEffectsDone rg
+      then (rg, Nothing)
+      else
+        let done = uid : rgEffectsDone rg
+            allDone = all (`elem` done) order
+        in (rg { rgEffectsDone = done }, Just (allDone, rgBattle rg))
+  forM_ (join ready) $ \(allDone, battle) ->
+    when allDone $
+      if bRound battle >= bMaxRounds battle
+        then finishBattle env rid "completed" (winnerOf battle)
+        else beginNextRound env rid
 
 finishBattle :: Env -> RoomId -> Text -> Maybe UserId -> IO ()
 finishBattle env rid reason winner = do

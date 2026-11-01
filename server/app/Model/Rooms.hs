@@ -5,6 +5,7 @@ module Model.Rooms
     (
     Room(..)
     , getRooms
+    , getRoomsByName
     , getRoomById
     , createRoom
     , deleteRoom
@@ -24,6 +25,7 @@ import Data.UUID.V4 (nextRandom)
 import Data.UUID (toString)
 import Control.Monad.IO.Class (liftIO)
 import Data.Text (Text, pack)
+import qualified Data.Text as T
 
 import Config.Database (runDB)
 import Config.GameConfig(maxRoomName)
@@ -39,10 +41,36 @@ data Room = Room
   , status :: Text
   } deriving (Show)
 
-getRooms :: IO [Room]
-getRooms = runDB $ do
-    docs <- find ((select [] "room") { project = ["room_password" =: (0 :: Int)] }) >>= rest
+getRooms :: Int -> Text -> IO [Room]
+getRooms limitVal cursor = getRoomsMatching limitVal cursor Nothing
+
+getRoomsByName :: Int -> Text -> Text -> IO [Room]
+getRoomsByName limitVal cursor roomName =
+    getRoomsMatching limitVal cursor (Just roomName)
+
+getRoomsMatching :: Int -> Text -> Maybe Text -> IO [Room]
+getRoomsMatching limitVal cursor roomName = runDB $ do
+    let cursorFilter = if T.null cursor then [] else ["room_id" =: ["$gt" =: cursor]]
+        nameFilter = case fmap T.strip roomName of
+            Just name | not (T.null name) ->
+                [ "room_name" =:
+                    [ "$regex" =: T.unpack (escapeRegex name)
+                    , "$options" =: ("i" :: String)
+                    ]
+                ]
+            _ -> []
+    docs <- find ((select (cursorFilter ++ nameFilter) "room")
+                    { project = ["room_password" =: (0 :: Int)]
+                    , sort = ["room_id" =: (1 :: Int)]
+                    , limit = fromIntegral limitVal
+                    }) >>= rest
     return (map docToRoom docs)
+  where
+    -- Escape metacharacters so room names are matched as literal text.
+    escapeRegex = T.concatMap $ \char ->
+        if char `elem` ("\\.^$|?*+()[]{}" :: String)
+            then T.pack ['\\', char]
+            else T.singleton char
 
 getRoomById :: Text -> IO (Maybe Room)
 getRoomById rid = runDB $ do

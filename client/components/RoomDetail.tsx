@@ -1,132 +1,377 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
-import { useRooms, joinRoom } from "@/api/rooms";
+import { getRooms, getRoomsByName, joinRoom } from "@/api/rooms";
 
-export default function RoomDetail() {
-  const [rooms, setRooms] = useState<Room[] | [] | undefined>([]);
-  const { data, mutate } = useRooms();
+const pageSize = 8;
+
+type Props = {
+  searchOpen: boolean;
+};
+
+export default function RoomDetail({ searchOpen }: Props) {
+  const [pages, setPages] = useState<RoomsResponse[]>([]);
+  const [pageIndex, setPageIndex] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [searchText, setSearchText] = useState("");
+  const [activeSearch, setActiveSearch] = useState("");
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
+  const [password, setPassword] = useState("");
+  const [joining, setJoining] = useState(false);
+  const [joinError, setJoinError] = useState<string | null>(null);
   const router = useRouter();
 
-  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
-  const [password, setPassword] = useState<string>("");
-  const handleChangePassword = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setPassword(value);
-  };
+  const fetchRoomPage = (cursor: string, name: string) =>
+    name
+      ? getRoomsByName({ limit: pageSize, cursor, name })
+      : getRooms({ limit: pageSize, cursor });
 
   useEffect(() => {
-    setRooms(data);
-  }, [data]);
+    let active = true;
+    fetchRoomPage("", "")
+      .then((response) => {
+        if (active) setPages([response]);
+      })
+      .catch(() => {
+        if (active) setError("Unable to load rooms. Please try again.");
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
-  const fetchRooms = async () => {
-    await mutate();
-  };
-  const handleJoinRoom = async (roomId: string, pass: string) => {
-    const joinRoomSend: joinRoomRequest = { room_id: roomId, password: pass };
-    const data = await joinRoom(joinRoomSend);
-    if (data.status === "success") {
-      router.push(`/rooms/${data.room_id}`);
-    }
-    handleRefreshSelectedRoom();
-  };
-  const handleCheckRoom = (room: Room) => {
-    if (!room.is_private) {
-      handleJoinRoom(room.room_id, password);
-    } else {
-      setSelectedRoom(room);
-    }
-  };
-  const handleRefreshSelectedRoom = () => {
+  const currentPage = pages[pageIndex];
+  const currentRooms = currentPage?.rooms ?? [];
+  const hasNextPage =
+    pageIndex < pages.length - 1 || !!currentPage?.pagination.nextCursor;
+
+  const closeRoomDialog = () => {
     setSelectedRoom(null);
     setPassword("");
+    setJoinError(null);
   };
+
+  const loadFirstPage = async (name: string) => {
+    setLoading(true);
+    setError(null);
+    setActiveSearch(name);
+    setPageIndex(0);
+    setPages([]);
+    try {
+      const response = await fetchRoomPage("", name);
+      setPages([response]);
+    } catch {
+      setError(
+        name
+          ? "Unable to search rooms. Please try again."
+          : "Unable to load rooms. Please try again.",
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSearch = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    void loadFirstPage(searchText.trim());
+  };
+
+  const refreshPage = async () => {
+    const cursor =
+      pageIndex === 0
+        ? ""
+        : (pages[pageIndex - 1]?.pagination.nextCursor ?? "");
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchRoomPage(cursor, activeSearch);
+      setPages((previous) =>
+        previous.length === 0
+          ? [response]
+          : previous.map((page, index) =>
+              index === pageIndex ? response : page,
+            ),
+      );
+    } catch {
+      setError("Unable to refresh rooms. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNextPage = async () => {
+    if (pageIndex < pages.length - 1) {
+      setPageIndex((index) => index + 1);
+      return;
+    }
+
+    const cursor = currentPage?.pagination.nextCursor;
+    if (!cursor) return;
+
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await fetchRoomPage(cursor, activeSearch);
+      setPages((previous) => [...previous, response]);
+      setPageIndex((index) => index + 1);
+    } catch {
+      setError("Unable to load the next page. Please try again.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleJoinRoom = async (room: Room) => {
+    setJoining(true);
+    setJoinError(null);
+    try {
+      const response = await joinRoom({
+        room_id: room.room_id,
+        password,
+      });
+      if (response.status === "success") {
+        router.push(`/rooms/${response.room_id}`);
+        return;
+      }
+      setJoinError(
+        "This room is no longer available or the password is incorrect.",
+      );
+    } catch {
+      setJoinError("Unable to join this room. Please try again.");
+    } finally {
+      setJoining(false);
+    }
+  };
+
+  const openRoom = (room: Room) => {
+    if (room.is_private) {
+      setSelectedRoom(room);
+      setJoinError(null);
+      return;
+    }
+    void handleJoinRoom(room);
+  };
+
   return (
-    <div className="w-100 h-100 d-flex flex-column justify-content-start overflow-auto">
-      {rooms?.length ? (
-        <div className="d-flex flex-column gap-2 overflow-hidden">
-          {selectedRoom && (
-            <div
-              className="position-absolute vw-100 vh-100"
-              style={{ zIndex: 3 }}
-            ></div>
-          )}
-          {selectedRoom && (
-            <div
-              className="position-absolute mt-5 d-flex justify-content-center align-items-center w-100"
-              style={{ zIndex: 4 }}
+    <section
+      className="w-100 h-100 d-flex flex-column"
+      aria-labelledby="room-browser-title"
+      style={{ minHeight: 0 }}
+    >
+      <header className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+        <p className="small text-muted mb-0">
+          Find an open room and join the battle.
+        </p>
+        <button
+          type="button"
+          className="btn btn-outline-dark"
+          onClick={() => void refreshPage()}
+          disabled={loading}
+        >
+          {loading ? "Loading..." : "Refresh"}
+        </button>
+      </header>
+
+      {searchOpen && (
+        <form className="input-group mb-3" onSubmit={handleSearch}>
+          <label className="visually-hidden" htmlFor="room-name-search">
+            Room name
+          </label>
+          <input
+            id="room-name-search"
+            className="form-control"
+            type="search"
+            placeholder="Search by names"
+            value={searchText}
+            onChange={(event) => setSearchText(event.target.value)}
+            maxLength={64}
+          />
+          <button className="btn btn-warning" type="submit" disabled={loading}>
+            Search
+          </button>
+          {activeSearch && (
+            <button
+              className="btn btn-outline-secondary"
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setSearchText("");
+                void loadFirstPage("");
+              }}
             >
-              <div className="bg-white p-3 border border-3 border-dark">
-                <p className="small mb-4">Room : {selectedRoom.room_name}</p>
-                <input
-                  type="password"
-                  placeholder="1x3428@arH"
-                  value={password}
-                  onChange={handleChangePassword}
-                  className="border-4 p-2 rounded mb-4 w-100"
-                />
-                <div className="d-flex justify-content-between align-items-center">
-                  <button
-                    onClick={handleRefreshSelectedRoom}
-                    className="text-secondary text-decoration-none border-1 px-2 py-2"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleJoinRoom(selectedRoom.room_id, password)
-                    }
-                    className="rounded-1 border-5 border-dark btn btn-success px-4 py-2 text-white"
-                  >
-                    Enter
-                  </button>
-                </div>
-              </div>
-            </div>
+              Clear
+            </button>
           )}
-          {rooms?.map((room) => {
-            return (
-              <div
-                key={room.room_id}
-                className="d-flex align-items-center justify-content-between rounded p-1"
-                style={{ border: "5px solid white" }}
-              >
-                <div
-                  className="ps-2 overflow-hidden text-truncate"
-                  style={{ maxWidth: "500px" }}
-                >
-                  {room.room_name}
-                </div>
-                <div className="d-flex justify-content-center align-items-center">
-                  {room.is_private ? (
-                    <span className="text-danger">&#128274;&#xFE0E;</span>
-                  ) : (
-                    <span className="text-info">&#128275;&#xFE0E;</span>
-                  )}
-                  <button
-                    className="btn btn-secondary rounded-0 d-flex ms-3"
-                    disabled={!(room.occupation === "1/2")}
-                    value={room.room_id}
-                    onClick={() => handleCheckRoom(room)}
-                  >
-                    <div>{room.occupation}</div>
-                    <div className="ms-2">Join</div>
-                  </button>
-                </div>
-              </div>
-            );
-          })}
-          <div className="justify-content-start">
-            <button onClick={fetchRooms}>Refresh?</button>
-          </div>
-        </div>
-      ) : (
-        <div className="h5 h-100 d-flex flex-column align-items-center justify-content-center">
-          No room exists
-          <button onClick={fetchRooms}>Refresh?</button>
+        </form>
+      )}
+
+      {error && (
+        <div className="alert alert-warning py-2" role="alert">
+          {error}
         </div>
       )}
-    </div>
+
+      <div className="flex-grow-1 overflow-auto pe-1" style={{ minHeight: 0 }}>
+        {loading && pages.length === 0 ? (
+          <div className="h-100 d-flex flex-column align-items-center justify-content-center">
+            <div
+              className="spinner-border"
+              role="status"
+              aria-label="Loading rooms"
+            />
+            <span className="small mt-3">Loading rooms...</span>
+          </div>
+        ) : error && pages.length === 0 ? (
+          <div className="h-100 d-flex flex-column align-items-center justify-content-center text-center">
+            <p className="text-muted">Rooms could not be loaded.</p>
+            <button
+              type="button"
+              className="btn btn-outline-dark"
+              onClick={() => void refreshPage()}
+              disabled={loading}
+            >
+              Try again
+            </button>
+          </div>
+        ) : currentRooms.length > 0 ? (
+          <div className="d-flex flex-column gap-2">
+            {currentRooms.map((room) => {
+              const canJoin =
+                room.status === "waiting" && room.occupation === "1/2";
+              return (
+                <article
+                  key={room.room_id}
+                  className="d-flex align-items-center justify-content-between gap-3 ps-3 pe-1 py-1 rounded bg-white shadow-sm"
+                  style={{ border: "3px solid rgba(178, 140, 15, 0.8)" }}
+                >
+                  <div className="overflow-hidden">
+                    <h3 className="h6 text-truncate mb-2">{room.room_name}</h3>
+                    <div className="d-flex flex-wrap gap-2">
+                      <span className="badge fs-6">
+                        {room.is_private ? (
+                          <span className="text-danger">&#128274;&#xFE0E;</span>
+                        ) : (
+                          <span className="text-info">&#128275;&#xFE0E;</span>
+                        )}
+                      </span>
+                      <span className="d-flex justify-content-center align-items-center badge text-bg-info border text-dark">
+                        {room.status === "waiting" ? "Waiting" : room.status}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                    <span className="small text-nowrap">{room.occupation}</span>
+                    <button
+                      type="button"
+                      className="btn btn-warning"
+                      disabled={!canJoin || joining}
+                      onClick={() => openRoom(room)}
+                    >
+                      Join
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div className="h-100 d-flex flex-column align-items-center justify-content-center text-center">
+            <h3 className="h6">No rooms found</h3>
+            <p className="small text-muted mb-0">
+              Try refreshing the room list in a moment.
+            </p>
+          </div>
+        )}
+      </div>
+
+      <footer className="d-flex align-items-center justify-content-center gap-5 pt-2 flex-shrink-0">
+        <button
+          type="button"
+          className="btn btn-secondary rounded-0"
+          onClick={() => setPageIndex((index) => Math.max(0, index - 1))}
+          disabled={pageIndex === 0 || loading}
+        >
+          Prev
+        </button>
+        <span className="small" aria-live="polite">
+          Page {pageIndex + 1}
+        </span>
+        <button
+          type="button"
+          className="btn btn-secondary rounded-0"
+          onClick={() => void handleNextPage()}
+          disabled={!hasNextPage || loading}
+        >
+          Next
+        </button>
+      </footer>
+
+      {selectedRoom && (
+        <div
+          className="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center p-3"
+          style={{ zIndex: 1100, background: "rgba(0, 0, 0, 0.65)" }}
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeRoomDialog();
+          }}
+        >
+          <form
+            className="bg-white rounded shadow-lg p-4 w-100"
+            style={{ maxWidth: 420 }}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="room-password-title"
+            onSubmit={(event) => {
+              event.preventDefault();
+              void handleJoinRoom(selectedRoom);
+            }}
+          >
+            <h3 id="room-password-title" className="h5 mb-2">
+              Join private room
+            </h3>
+            <p className="text-muted mb-3">{selectedRoom.room_name}</p>
+            <label htmlFor="room-password" className="form-label">
+              Room password
+            </label>
+            <input
+              id="room-password"
+              type="password"
+              className="form-control"
+              autoFocus
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              disabled={joining}
+            />
+            {joinError && (
+              <p className="small text-danger mt-2 mb-0" role="alert">
+                {joinError}
+              </p>
+            )}
+            <div className="d-flex justify-content-end gap-2 mt-4">
+              <button
+                type="button"
+                className="btn btn-outline-secondary"
+                onClick={closeRoomDialog}
+                disabled={joining}
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                className="btn btn-success"
+                disabled={joining}
+              >
+                {joining ? "Joining..." : "Join room"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+    </section>
   );
 }

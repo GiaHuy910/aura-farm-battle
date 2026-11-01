@@ -7,6 +7,7 @@ module Model.GachaHistory
   ( GachaHistory(..)
   , saveGachaHistory
   , getGachaHistory
+  , validHistoryCursor
   ) where
 
 import Prelude hiding (lookup)
@@ -66,6 +67,12 @@ getGachaHistory uid itemType limitVal cursor = runDB $ do
                     }
     docs <- rest cursorObj
     return $ map docToGachaHistory docs
+
+validHistoryCursor :: Text -> Bool
+validHistoryCursor cursor =
+    T.null cursor || case readMaybe (T.unpack cursor) :: Maybe ObjectId of
+        Just _ -> True
+        Nothing -> False
 
 docToGachaHistory :: Document -> GachaHistory
 docToGachaHistory doc = GachaHistory

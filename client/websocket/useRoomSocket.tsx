@@ -32,6 +32,13 @@ export type RoomState = {
 
 export type ConnectionState = "connecting" | "open" | "reconnecting";
 
+export type ChatMessage = {
+  userId: string;
+  name: string;
+  text: string;
+  sentAt: string;
+};
+
 type RawBattle = Omit<BattleView, "roundOpen" | "deadlineAt"> & {
   timeLeftMs: number | null;
 };
@@ -76,7 +83,9 @@ type ServerMessage =
   | { type: "reward.result"; data: RewardResult }
   | { type: "match.ended"; data: Record<string, never> }
   | { type: "rematch.status"; data: { ready: string[] } }
-  | { type: "game.error"; data: { code: string } };
+  | { type: "game.error"; data: { code: string } }
+  | { type: "chat.message"; data: ChatMessage }
+  | { type: "chat.error"; data: { code: string; retryAfterMs: number } };
 
 const WS_URL = config.server.wsUrl;
 
@@ -174,6 +183,11 @@ export function useRoomSocket(roomId: string) {
   const [connection, setConnection] = useState<ConnectionState>("connecting");
   const [closedReason, setClosedReason] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [chatMessage, setChatMessage] = useState<ChatMessage | null>(null);
+  const [chatError, setChatError] = useState<{
+    code: string;
+    retryAfterMs: number;
+  } | null>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const errorTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
     undefined,
@@ -182,6 +196,7 @@ export function useRoomSocket(roomId: string) {
   const send = useCallback((type: string, data: unknown = {}) => {
     const ws = wsRef.current;
     if (ws && ws.readyState === WebSocket.OPEN) {
+      if (type === "chat.send") setChatError(null);
       ws.send(JSON.stringify({ type, data }));
     }
   }, []);
@@ -196,6 +211,8 @@ export function useRoomSocket(roomId: string) {
     setGame(null);
     setClosedReason(null);
     setConnection("connecting");
+    setChatMessage(null);
+    setChatError(null);
 
     const giveUp = (reason: string) => {
       disposed = true;
@@ -214,6 +231,9 @@ export function useRoomSocket(roomId: string) {
           const { game: g, ...r } = msg.data;
           setRoom(r);
           setGame(fromSnapshot(g));
+          if (g?.phase === "battle" && g.battle?.timeLeftMs === null) {
+            send("game.effects_done", { round: g.battle.round });
+          }
           break;
         }
         case "room.player_joined":
@@ -307,6 +327,13 @@ export function useRoomSocket(roomId: string) {
         case "game.error":
           showError(msg.data.code);
           break;
+        case "chat.message":
+          setChatMessage(msg.data);
+          setChatError(null);
+          break;
+        case "chat.error":
+          setChatError(msg.data);
+          break;
         case "room.closed":
           giveUp("The owner left, the room is closed.");
           break;
@@ -365,5 +392,14 @@ export function useRoomSocket(roomId: string) {
     };
   }, [roomId]);
 
-  return { room, game, connection, closedReason, error, send };
+  return {
+    room,
+    game,
+    connection,
+    closedReason,
+    error,
+    chatMessage,
+    chatError,
+    send,
+  };
 }

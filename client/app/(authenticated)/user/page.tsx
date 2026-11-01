@@ -149,12 +149,9 @@ export default function UserPage() {
   )?.rarity;
 
   return (
-    <div
-      className={`${page.roomsPage} container h-100 position-relative overflow-hidden mb-2`}
-      style={{ border: "5px solid darkgoldenrod", backgroundColor: "#eae2c7" }}
-    >
+    <div className={page.userFrame}>
       <button
-        className={`${home.optionBtn} position-absolute mt-3`}
+        className={`${home.optionBtn} position-absolute ${page.userReturn}`}
         style={{
           padding: "10px 10px",
           color: "white",
@@ -165,7 +162,7 @@ export default function UserPage() {
         RETURN
       </button>
       <div
-        className={`position-absolute custom-dropdown-left ${showClothes ? "open" : ""}`}
+        className={`${page.userInventoryPanel} ${page.userInventoryClothes} ${showClothes ? page.inventoryOpen : ""}`}
       >
         <div
           className="header d-flex justify-content-between flex-wrap"
@@ -193,15 +190,17 @@ export default function UserPage() {
             {clothe_3_name}
           </button>
         </div>
-        <div className="pt-2">
-          <button className="close-btn-left" onClick={handleCloseClothes}>
+        <div className={page.inventoryBody}>
+          <button
+            type="button"
+            className="close-btn-left"
+            aria-label="Close clothing inventory"
+            onClick={handleCloseClothes}
+          >
             &times;
           </button>
-          <div className="d-flex justify-content-start h-100">
-            <div
-              className="d-flex flex-row flex-wrap overflow-auto gap-2"
-              style={{ height: "70vh" }}
-            >
+          <div className="d-flex flex-grow-1 justify-content-start pt-4 overflow-hidden">
+            <div className={page.inventoryList}>
               {ownedClothes?.map((clothe_id) => {
                 const prefixClothes = clothe_id.split("_")[0].toUpperCase();
                 const currentImage = `${baseClothesUrl}/${prefixClothes}/${clothe_id}.png`;
@@ -234,12 +233,9 @@ export default function UserPage() {
           </div>
         </div>
       </div>
-      <div className="row h-100">
-        <div
-          style={{ border: "5px solid darkgoldenrod" }}
-          className="col-md-6 d-flex flex-column align-items-center justify-content-center"
-        >
-          <div className="w-100 mt-5 d-flex flex-row flex-wrap align-items-center justify-content-center">
+      <div className={page.userMainGrid}>
+        <div className={page.userPanel}>
+          <div className={page.userEquipment}>
             <div className="component-item" key={skill_1_equipped}>
               <div className="glow-active">
                 <BackgroundButton
@@ -249,8 +245,8 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_1_rarity}
-                  Width="120px"
-                  Height="120px"
+                  Width="clamp(76px, 11vw, 120px)"
+                  Height="clamp(76px, 11vw, 120px)"
                   bgSize="150%"
                 />
               </div>
@@ -264,8 +260,8 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_2_rarity}
-                  Width="120px"
-                  Height="120px"
+                  Width="clamp(76px, 11vw, 120px)"
+                  Height="clamp(76px, 11vw, 120px)"
                   bgSize="150%"
                 />
               </div>
@@ -279,8 +275,8 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_3_rarity}
-                  Width="120px"
-                  Height="120px"
+                  Width="clamp(76px, 11vw, 120px)"
+                  Height="clamp(76px, 11vw, 120px)"
                   bgSize="150%"
                 />
               </div>
@@ -294,8 +290,8 @@ export default function UserPage() {
                   isDisabled={false}
                   isEquipped={false}
                   itemRarity={skill_4_rarity}
-                  Width="200px"
-                  Height="120px"
+                  Width="clamp(110px, 18vw, 200px)"
+                  Height="clamp(76px, 11vw, 120px)"
                   bgSize="150%"
                 />
               </div>
@@ -303,10 +299,7 @@ export default function UserPage() {
           </div>
         </div>
 
-        <div
-          style={{ border: "5px solid darkgoldenrod" }}
-          className="col-md-6 d-flex flex-column align-items-center justify-content-center"
-        >
+        <div className={page.userPanel}>
           <div className="w-100 d-flex flex-column align-items-center justify-content-center">
             <div className="component-item d-flex ">
               <p className="text-dark">AURA : </p>
@@ -322,11 +315,8 @@ export default function UserPage() {
                 shoes_user_url={shoes_user_url}
               />
             </div>
-            <div className="component-item mt-5">
-              <button
-                className={`${page.optionBtn}`}
-                onClick={handleShowClothes}
-              >
+            <div className="component-item mt-3">
+              <button className={home.optionBtn} onClick={handleShowClothes}>
                 Customize
               </button>
             </div>
@@ -334,7 +324,7 @@ export default function UserPage() {
         </div>
       </div>
       <div
-        className={`position-absolute custom-dropdown-right ${showSkills ? "open" : ""}`}
+        className={`${page.userInventoryPanel} ${page.userInventorySkills} ${showSkills ? page.inventoryOpen : ""}`}
       >
         <div
           className="header d-flex justify-content-between flex-wrap"
@@ -369,15 +359,17 @@ export default function UserPage() {
             {skill_4_name}
           </button>
         </div>
-        <div className="pt-2">
-          <button className="close-btn-right" onClick={handleCloseSkills}>
+        <div className={page.inventoryBody}>
+          <button
+            type="button"
+            className="close-btn-right"
+            aria-label="Close skill inventory"
+            onClick={handleCloseSkills}
+          >
             &times;
           </button>
-          <div className="d-flex justify-content-end h-100">
-            <div
-              className="d-flex flex-row flex-wrap overflow-auto gap-2"
-              style={{ height: "70vh" }}
-            >
+          <div className="d-flex flex-grow-1 justify-content-end pt-4 overflow-hidden">
+            <div className={page.inventoryList}>
               {ownedSkills?.map((skill_id) => {
                 const prefixSkill = skill_id.split("_")[0].toUpperCase();
                 const currentImage = `${baseSkillsUrl}/${prefixSkill}/${skill_id}.png`;

@@ -22,8 +22,8 @@ const UserCharacter = ({
     <div
       className="position-relative"
       style={{
-        width: 256,
-        height: 256,
+        width: "min(256px, 60vw, 32vh)",
+        height: "min(256px, 60vw, 32vh)",
         filter: "drop-shadow(0px 0px 30px red)",
       }}
     >
@@ -33,6 +33,7 @@ const UserCharacter = ({
           className="position-absolute top-0 start-0"
           width={256}
           height={256}
+          style={{ width: "100%", height: "100%", objectFit: "contain" }}
           src={src}
           alt={alt}
           priority

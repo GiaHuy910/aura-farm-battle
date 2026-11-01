@@ -80,6 +80,7 @@ allSkills =
   ,normal "s2_13" "s2" "super chad" "mythical" 1
   ,normal "s3_13" "s3" "verity" "mythical" 1
   ,normal "s1_14" "s1" "kimi no nawa" "mythical" 1
+    ,normal "s3_14" "s3" "4 iced tea" "epic" 1
   -- curse the opponent and lower their gaining aura by x0.75 times in N turns
   ,ult "ult_13" "we are Charlie Kirk" "mythical" 7 "curse" 3
   ]
@@ -91,4 +92,4 @@ seedSkills = do
     then putStrLn ("Skills already exist (" ++ show existing ++ "), skip seeding.")
     else do
       insertSkills allSkills
-      putStrLn "Seeded 53 skills."
+      putStrLn "Seeded 55 skills."

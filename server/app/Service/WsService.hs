@@ -38,11 +38,16 @@ handleLeave env rid uid = do
     when (riStatus room == Playing && isMember uid room) $
       forfeitMatch env room uid                         -- NEW
     if uid == riOwner room
-      then do
-        rsDeleteRoom st rid
-        dropIfEnded (envRegistry env) rid                 -- NEW
-        Hub.broadcast hub rid (msg "room.closed" (object []))
-        Hub.closeRoom hub rid
+      then if riStatus room /= Waiting
+        then do
+          Hub.broadcast hub rid
+            (msg "room.player_offline" (object ["userId" .= uid]))
+          Hub.closeUser hub rid uid
+        else do
+          rsDeleteRoom st rid
+          dropIfEnded (envRegistry env) rid
+          Hub.broadcast hub rid (msg "room.closed" (object []))
+          Hub.closeRoom hub rid
       else when (riGuest room == Just uid) $ do
         rsRemoveGuest st rid
         Hub.closeUser hub rid uid

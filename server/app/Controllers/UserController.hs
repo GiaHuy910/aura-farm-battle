@@ -98,7 +98,7 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
 
     case categorizeItem targetItem of
         Nothing ->
-            return $ EquipResponse "failure" "Định dạng trang bị không hợp lệ!" ""
+            throwError err400 { errBody = "invalid_item" }
 
         Just (category, dbField) -> do
             let isOwned = case category of
@@ -106,7 +106,7 @@ getEquipItemHandler cookie req = withAuthenticatedUser cookie $ \u -> do
                     ClotheType -> targetItem `elem` u.owned_clothes
 
             if not isOwned
-                then return $ EquipResponse "failure" "Bạn chưa sở hữu vật phẩm này!" ""
+                then throwError err403 { errBody = "item_not_owned" }
                 else do
                     liftIO $ updateEquippedItem
                                 uid
@@ -126,24 +126,22 @@ instance ToJSON GachaResponse
 getGachaHandler :: Maybe String -> GachaRequest -> Handler GachaResponse
 getGachaHandler cookie req = withAuthenticatedUser cookie $ \u -> do
     let uid = u.user_id
-
-    let (count, isValidCount) = case req.wish of
-                                  "x1"  -> (1, True)
-                                  "x10" -> (10, True)
-                                  _     -> (0, False)
-
-    if not isValidCount
-        then return $ GachaResponse "failure" "Quantity not valid" Nothing Nothing
-        else do
-            mRemaining <- liftIO $ deductTickets uid count
-            case mRemaining of
-                Nothing ->
-                    return $ GachaResponse "failure" "Too Poor huhu" Nothing (Just u.tickets)
-                Just remaining -> do
-                    case req.wish_type of
-                        "clothes" -> processGacha count ClotheType getClothesPool clothe_id Clothe.rarity (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u remaining
-                        "skills"  -> processGacha count SkillType getSkillsPool skill_id Skill.rarity (\user -> user.pity_skill_leg) "pity_skill_leg" uid u remaining
-                        _         -> return $ GachaResponse "failure" "Wish Type not valid" Nothing Nothing
+        count = case req.wish of
+          "x1" -> Just 1
+          "x10" -> Just 10
+          _ -> Nothing
+    case count of
+      Nothing -> throwError err400 { errBody = "invalid_quantity" }
+      Just amount -> case req.wish_type of
+        "clothes" -> do
+          pool <- liftIO getClothesPool
+          runGacha amount ClotheType pool clothe_id Clothe.rarity
+            (\user -> user.pity_clothe_leg) "pity_clothe_leg" uid u
+        "skills" -> do
+          pool <- liftIO getSkillsPool
+          runGacha amount SkillType pool skill_id Skill.rarity
+            (\user -> user.pity_skill_leg) "pity_skill_leg" uid u
+        _ -> throwError err400 { errBody = "invalid_wish_type" }
 
 rarityWeights :: [(Text, Double)]
 rarityWeights =
@@ -193,24 +191,27 @@ rollMultiple n currentPity pool getId getRarity = do
     (restIds, finalPity) <- rollMultiple (n - 1) nextPity pool getId getRarity
     return (itemId : restIds, finalPity)
 
-processGacha :: Int -> ItemType -> IO [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Int -> Handler GachaResponse
-processGacha count category getPool getId getRarity getPityFunc pityField uid u remainingTickets = do
-    pool <- liftIO getPool
+runGacha :: Int -> ItemType -> [a] -> (a -> Text) -> (a -> Text) -> (User -> Int) -> Text -> Text -> User -> Handler GachaResponse
+runGacha count category pool getId getRarity getPityFunc pityField uid u = do
     if null pool
-        then return $ GachaResponse "failure" "Nothing in Pool" Nothing (Just u.tickets)
+        then throwError err503 { errBody = "empty_pool" }
         else do
-            let currentPity = getPityFunc u
-            (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
+            mRemaining <- liftIO $ deductTickets uid count
+            case mRemaining of
+              Nothing -> throwError err409 { errBody = "insufficient_tickets" }
+              Just remainingTickets -> do
+                let currentPity = getPityFunc u
+                (rolledIDs, finalPity) <- liftIO $ rollMultiple count currentPity pool getId getRarity
 
-            liftIO $ addGachaItems uid category rolledIDs
-            liftIO $ updatePity uid pityField finalPity
+                liftIO $ addGachaItems uid category rolledIDs
+                liftIO $ updatePity uid pityField finalPity
 
-            let itemTypeStr = case category of
-                                ClotheType -> "clothe"
-                                SkillType  -> "skill"
-            liftIO $ saveGachaHistory uid itemTypeStr rolledIDs
+                let itemTypeStr = case category of
+                                    ClotheType -> "clothe"
+                                    SkillType  -> "skill"
+                liftIO $ saveGachaHistory uid itemTypeStr rolledIDs
 
-            return $ GachaResponse "success" "Success" (Just rolledIDs) (Just remainingTickets)
+                return $ GachaResponse "success" "Success" (Just rolledIDs) (Just remainingTickets)
 
 categorizeItem :: Text -> Maybe (ItemType, Text)
 categorizeItem item

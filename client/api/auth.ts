@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import useSWR from "swr";
 
 import { fetcher } from "./customFetcher";
+import { throwApiError } from "./httpError";
 import { config } from "@/config/config";
 import { useRouter } from "next/navigation";
 
@@ -35,10 +36,10 @@ export const getCurrentUser = async () => {
     credentials: "include",
     method: "GET",
   });
-  const data: AuthMeResponse = await response.json();
   if (!response.ok) {
-    throw new Error(data.auth.message || "Unauthorized");
+    await throwApiError(response, "Unauthorized");
   }
+  const data: AuthMeResponse = await response.json();
   return data.me;
 };
 export const logOutUser = async () => {
@@ -46,11 +47,10 @@ export const logOutUser = async () => {
     method: "POST",
     credentials: "include",
   });
-  const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Logout failed");
+    await throwApiError(response, "Logout failed");
   }
-  return data;
+  return response.json();
 };
 export const logInUser = async (loginData: logInForm) => {
   const response = await fetch(`${baseApi}/login`, {
@@ -61,11 +61,10 @@ export const logInUser = async (loginData: logInForm) => {
     },
     body: JSON.stringify(loginData),
   });
-  const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Login Failed");
+    await throwApiError(response, "Login Failed");
   }
-  return data;
+  return response.json();
 };
 export const registerUser = async (username: string, password: string) => {
   const response = await fetch(`${baseApi}/register`, {
@@ -76,9 +75,8 @@ export const registerUser = async (username: string, password: string) => {
     },
     body: JSON.stringify({ username, password }),
   });
-  const data = await response.json();
   if (!response.ok) {
-    throw new Error(data.message || "Unauthorized");
+    await throwApiError(response, "Unauthorized");
   }
-  return data;
+  return response.json();
 };
