@@ -67,7 +67,7 @@ getUsers = runDB $ do
 
 getUser :: Text -> IO (Maybe User)
 getUser uname = runDB $ do
-    user <- findOne ((select ["username" =: uname] "user") {project = ["password" =: (0 :: Int)]}) --Ẩn password khi lấy user
+    user <- findOne ((select ["username" =: uname] "user") {project = ["password" =: (0 :: Int)]}) -- Exclude the password when fetching a user.
     return (fmap docToUser user)
 
 getUserById :: Text -> IO (Maybe User)
@@ -168,7 +168,7 @@ registerUser uname pass = do
 
 loginUser :: Text -> Text -> IO LoginStatus
 loginUser uname pass = do
-    existingDocs <- runDB $ find ((select ["username" =: uname] "user") {project = ["user_id" =: (1 :: Int), "password" =: (1 :: Int)]}) >>= rest   --Làm biến giải thích quá, nếu bạn có trình bạn sẽ tự hiểu ha
+    existingDocs <- runDB $ find ((select ["username" =: uname] "user") {project = ["user_id" =: (1 :: Int), "password" =: (1 :: Int)]}) >>= rest
     case existingDocs of
         [] -> return LoginFailed 
         (userDoc:_) -> do        
