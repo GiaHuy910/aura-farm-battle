@@ -22,6 +22,30 @@ const gacha_2_button = "10";
 
 type BannerType = typeof banner_1_name | typeof banner_2_name;
 
+const RARITY_RANK: Record<string, number> = {
+  common: 0,
+  uncommon: 1,
+  rare: 2,
+  epic: 3,
+  legendary: 4,
+  mythical: 5,
+};
+
+function getHighestGachaRarity(
+  itemIds: string[],
+  pool: PoolResponse | undefined,
+): string {
+  return itemIds.reduce((highest, itemId) => {
+    const item =
+      pool?.clothe.find((clothe) => clothe.clothe_id === itemId) ??
+      pool?.skill.find((skill) => skill.skill_id === itemId);
+    const rarity = item?.rarity.toLowerCase() ?? "common";
+    return (RARITY_RANK[rarity] ?? 0) > (RARITY_RANK[highest] ?? 0)
+      ? rarity
+      : highest;
+  }, "common");
+}
+
 export default function GachaBannerPage() {
   const { user, fetchMe } = useAuth();
   const { poolData } = usePool();
@@ -36,6 +60,7 @@ export default function GachaBannerPage() {
     setShowResult((prev) => !prev);
   };
   const [gachaResultItems, setGachaResultItems] = useState<string[]>([]);
+  const [gachaAnimationRarity, setGachaAnimationRarity] = useState("common");
 
   const [showPaymentBoard, setShowPaymentBoard] = useState(false);
   const toggleBoard = () => {
@@ -72,6 +97,9 @@ export default function GachaBannerPage() {
 
       if (resultItem && resultItem.added_items) {
         setGachaResultItems(resultItem.added_items);
+        setGachaAnimationRarity(
+          getHighestGachaRarity(resultItem.added_items, poolData),
+        );
         toggleAnimating();
         fetchMe();
       }
@@ -137,7 +165,7 @@ export default function GachaBannerPage() {
           }}
         >
           <video
-            src="/animation/game-gacha-animation-common.mp4"
+            src={`/animation/game-gacha-animation-${gachaAnimationRarity}.mp4`}
             autoPlay
             playsInline
             className="w-100 h-100"
