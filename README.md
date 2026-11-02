@@ -44,6 +44,7 @@
 - [Table of contents](#table-of-contents)
 - [Requirements](#requirements)
 - [Quick Start](#quick-start)
+- [One more step](#one-more-step)
 - [Tech Stacks](#tech-stacks)
 - [Contribution](#contribution)
 
@@ -62,6 +63,28 @@
 - In the server directory : `cabal build`
 - Run the server : `cabal run`
   Backend end will be hosting locally on port `3001` by default
+
+## One more step
+
+- In order to use this application properly, you will have to apply these lines into MongoCompass Shell by hand
+- Open MongoCompass, select "aura-farm-battle" database and click "open MongoDB shell" then enter these in.
+
+```shell
+db.sessions.createIndex(
+  { expiresAt: 1 },
+  { expireAfterSeconds: 0 }
+  )
+```
+
+```shell
+db.gachahistories.createIndex({ user_id: 1, item_type: 1, \_id: -1 })
+```
+
+```shell
+db.giftcode_redemptions.createIndex({ user_id : 1, code : 1})
+```
+
+- Now you've set to go
 
 ## Tech Stacks
 
