@@ -63,6 +63,7 @@
 - In the server directory : `cabal build`
 - Run the server : `cabal run`
   Backend end will be hosting locally on port `3001` by default
+- Then you can open "localhost:4000" on your brower. Then Register and claim giftcode on the seting panel, proceed to Gacha in gacha page.
 
 ## One more step
 
@@ -77,7 +78,7 @@ db.sessions.createIndex(
 ```
 
 ```shell
-db.gachahistories.createIndex({ user_id: 1, item_type: 1, \_id: -1 })
+db.gachahistories.createIndex({ user_id: 1, item_type: 1, _id: -1 })
 ```
 
 ```shell
